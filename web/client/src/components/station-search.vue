@@ -21,6 +21,8 @@ import SoroButton from '@/components/common/soro-button.vue';
 
 <script lang="ts">
 import { defineComponent } from 'vue';
+import { InfrastructureNamespace } from '@/stores/infrastructure-store';
+import { mapActions } from 'vuex';
 
 export default defineComponent({
     name: 'StationSearch',
@@ -38,7 +40,10 @@ export default defineComponent({
             }
 
             console.log(`Will now try searching for ${this.currentQuery}`);
+            this.searchPositionFromName(this.currentQuery);
         },
+
+        ...mapActions(InfrastructureNamespace, ['searchPositionFromName']),
     },
 });
 </script>

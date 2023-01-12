@@ -80,6 +80,11 @@ const mapDefaults = {
     bearing: 0,
 };
 
+export type MapPosition = {
+    lat: number,
+    lon: number,
+};
+
 export default defineComponent({
     name: 'InfrastructureMap',
 
@@ -97,6 +102,7 @@ export default defineComponent({
     computed: {
         ...mapState(InfrastructureNamespace, [
             'currentInfrastructure',
+            'currentSearchedMapPosition',
             'highlightedSignalStationRouteID',
             'highlightedStationRouteID',
         ]),
@@ -107,6 +113,18 @@ export default defineComponent({
             // Re-instantiating the map on infrastructure change currently leads to duplicated icon fetching on change.
             // @ts-ignore type instantiation for some reason is too deep
             this.libreGLMap = newInfrastructure ? this.createMap(newInfrastructure) : null;
+        },
+
+        currentSearchedMapPosition(mapPosition: MapPosition) {
+            if (!this.libreGLMap) {
+                return;
+            }
+
+            console.log('Jumping to: ' + JSON.stringify(mapPosition));
+            this.libreGLMap.jumpTo({
+                center: mapPosition,
+                zoom: 20,
+            });
         },
 
         highlightedSignalStationRouteID(newID, oldID) {

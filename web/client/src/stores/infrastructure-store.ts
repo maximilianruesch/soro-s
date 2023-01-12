@@ -1,8 +1,10 @@
 import { Module } from 'vuex';
+import { MapPosition } from '@/components/infrastructure/infrastructure-map.vue';
 
 type InfrastructureState = {
     infrastructures: string[],
     currentInfrastructure?: string,
+    currentSearchedMapPosition?: MapPosition,
     highlightedSignalStationRouteID?: string,
     highlightedStationRouteID?: string,
 }
@@ -18,6 +20,7 @@ export const InfrastructureStore: Module<InfrastructureState, undefined> = {
         return {
             infrastructures: [],
             currentInfrastructure: undefined,
+            currentSearchedMapPosition: undefined,
             highlightedSignalStationRouteID: undefined,
             highlightedStationRouteID: undefined,
         };
@@ -30,6 +33,10 @@ export const InfrastructureStore: Module<InfrastructureState, undefined> = {
 
         setCurrentInfrastructure(state, currentInfrastructure) {
             state.currentInfrastructure = currentInfrastructure;
+        },
+
+        setCurrentSearchedMapPosition(state, currentSearchedMapPosition) {
+            state.currentSearchedMapPosition = currentSearchedMapPosition;
         },
 
         setHighlightedSignalStationRouteID(state, highlightedSignalStationRouteID) {
@@ -58,5 +65,17 @@ export const InfrastructureStore: Module<InfrastructureState, undefined> = {
         unload({ commit }) {
             commit('setCurrentInfrastructure', null);
         },
+        
+        searchPositionFromName({ commit }, query) {
+            if (!query) {
+                commit('setCurrentSearchedMapPosition', null);
+                
+                return;
+            }
+            
+            fetch(`${window.origin}/search?query=${query}`)
+                .then(response => response.json())
+                .then(position => commit('setCurrentSearchedMapPosition', position));
+        }
     },
 };

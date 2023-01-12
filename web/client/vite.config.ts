@@ -10,6 +10,7 @@ const relayLocations = [
     '/icons',
     '/interlocking_route_simple',
     '/small',
+    '/search'
 ];
 
 const proxy = {};
