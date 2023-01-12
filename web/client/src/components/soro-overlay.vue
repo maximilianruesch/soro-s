@@ -41,6 +41,8 @@
                     />
                 </div>
 
+                <station-search class="station-search-field" />
+
                 <soro-collapsible
                     label="Dev Tools"
                     class="dev-tools"
@@ -108,10 +110,11 @@
 </template>
 
 <script setup lang="ts">
-import DisruptionDetail from './disruption-detail.vue';
-import SoroSelect from './soro-select.vue';
-import SoroButton from './soro-button.vue';
-import SoroCollapsible from '@/components/soro-collapsible.vue';
+import DisruptionDetail from '@/components/disruption-detail.vue';
+import SoroSelect from '@/components/common/soro-select.vue';
+import SoroButton from '@/components/common/soro-button.vue';
+import SoroCollapsible from '@/components/common/soro-collapsible.vue';
+import StationSearch from '@/components/station-search.vue';
 </script>
 
 <script lang="ts">
@@ -265,8 +268,7 @@ export default defineComponent({
     cursor: pointer;
 }
 
-.window-controls,
-.dev-tools {
+.window-controls {
     display: flex;
     flex-flow: column wrap;
     width: 94%;
@@ -274,6 +276,30 @@ export default defineComponent({
     padding: 3%;
     margin-top: 0.5em;
     margin-bottom: 0.5em;
+}
+
+.window-controls > .soro-button {
+    margin-top: 0.2em;
+    margin-bottom: 0.2em;
+}
+
+.station-search-field {
+    width: 94%;
+}
+
+.dev-tools {
+    width: 94%;
+    justify-content: space-around;
+    padding: 3%;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+    position: absolute;
+    bottom: 0;
+}
+
+.dev-tools .soro-button {
+    margin-top: 0.2em;
+    margin-bottom: 0.2em;
 }
 
 .data-selects {

@@ -49,7 +49,7 @@
 </template>
 
 <script setup>
-import SoroCollapsible from '@/components/soro-collapsible.vue';
+import SoroCollapsible from '@/components/common/soro-collapsible.vue';
 </script>
 
 <script>
