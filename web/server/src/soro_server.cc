@@ -1,6 +1,7 @@
 #include "soro/server/soro_server.h"
 
 #include <chrono>
+#include <regex>
 
 #include "utl/logging.h"
 #include "utl/parser/mmap_reader.h"
@@ -15,6 +16,7 @@
 #include "tiles/util.h"
 
 #include "soro/server/http_server.h"
+#include "soro/server/soro_util.h"
 
 namespace soro::server {
 
@@ -132,8 +134,18 @@ void serve_file(std::string const& decoded_url,
 
 bool serve_tile(server::serve_context& sc, std::string const& decoded_url,
                 auto const& req, auto& res) {
-  static tiles::regex_matcher const matcher{R"(\/(\d+)\/(\d+)\/(\d+).mvt)"};
-  auto const match = matcher.match(decoded_url);
+  std::cmatch regmatch;
+
+  tiles::regex_matcher::match_result_t match;
+
+  if (std::regex_match(decoded_url.c_str(), regmatch,
+                       std::regex(R"(\/(\d+)\/(\d+)\/(\d+).mvt)"))) {
+
+    match = utl::to_vec(regmatch, [](auto const& m) {
+      return std::string_view{m.first, static_cast<size_t>(m.length())};
+    });
+  }
+
   if (!match) {
     return false;
   }
@@ -175,6 +187,30 @@ void initialize_serve_contexts(server::serve_contexts& contexts,
   }
 }
 
+void serve_search(std::string const& decoded_url, response_t& res) {
+  auto const index = decoded_url.find("query=") + 6;
+  auto const msg = decoded_url.substr(index, decoded_url.length() - index);
+
+  // TODO
+
+  rapidjson::Document doc;
+  doc.SetObject();
+  doc.AddMember("lat", 50.11, doc.GetAllocator());
+  doc.AddMember("lon", 8.68, doc.GetAllocator());
+
+
+  rapidjson::StringBuffer buffer;
+
+  buffer.Clear();
+
+  rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+  doc.Accept(writer);
+
+  res.body() = buffer.GetString();
+  res.result(http::status::ok);
+}
+
+
 server::server(std::string const& address, port_t const port,
                fs::path const& server_resource_dir, bool const test) {
   initialize_serve_contexts(contexts_, server_resource_dir);
@@ -193,6 +229,7 @@ server::server(std::string const& address, port_t const port,
 
         auto const tiles_pos = url.find("/tiles/");
         bool const should_serve_tiles = tiles_pos != std::string::npos;
+        bool const should_send_pos = url.find("/search?") != std::string::npos;
 
         switch (req.method()) {
           case http::verb::options: {
@@ -210,7 +247,10 @@ server::server(std::string const& address, port_t const port,
               }
 
               serve_tile(sc_it->second, url.substr(tiles_pos + 6), req, res);
-            } else {
+            } else if (should_send_pos) {
+              serve_search(url, res);
+            }
+            else {
               serve_file(url, server_resource_dir, res);
             }
             break;
