@@ -66,14 +66,20 @@ export const InfrastructureStore: Module<InfrastructureState, undefined> = {
             commit('setCurrentInfrastructure', null);
         },
         
-        searchPositionFromName({ commit }, query) {
+        searchPositionFromName({ commit, state }, query) {
+            if (!state.currentInfrastructure) {
+                console.error('Tried search with no selected infrastructure');
+
+                return;
+            }
+
             if (!query) {
                 commit('setCurrentSearchedMapPosition', null);
                 
                 return;
             }
             
-            fetch(`${window.origin}/search?query=${query}`)
+            fetch(`${window.origin}/search?query=${query}&infrastructure=${state.currentInfrastructure}`)
                 .then(response => response.json())
                 .then(position => commit('setCurrentSearchedMapPosition', position));
         }
