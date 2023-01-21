@@ -34,14 +34,25 @@ export const SettingsStore: Module<SettingsState, undefined> = {
     },
 
     actions: {
-        loadSettings({ dispatch }) {
+        loadSettings({ dispatch, commit }) {
+            const storage = window.localStorage;
+            const darkLightModePreference = storage.getItem('darkLightModePreference');
+            if (darkLightModePreference) {
+                commit('setDarkLightModePreference', darkLightModePreference);
+            }
+
             dispatch('initThemeListener');
             dispatch('applyTheme');
+        },
+
+        saveSettings({ state }) {
+            window.localStorage.setItem('darkLightModePreference', state.darkLightModePreference);
         },
 
         setDarkLightModePreference({ commit, dispatch }, preference) {
             commit('setDarkLightModePreference', preference);
             dispatch('applyTheme');
+            dispatch('saveSettings');
         },
 
         initThemeListener({ commit, state }) {
