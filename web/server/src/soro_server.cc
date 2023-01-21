@@ -134,17 +134,18 @@ void serve_file(std::string const& decoded_url,
 
 bool serve_tile(server::serve_context& sc, std::string const& decoded_url,
                 auto const& req, auto& res) {
-  std::cmatch regmatch;
 
-  tiles::regex_matcher::match_result_t match;
 
-  if (std::regex_match(decoded_url.c_str(), regmatch,
-                       std::regex(R"(\/(\d+)\/(\d+)\/(\d+).mvt)"))) {
+    std::cmatch regmatch;
+    
+    tiles::regex_matcher::match_result_t match;
 
-    match = utl::to_vec(regmatch, [](auto const& m) {
-      return std::string_view{m.first, static_cast<size_t>(m.length())};
-    });
-  }
+    if (std::regex_match(decoded_url.c_str(), regmatch, std::regex(R"(\/(\d+)\/(\d+)\/(\d+).mvt)"))) {
+
+        match = utl::to_vec(regmatch, [](auto const& m) {
+            return std::string_view{ m.first, static_cast<size_t>(m.length()) };
+            });
+    }
 
   if (!match) {
     return false;
@@ -209,7 +210,6 @@ void serve_search(std::string const& decoded_url, response_t& res) {
   res.body() = buffer.GetString();
   res.result(http::status::ok);
 }
-
 
 server::server(std::string const& address, port_t const port,
                fs::path const& server_resource_dir, bool const test) {
