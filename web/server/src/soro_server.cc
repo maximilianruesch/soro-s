@@ -3,6 +3,9 @@
 #include <chrono>
 #include <regex>
 
+#include <iostream>
+#include <algorithm>
+
 #include "utl/logging.h"
 #include "utl/parser/mmap_reader.h"
 
@@ -14,9 +17,10 @@
 #include "tiles/parse_tile_url.h"
 #include "tiles/perf_counter.h"
 #include "tiles/util.h"
+#include "soro/utls/string.h"
+
 
 #include "soro/server/http_server.h"
-#include "soro/server/soro_util.h"
 
 namespace soro::server {
 
@@ -188,31 +192,73 @@ void initialize_serve_contexts(server::serve_contexts& contexts,
   }
 }
 
-void serve_search(std::string const& decoded_url, response_t& res) {
-  auto const index = decoded_url.find("query=") + 6;
-  auto const msg = decoded_url.substr(index, decoded_url.length() - index);
 
-  // TODO
-
-  rapidjson::Document doc;
-  doc.SetObject();
-  doc.AddMember("lat", 50.11, doc.GetAllocator());
-  doc.AddMember("lon", 8.68, doc.GetAllocator());
-
-
-  rapidjson::StringBuffer buffer;
-
-  buffer.Clear();
-
-  rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-  doc.Accept(writer);
-
-  res.body() = buffer.GetString();
-  res.result(http::status::ok);
+std::string to_lower(std::string str) {
+  std::transform(str.begin(), str.end(), str.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
+  return str;
 }
 
+
+std::optional<soro::server::osm_halt> get_halt_info(const std::vector<soro::server::osm_halt>& osm_halts, std::string name) {
+    std::vector<soro::server::osm_halt> matches;
+
+    for (const auto& halt : osm_halts) {
+        if (to_lower(halt.name_).starts_with(to_lower(name))) {
+            matches.push_back(halt);
+        }
+    }
+
+    // exact match?
+    for (const auto& match : matches) 
+        if (match.name_.length() == name.length()) return match;
+    
+
+    if (matches.size() >= 1) return matches[0];
+
+    return {};
+}
+
+
+void serve_search(std::string const& decoded_url, response_t& res, const std::vector<soro::server::osm_halt>& osm_halts) {
+  auto const index = decoded_url.find("?") + 1;
+  auto const msg = decoded_url.substr(index, decoded_url.length() - index);
+
+  const auto params = utls::split(msg, "&");
+  
+  auto query = params[0];
+
+  std::string name = query.substr(6);
+
+  auto info = get_halt_info(osm_halts, name);
+
+  if (info.has_value()) {
+
+    rapidjson::Document doc;
+    doc.SetObject();
+    doc.AddMember("lat", info.value().lat_, doc.GetAllocator());
+    doc.AddMember("lon", info.value().lon_, doc.GetAllocator());
+
+    rapidjson::StringBuffer buffer;
+
+    buffer.Clear();
+
+    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+    doc.Accept(writer);
+
+    res.body() = buffer.GetString();
+    res.result(http::status::ok);
+  } else {
+    res.result(http::status::no_content);
+  }
+
+}
+
+
+
 server::server(std::string const& address, port_t const port,
-               fs::path const& server_resource_dir, bool const test) {
+               fs::path const& server_resource_dir, bool const test,
+               const std::vector<soro::server::osm_halt>& osm_halts) {
   initialize_serve_contexts(contexts_, server_resource_dir);
 
   serve_forever(
@@ -248,7 +294,7 @@ server::server(std::string const& address, port_t const port,
 
               serve_tile(sc_it->second, url.substr(tiles_pos + 6), req, res);
             } else if (should_send_pos) {
-              serve_search(url, res);
+              serve_search(url, res, osm_halts);
             }
             else {
               serve_file(url, server_resource_dir, res);
