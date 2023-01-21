@@ -18,8 +18,8 @@ export const SettingsStore: Module<SettingsState, undefined> = {
 
     state() {
         return {
-            darkLightModePreference: 'light',
-            theme: 'light',
+            darkLightModePreference: DarkLightModes.OS,
+            theme: DarkLightModes.DARK,
         };
     },
 
