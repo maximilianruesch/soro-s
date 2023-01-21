@@ -16,7 +16,7 @@
 
 <script setup lang="ts">
 import SoroTextField from '@/components/common/soro-text-field.vue';
-import SoroButton from '@/components/common/soro-button.vue';
+import SoroButton from '@/components/soro-button.vue';
 </script>
 
 <script lang="ts">

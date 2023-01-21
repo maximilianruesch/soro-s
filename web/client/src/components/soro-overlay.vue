@@ -111,9 +111,9 @@
 
 <script setup lang="ts">
 import DisruptionDetail from '@/components/disruption-detail.vue';
-import SoroSelect from '@/components/common/soro-select.vue';
-import SoroButton from '@/components/common/soro-button.vue';
-import SoroCollapsible from '@/components/common/soro-collapsible.vue';
+import SoroSelect from '@/components/soro-select.vue';
+import SoroButton from '@/components/soro-button.vue';
+import SoroCollapsible from '@/components/soro-collapsible.vue';
 import StationSearch from '@/components/station-search.vue';
 </script>
 
