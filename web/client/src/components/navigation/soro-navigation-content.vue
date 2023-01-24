@@ -75,11 +75,11 @@
                             Select color
 
                             <v-menu
-                                style="overflow-x: clip;"
                                 activator="parent"
                                 :close-on-content-click="false"
                             >
                                 <v-color-picker
+                                    style="overflow: unset;"
                                     :model-value="colorSelection"
                                     min-width="300"
                                     hide-inputs
