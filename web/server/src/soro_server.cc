@@ -220,17 +220,20 @@ std::optional<soro::server::osm_halt> get_halt_info(const std::vector<soro::serv
 }
 
 
-void serve_search(std::string const& decoded_url, response_t& res, const std::vector<soro::server::osm_halt>& osm_halts) {
-  auto const index = decoded_url.find("?") + 1;
-  auto const msg = decoded_url.substr(index, decoded_url.length() - index);
+void serve_search(
+    std::string const& decoded_url, response_t& res, const std::unordered_map<std::string, std::vector<soro::server::osm_halt>>& osm_halts) {
+  const auto index = decoded_url.find("?") + 1;
+  const auto msg = decoded_url.substr(index, decoded_url.length() - index);
 
   const auto params = utls::split(msg, "&");
   
-  auto query = params[0];
+  const auto query = params[0];
+  const auto infra = params[1];
 
-  std::string name = query.substr(6);
+  const auto halt_name = query.substr(6); // len("query=") = 6
+  const auto infra_name = infra.substr(15); // len("infrastructure=") = 15
 
-  auto info = get_halt_info(osm_halts, name);
+  const auto info = get_halt_info(osm_halts.at(infra_name), halt_name);
 
   if (info.has_value()) {
 
@@ -258,7 +261,8 @@ void serve_search(std::string const& decoded_url, response_t& res, const std::ve
 
 server::server(std::string const& address, port_t const port,
                fs::path const& server_resource_dir, bool const test,
-               const std::vector<soro::server::osm_halt>& osm_halts) {
+    const std::unordered_map<std::string, std::vector<soro::server::osm_halt>>&
+        osm_halts) {
   initialize_serve_contexts(contexts_, server_resource_dir);
 
   serve_forever(

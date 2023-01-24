@@ -199,7 +199,9 @@ int main(int argc, char const** argv) {
       }
   }
 
-  std::vector<soro::server::osm_halt> halts;
+  //std::vector<soro::server::osm_halt> halts;
+
+  std::unordered_map<std::string, std::vector<soro::server::osm_halt>> halts;
 
   // Copy every osm file to server
   for (const auto& osm_file : osm_paths) {
@@ -214,7 +216,9 @@ int main(int argc, char const** argv) {
 
       // TODO Filter for Stations (and Stops)
       const auto filtered = filter_halt(osm_data);
-      halts = extract_halt_info(filtered);
+      const auto fileName = osm_file.filename().replace_extension("").string();
+
+      halts[fileName] = extract_halt_info(filtered);
 
 
       if (error) {
