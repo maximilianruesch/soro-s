@@ -61,7 +61,7 @@ import { infrastructureMapStyle } from './mapStyle';
 import { addIcons, iconExtension, iconUrl } from './addIcons';
 import { elementTypes, elementTypeLabels } from './elementTypes';
 import { defineComponent } from 'vue';
-import {transformUrl} from "@/api/api-client";
+import { transformUrl } from '@/api/api-client';
 
 const specialLayoutControls = ['Rising', 'Falling'];
 const initiallyCheckedControls = ['station', 'ms', 'as', 'eotd', ...specialLayoutControls];
