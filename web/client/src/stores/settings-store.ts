@@ -25,14 +25,14 @@ export const SettingsStore: Module<SettingsState, undefined> = {
     },
 
     mutations: {
-        setDarkLightModePreference(this: VuetifyExtension, state, darkLightModePreference) {
+        setDarkLightModePreference(state, darkLightModePreference) {
             state.darkLightModePreference = darkLightModePreference;
-            // We need to set the theme globally in vuetify to access its properties in components
-            this.$vuetify.theme.global.name.value = darkLightModePreference;
         },
         
-        setTheme(state, theme) {
+        setTheme(this: VuetifyExtension, state, theme) {
             state.theme = theme;
+            // We need to set the theme globally in vuetify to access its properties in components
+            this.$vuetify.theme.global.name.value = theme;
         }
     },
 
