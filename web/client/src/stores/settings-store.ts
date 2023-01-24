@@ -1,4 +1,5 @@
 import { Module } from 'vuex';
+import { VuetifyExtension } from '@/vuetify';
 
 type SettingsState = {
     darkLightModePreference: typeof DarkLightModes[keyof typeof DarkLightModes],
@@ -24,8 +25,10 @@ export const SettingsStore: Module<SettingsState, undefined> = {
     },
 
     mutations: {
-        setDarkLightModePreference(state, darkLightModePreference) {
+        setDarkLightModePreference(this: VuetifyExtension, state, darkLightModePreference) {
             state.darkLightModePreference = darkLightModePreference;
+            // We need to set the theme globally in vuetify to access its properties in components
+            this.$vuetify.theme.global.name.value = darkLightModePreference;
         },
         
         setTheme(state, theme) {
