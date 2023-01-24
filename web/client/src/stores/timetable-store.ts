@@ -8,7 +8,7 @@
 // } from "../utl/IDBFSHelper.js";
 import { InfrastructureNamespace } from '@/stores/infrastructure-store';
 import type { Module } from 'vuex';
-import {sendRequest} from "@/api/api-client";
+import { sendRequest } from '@/api/api-client';
 
 // import { Module } from "../soro-client.js";
 

@@ -23,7 +23,6 @@
                     density="compact"
                     min-height="0px"
                     hide-details
-                    @click="onLegendControlClicked"
                 >
                     <template #label>
                         <img
@@ -115,6 +114,35 @@ export default defineComponent({
             this.libreGLMap = newInfrastructure ? this.createMap(newInfrastructure) : null;
         },
 
+        checkedControls(newCheckedControls: string[], oldCheckedControls: string[]) {
+            if (!this.libreGLMap) {
+                return;
+            }
+
+            const controlsToDeactivate = oldCheckedControls.filter((control) => !newCheckedControls.includes(control));
+            const controlsToActivate = newCheckedControls.filter((control) => !oldCheckedControls.includes(control));
+
+            controlsToDeactivate.forEach((control) => {
+                if (specialLayoutControls.includes(control)) {
+                    this.evaluateSpecialLegendControls();
+
+                    return;
+                }
+
+                this.setElementTypeVisibility(control, false);
+            });
+
+            controlsToActivate.forEach((control) => {
+                if (specialLayoutControls.includes(control)) {
+                    this.evaluateSpecialLegendControls();
+
+                    return;
+                }
+
+                this.setElementTypeVisibility(control, true);
+            });
+        },
+
         currentTheme: {
             handler(newTheme: ThemeInstance) {
                 if (!this.libreGLMap) {
@@ -167,34 +195,20 @@ export default defineComponent({
             return !specialLayoutControls.includes(elementType);
         },
 
-        onLegendControlClicked(event: Event) {
-            if (specialLayoutControls.includes((event.target as HTMLInputElement).id)) {
-                this.evaluateSpecialLegendControls();
-
-                return;
-            }
-
-            this.evaluateLegendControlForControlType((event.target as HTMLInputElement).value);
-        },
-
-        evaluateLegendControlForControlType(type: string) {
-            if (!this.libreGLMap) {
-                return;
-            }
-
-            this.libreGLMap.setLayoutProperty(
-                type + '-layer',
-                'visibility',
-                this.checkedControls.includes(type) ? 'visible' : 'none',
-            );
-
-            if (type !== 'station') {
-                this.libreGLMap.setLayoutProperty(
-                    'circle-' + type + '-layer',
+        setElementTypeVisibility(elementType: string, visible: boolean) {
+            if (elementType !== 'station') {
+                this.libreGLMap?.setLayoutProperty(
+                    `circle-${elementType}-layer`,
                     'visibility',
-                    this.checkedControls.includes(type) ? 'visible' : 'none',
+                    visible ? 'visible': 'none',
                 );
             }
+
+            this.libreGLMap?.setLayoutProperty(
+                `${elementType}-layer`,
+                'visibility',
+                visible ? 'visible': 'none',
+            );
         },
 
         evaluateSpecialLegendControls() {
@@ -244,7 +258,7 @@ export default defineComponent({
 
             map.on('load', async () => {
                 await addIcons(map);
-                elementTypes.forEach((type) => this.evaluateLegendControlForControlType(type));
+                elementTypes.forEach((type) => this.setElementTypeVisibility(type, this.checkedControls.includes(type)));
             });
 
             map.dragPan.enable({

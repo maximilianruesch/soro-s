@@ -1,5 +1,5 @@
 import { Module } from 'vuex';
-import {sendRequest} from "@/api/api-client";
+import { sendRequest } from '@/api/api-client';
 
 type InfrastructureState = {
     infrastructures: string[],
