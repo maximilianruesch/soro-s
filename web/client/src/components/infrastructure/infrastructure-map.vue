@@ -60,14 +60,20 @@ import {
 import { FilterSpecification, Map } from 'maplibre-gl';
 import { infrastructureMapStyle } from './mapStyle';
 import { addIcons, iconExtension, iconUrl } from './addIcons';
-import { elementTypes, elementTypeLabels } from './elementTypes';
+import { ElementTypes, ElementTypeLabels } from './elementTypes';
 import { defineComponent } from 'vue';
 import { transformUrl } from '@/api/api-client';
 
 const specialLayoutControls = ['Rising', 'Falling'];
-const initiallyCheckedControls = ['station', 'ms', 'as', 'eotd', ...specialLayoutControls];
+const initiallyCheckedControls = [
+    ElementTypes.STATION,
+    ElementTypes.MAIN_SIGNAL,
+    ElementTypes.APPROACH_SIGNAL,
+    ElementTypes.END_OF_TRAIN_DETECTOR,
+    ...specialLayoutControls,
+];
 const legendControlTypes = [
-    ...elementTypes,
+    ...Object.values(ElementTypes),
     ...specialLayoutControls
 ];
 
@@ -91,7 +97,7 @@ export default defineComponent({
             initiallyCheckedControls,
             iconUrl,
             iconExtension,
-            elementTypeLabels: elementTypeLabels as { [elementType: string]: string },
+            elementTypeLabels: ElementTypeLabels as { [elementType: string]: string },
         };
     },
 
@@ -189,8 +195,8 @@ export default defineComponent({
                 filter = ['boolean', false];
             }
 
-            elementTypes.forEach((elementType) => {
-                if (elementType === 'station') {
+            Object.values(ElementTypes).forEach((elementType) => {
+                if (elementType === ElementTypes.STATION) {
                     return;
                 }
 
@@ -215,7 +221,7 @@ export default defineComponent({
 
             map.on('load', async () => {
                 await addIcons(map);
-                elementTypes.forEach((type) => this.evaluateLegendControlForControlType(type));
+                Object.values(ElementTypes).forEach((type) => this.evaluateLegendControlForControlType(type));
             });
 
             map.dragPan.enable({
