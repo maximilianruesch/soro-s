@@ -2,14 +2,6 @@ import { ElementTypes } from './elementTypes';
 import { StyleSpecification } from 'maplibre-gl';
 import { transformUrl } from '@/api/api-client';
 
-export const mapLayers = (() => {
-    const mapLayers: Record<string, string> = {};
-    for (const entry in Object.entries(ElementTypes)) {
-        mapLayers[entry[0]] = `${entry[1]}-layer}`;
-    }
-    return mapLayers;
-})();
-
 export const infrastructureMapStyle = (() => {
     const style: StyleSpecification = {
         version: 8,
