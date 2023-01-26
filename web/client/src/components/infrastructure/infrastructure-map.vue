@@ -62,6 +62,7 @@ import { infrastructureMapStyle } from './mapStyle';
 import { addIcons, iconExtension, iconUrl } from './addIcons';
 import { elementTypes, elementTypeLabels } from './elementTypes';
 import { defineComponent } from 'vue';
+import { transformUrl } from '@/api/api-client';
 
 const specialLayoutControls = ['Rising', 'Falling'];
 const initiallyCheckedControls = ['station', 'ms', 'as', 'eotd', ...specialLayoutControls];
@@ -110,6 +111,7 @@ export default defineComponent({
 
     watch: {
         currentInfrastructure(newInfrastructure: string | null) {
+            this.libreGLMap?.remove();
             // Re-instantiating the map on infrastructure change currently leads to duplicated icon fetching on change.
             // @ts-ignore type instantiation for some reason is too deep
             this.libreGLMap = newInfrastructure ? this.createMap(newInfrastructure) : null;
@@ -225,8 +227,7 @@ export default defineComponent({
                 // @ts-ignore
                 transformRequest: (relative_url) => {
                     if (relative_url.startsWith('/')) {
-                        const url = window.origin + '/' + infrastructure + relative_url;
-                        return { url };
+                        return { url: transformUrl(`/${infrastructure}${relative_url}`) };
                     }
                 }
             });

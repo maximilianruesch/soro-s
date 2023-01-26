@@ -1,5 +1,6 @@
 import { Module } from 'vuex';
 import { MapPosition } from '@/components/infrastructure/infrastructure-map.vue';
+import { sendRequest } from '@/api/api-client';
 
 type InfrastructureState = {
     infrastructures: string[],
@@ -50,7 +51,7 @@ export const InfrastructureStore: Module<InfrastructureState, undefined> = {
 
     actions: {
         initialLoad({ commit }) {
-            fetch(window.origin + '/infrastructure/')
+            sendRequest({ url: 'infrastructure' })
                 .then(response => response.json())
                 .then((dir: InfrastructureFetchResponse) => {
                     commit('setInfrastructures', dir.dirs.filter((option: string) => option !== '.' && option !== '..'));
@@ -65,7 +66,7 @@ export const InfrastructureStore: Module<InfrastructureState, undefined> = {
         unload({ commit }) {
             commit('setCurrentInfrastructure', null);
         },
-        
+
         searchPositionFromName({ commit, state }, query) {
             if (!state.currentInfrastructure) {
                 console.error('Tried search with no selected infrastructure');
@@ -75,10 +76,10 @@ export const InfrastructureStore: Module<InfrastructureState, undefined> = {
 
             if (!query) {
                 commit('setCurrentSearchedMapPosition', null);
-                
+
                 return;
             }
-            
+
             fetch(`${window.origin}/search?query=${query}&infrastructure=${state.currentInfrastructure}`)
                 .then(response => response.json())
                 .then(position => commit('setCurrentSearchedMapPosition', position));
