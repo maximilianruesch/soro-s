@@ -145,18 +145,16 @@ int main(int argc, char const** argv) {
 
       auto const osm_server_file = infra_res_dir / osm_file.filename();
 
-      // load and copy
-      pugi::xml_document osm_data;
-      auto const error = osm_data.load_file(osm_file.c_str()); // load
-
-      if (error) {
-          osm_data.save_file(osm_server_file.c_str()); // copy
+      //copy to new location
+      try {
+          std::filesystem::copy(osm_file.c_str(), osm_server_file.c_str());
+          all_osm_paths.push_back(osm_server_file);
       }
-      else {
-          uLOG(utl::err) << "Failed to read OSM file " << osm_server_file.filename();
+      catch (const std::filesystem::filesystem_error& e) {
+          uLOG(utl::err) << e.what() << osm_server_file.filename();
           continue;
       }
-      all_osm_paths.push_back(osm_server_file);
+
   }
 
 
