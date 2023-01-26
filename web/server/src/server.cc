@@ -2,6 +2,7 @@
 
 #include "utl/cmd_line_parser.h"
 #include "utl/to_vec.h"
+#include "utl/logging.h"
 
 #include "soro/infrastructure/infrastructure.h"
 
@@ -65,12 +66,14 @@ int main(int argc, char const** argv) {
   auto const coord_file = s.server_resource_dir_ / "misc" / "btrs_geo.csv";
 
   fs::path const tt_dir = s.server_resource_dir_ / "timetable";
+  //this is where the tiles will be stored
   fs::path const infra_dir = s.server_resource_dir_ / "infrastructure";
 
   exists_or_create_dir(s.server_resource_dir_);
   exists_or_create_dir(tt_dir);
   exists_or_create_dir(infra_dir);
 
+  //collects all infrastructure Files
   std::vector<fs::path> infra_todo;
   for (auto const& dir_entry :
        fs::directory_iterator{s.resource_dir_ / "infrastructure"}) {
@@ -86,8 +89,6 @@ int main(int argc, char const** argv) {
       infra_todo.emplace_back(dir_entry.path());
     }
   }
-  //For debuging purposes only. Technically it only needs to run this once
-  s.regenerate_ = true;
 
   if (s.regenerate_) {
     infra_todo.clear();
@@ -102,14 +103,14 @@ int main(int argc, char const** argv) {
   // Create paths for infraFiles files
   std::vector<fs::path> all_osm_paths;
 
-  //OSM data is generated from the XML files in Infrastructure and stored in /Serverresources
+  //OSM data is generated from the Infrastructure XML files in server_resources\resources\infrastructure and stored in server_resources\infrastructure\"Name Of Infrastructure"\\"Name Of Infrastructure".osm
   for (auto const& infra_file : infra_todo) {
-      auto const infra_res_dir = infra_dir / infra_file.filename();
-      exists_or_create_dir(infra_res_dir);
+    auto const infra_res_dir = infra_dir / infra_file.filename();
+    exists_or_create_dir(infra_res_dir);
 
-      soro::infra::infrastructure_options opts;
-      opts.infrastructure_path_ = infra_file;
-      opts.gps_coord_path_ = coord_file;
+    soro::infra::infrastructure_options opts;
+    opts.infrastructure_path_ = infra_file;
+    opts.gps_coord_path_ = coord_file;
     opts.determine_layout_ = true;
     opts.determine_interlocking_ = false;
     opts.determine_conflicts_ = false;
@@ -128,7 +129,7 @@ int main(int argc, char const** argv) {
   // Create paths for osm files
   std::vector<fs::path> osm_paths;
 
-  //All real osm files are collected from folder /resources/osm
+  //All real osm files are collected from folder server_resources\resources\osm
   auto osm_path = s.resource_dir_ / "osm";
   if (fs::exists(osm_path)) { // if folder "osm" folder exists, generate paths to osm files
       for (auto&& dir_entry : fs::directory_iterator{ osm_path }) {
@@ -144,18 +145,16 @@ int main(int argc, char const** argv) {
 
       auto const osm_server_file = infra_res_dir / osm_file.filename();
 
-      // load and copy
-      pugi::xml_document osm_data;
-      auto const error = osm_data.load_file(osm_file.c_str()); // load
-
-      if (error) {
-          osm_data.save_file(osm_server_file.c_str()); // copy
+      //copy to new location
+      try {
+          std::filesystem::copy(osm_file.c_str(), osm_server_file.c_str());
+          all_osm_paths.push_back(osm_server_file);
       }
-      else {
-          std::cout << "Failed to read real OSM Data. Will resume without it \n";
+      catch (const std::filesystem::filesystem_error& e) {
+          uLOG(utl::err) << e.what() << osm_server_file.filename();
           continue;
       }
-      all_osm_paths.push_back(osm_server_file);
+
   }
 
 
