@@ -4,22 +4,19 @@ import (
 	"encoding/xml"
 	"os"
 	"log"
+	"fmt"
 	Util "db-parse/DBUtils"
 )
 
 func main() {
 	const line string = "3601"
 
-	file, err := os.ReadFile("Spurplanbetriebsstellen_FB__S-FD.xml")
+	files, err := os.ReadDir("resources")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	var input_data Util.XmlIssDaten
-
-	if err := xml.Unmarshal([]byte(file), &input_data); err != nil {
-		panic(err)
-	}
+	var input_data Util.XmlIssDaten	
 
 	var output_data Util.XmlIssDaten
 	output_data.Betriebsstellen = []*Util.Spurplanbetriebsstelle{}
@@ -29,6 +26,15 @@ func main() {
 
 	var used bool
 	used = false
+
+	for _, file := range files {
+		data, _ := os.ReadFile("resources/"+file.Name())
+		fmt.Printf("Processing %s... \n", file.Name())
+		
+		if err := xml.Unmarshal([]byte(data), &input_data); err != nil { 
+			panic(err)	
+		}
+	}
 
 	for _, stelle := range input_data.Betriebsstellen {	
 		for _, abschnitt := range stelle.Abschnitte {			
@@ -45,6 +51,7 @@ func main() {
 			used = false
 		}
 	}
+	
 
 	var new_Data []byte 
 	
