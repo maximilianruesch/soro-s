@@ -10,8 +10,10 @@ import (
 
 func main() {
 	const line string = "3601"
+	const resourceDir = "resources"
+	const tempDir = "temp"
 
-	files, err := os.ReadDir("resources")
+	files, err := os.ReadDir(resourceDir)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -28,7 +30,7 @@ func main() {
 	used = false
 
 	for _, file := range files {
-		data, _ := os.ReadFile("resources/"+file.Name())
+		data, _ := os.ReadFile(resourceDir+"/"+file.Name())
 		fmt.Printf("Processing %s... \n", file.Name())
 		
 		if err := xml.Unmarshal([]byte(data), &input_data); err != nil { 
@@ -52,14 +54,14 @@ func main() {
 		}
 	}
 	
+	os.Mkdir("./"+tempDir+"/", 0755)
 
-	var new_Data []byte 
-	
+	var new_Data []byte 	
 
 	if new_Data, err = xml.MarshalIndent(output_data, "", "	"); err != nil {
 		panic(err)
 	} else {
-		if err := os.WriteFile("new_data.xml", []byte(xml.Header + string(new_Data)), 0644); err != nil {
+		if err := os.WriteFile(tempDir+"/"+line +".xml", []byte(xml.Header + string(new_Data)), 0644); err != nil {
 			panic(err)
 		}
 	}
