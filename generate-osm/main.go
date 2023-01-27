@@ -43,11 +43,11 @@ func main() {
 		"--overwrite",
 	})
 
-	DBParser.Parse()
-
 	refs := getRefIds(refOutputFile)
+
 	if generateLines {
 		os.RemoveAll("./temp/lines")
+		os.RemoveAll("./temp/DBLines")
 		os.Mkdir("./temp/lines", 0755)
 		for i, refId := range refs {
 			lineOsmFile, _ := filepath.Abs("./temp/lines/" + refId + ".xml")
@@ -60,6 +60,7 @@ func main() {
 			})
 			fmt.Printf("Processed %d/%d: %s\r", i+1, len(refs), refId)
 		}
+		DBParser.Parse(refs)
 	}
 
 	// Combine all the lines into one file
