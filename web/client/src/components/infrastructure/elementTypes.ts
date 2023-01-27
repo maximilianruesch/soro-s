@@ -19,5 +19,15 @@ export const elementTypeLabels = {
     'station': 'Station'
 };
 
-export const elementTypes = Object.keys(elementTypeLabels);
+export enum ElementType {
+    BUMPER = 'bumper',
+    BORDER = 'border',
+    TRACK_END = 'track_end',
+    SIMPLE_SWITCH = 'simple_switch',
+}
+
+export const elementTypes = Object.values(elementTypeLabels);
+
+export const elementTypesWithLabels = Object.values(ElementType);
+
 

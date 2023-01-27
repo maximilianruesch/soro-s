@@ -2,23 +2,24 @@ package combineLines
 
 import (
 	"encoding/xml"
+	"errors"
 	"fmt"
-	"log"
 	"math/rand"
 	"os"
 	osmUtils "transform-osm/osm-utils"
 )
 
-func CombineAllLines() osmUtils.Osm {
-	files, err := os.ReadDir("lines")
+var ErrLinesDirNotFound = errors.New("lines directory not found")
+
+func CombineAllLines() (osmData osmUtils.Osm, err error) {
+	files, err := os.ReadDir("./temp/lines")
 	if err != nil {
-		log.Fatal(err)
+		return osmUtils.Osm{}, ErrLinesDirNotFound
 	}
 
-	var osmData osmUtils.Osm
 	for _, file := range files {
 		fmt.Printf("Processing %s... ", file.Name())
-		data, _ := os.ReadFile("lines/" + file.Name())
+		data, _ := os.ReadFile("./temp/lines/" + file.Name())
 		var fileOsmData osmUtils.Osm
 		if err := xml.Unmarshal([]byte(data), &fileOsmData); err != nil {
 			panic(err)
@@ -39,7 +40,7 @@ func CombineAllLines() osmUtils.Osm {
 	}
 	fmt.Println("Done processing files")
 
-	return osmData
+	return osmData, nil
 }
 
 func getRandomColor() string {
