@@ -214,7 +214,7 @@ std::optional<soro::server::osm_halt> get_halt_info(const std::vector<soro::serv
         if (match.name_.length() == name.length()) return match;
     
 
-    if (matches.size() >= 1) return matches[0];
+    if (!matches.empty()) return matches[0];
 
     return {};
 }
@@ -222,16 +222,13 @@ std::optional<soro::server::osm_halt> get_halt_info(const std::vector<soro::serv
 
 void serve_search(
     std::string const& decoded_url, response_t& res, const std::unordered_map<std::string, std::vector<soro::server::osm_halt>>& osm_halts) {
-  const auto index = decoded_url.find("?") + 1;
+  const auto index = decoded_url.find('?') + 1;
   const auto msg = decoded_url.substr(index, decoded_url.length() - index);
 
   const auto params = utls::split(msg, "&");
-  
-  const auto query = params[0];
-  const auto infra = params[1];
 
-  const auto halt_name = query.substr(6); // len("query=") = 6
-  const auto infra_name = infra.substr(15); // len("infrastructure=") = 15
+  const auto halt_name = params[0].substr(6);  // len("query=") = 6
+  const auto infra_name = params[1].substr(15);  // len("infrastructure=") = 15
 
   const auto info = get_halt_info(osm_halts.at(infra_name), halt_name);
 
