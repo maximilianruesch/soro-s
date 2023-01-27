@@ -57,7 +57,7 @@ int failed_startup() { return 1; }
 
 // Filtering osm station and stops
 
-// Finter for station and stop nodes
+// Filter for station and stop nodes
 std::vector<pugi::xml_node> filter_halt(const pugi::xml_document& xml_doc) {
   std::vector<pugi::xml_node> filtered;
   auto osm_node = xml_doc.child("osm");
@@ -88,8 +88,6 @@ std::vector<pugi::xml_node> filter_halt(const pugi::xml_document& xml_doc) {
 std::vector<soro::server::osm_halt> extract_halt_info(
     const std::vector<pugi::xml_node>& nodes) {
   std::vector<soro::server::osm_halt> result;
-
-  //std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
 
   for (const auto& node : nodes) {
     const double lon = node.attribute("lon").as_double();
@@ -193,8 +191,6 @@ int main(int argc, char const** argv) {
           osm_paths.emplace_back(dir_entry);
       }
   }
-
-  //std::vector<soro::server::osm_halt> halts;
 
   std::unordered_map<std::string, std::vector<soro::server::osm_halt>> halts;
 
