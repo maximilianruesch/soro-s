@@ -10,7 +10,9 @@ import (
 )
 
 func CombineAllLines() osmUtils.Osm {
-	files, err := os.ReadDir("lines")
+	const tempLineDir = "temp/lines"
+
+	files, err := os.ReadDir(tempLineDir)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -18,7 +20,7 @@ func CombineAllLines() osmUtils.Osm {
 	var osmData osmUtils.Osm
 	for _, file := range files {
 		fmt.Printf("Processing %s... ", file.Name())
-		data, _ := os.ReadFile("lines/" + file.Name())
+		data, _ := os.ReadFile(tempLineDir+"/" + file.Name())
 		var fileOsmData osmUtils.Osm
 		if err := xml.Unmarshal([]byte(data), &fileOsmData); err != nil {
 			panic(err)

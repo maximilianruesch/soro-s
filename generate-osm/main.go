@@ -9,6 +9,7 @@ import (
 	combineLines "transform-osm/combine-lines"
 	osmUtils "transform-osm/osm-utils"
 	stationsHaltsDisplay "transform-osm/stations-halts-display"
+	DBParser "transform-osm/db-parser"
 )
 
 func main() {
@@ -41,6 +42,8 @@ func main() {
 		"r/ref",
 		"--overwrite",
 	})
+
+	DBParser.Parse()
 
 	refs := getRefIds(refOutputFile)
 	if generateLines {

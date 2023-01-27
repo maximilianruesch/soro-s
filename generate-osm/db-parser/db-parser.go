@@ -1,17 +1,17 @@
-package main
+package DBParser
 
 import (
 	"encoding/xml"
 	"os"
 	"log"
 	"fmt"
-	Util "db-parse/DBUtils"
+	Util "transform-osm/db-parser/DBUtils"
 )
 
-func main() {
+func Parse() {
 	const line string = "3601"
-	const resourceDir = "resources"
-	const tempDir = "temp"
+	const resourceDir = "db-parser/resources"
+	const tempDir = "db-parser/temp"
 
 	files, err := os.ReadDir(resourceDir)
 	if err != nil {
@@ -61,7 +61,7 @@ func main() {
 	if new_Data, err = xml.MarshalIndent(output_data, "", "	"); err != nil {
 		panic(err)
 	} else {
-		if err := os.WriteFile(tempDir+"/"+line +".xml", []byte(xml.Header + string(new_Data)), 0644); err != nil {
+		if err := os.WriteFile(tempDir+"/"+line +"_DB.xml", []byte(xml.Header + string(new_Data)), 0644); err != nil {
 			panic(err)
 		}
 	}
