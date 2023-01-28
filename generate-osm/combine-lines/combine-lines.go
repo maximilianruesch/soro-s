@@ -2,8 +2,8 @@ package combineLines
 
 import (
 	"encoding/xml"
+	"errors"
 	"fmt"
-	"log"
 	"math/rand"
 	"os"
 	osmUtils "transform-osm/osm-utils"
@@ -11,13 +11,14 @@ import (
 
 func CombineAllLines() osmUtils.Osm {
 	const tempLineDir = "temp/lines"
-
 	files, err := os.ReadDir(tempLineDir)
+
+	var ErrLinesDirNotFound = errors.New("lines directory not found")
+
 	if err != nil {
-		log.Fatal(err)
+		return osmUtils.Osm{}, ErrLinesDirNotFound
 	}
 
-	var osmData osmUtils.Osm
 	for _, file := range files {
 		fmt.Printf("Processing %s... ", file.Name())
 		data, _ := os.ReadFile(tempLineDir+"/" + file.Name())
@@ -41,7 +42,7 @@ func CombineAllLines() osmUtils.Osm {
 	}
 	fmt.Println("Done processing files")
 
-	return osmData
+	return osmData, nil
 }
 
 func getRandomColor() string {

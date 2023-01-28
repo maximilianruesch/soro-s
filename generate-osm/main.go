@@ -3,38 +3,85 @@ package main
 import (
 	"encoding/json"
 	"encoding/xml"
+	"errors"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	combineLines "transform-osm/combine-lines"
 	osmUtils "transform-osm/osm-utils"
 	stationsHaltsDisplay "transform-osm/stations-halts-display"
 	DBParser "transform-osm/db-parser"
+
+	"github.com/urfave/cli/v2"
 )
 
 func main() {
-	generateLines := true
 	os.Mkdir("./temp", 0755)
-	baseOsm, _ := filepath.Abs("./temp/base.osm.pbf")
+	var generateLines bool
+	var inputFile string
+
+	app := &cli.App{
+		Name:  "generate-osm",
+		Usage: "Generate OSM file from OSM PBF file and DB Data",
+		Flags: []cli.Flag{
+			&cli.BoolFlag{
+				Name:        "generate-lines",
+				Usage:       "Generate lines all lines new",
+				Destination: &generateLines,
+			},
+			&cli.StringFlag{
+				Name:        "input",
+				Aliases:     []string{"i"},
+				Value:       "./temp/base.osm.pbf",
+				Usage:       "The input file to read as OSM PBF file",
+				Destination: &inputFile,
+			},
+		},
+		Action: func(cCtx *cli.Context) error {
+			if err := generateOsm(generateLines, inputFile); err != nil {
+				return err
+			}
+
+			return nil
+		},
+	}
+
+	if err := app.Run(os.Args); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func generateOsm(generateLines bool, inputFile string) error {
+	if !filepath.IsAbs(inputFile) {
+		inputFile, _ = filepath.Abs(inputFile)
+	}
+	if _, err := os.Stat(inputFile); err != nil {
+		return errors.New("Input file does not exist: " + inputFile)
+	}
+	if filepath.Ext(inputFile) != ".pbf" {
+		return errors.New("Input file is not a PBF file: " + inputFile)
+	}
+
 	tracksWithoutRelationsFile, _ := filepath.Abs("./temp/tracksWithoutRelations.osm.pbf")
+	tracksFile, _ := filepath.Abs("./temp/tracks.osm.pbf")
+	refOutputFile, _ := filepath.Abs("./temp/trackRefs.xml")
+
 	osmUtils.ExecuteOsmFilterCommand([]string{
 		"-R",
-		baseOsm,
+		inputFile,
 		"-o",
 		tracksWithoutRelationsFile,
 		"r/route=tracks",
 		"--overwrite",
 	})
-	tracksFile, _ := filepath.Abs("./temp/tracks.osm.pbf")
 	osmUtils.ExecuteOsmFilterCommand([]string{
-		baseOsm,
+		inputFile,
 		"-o",
 		tracksFile,
 		"r/route=tracks",
 		"--overwrite",
 	})
-
-	refOutputFile, _ := filepath.Abs("./temp/trackRefs.xml")
 	osmUtils.ExecuteOsmFilterCommand([]string{
 		tracksWithoutRelationsFile,
 		"-o",
@@ -43,14 +90,30 @@ func main() {
 		"--overwrite",
 	})
 
-	refs := getRefIds(refOutputFile)
+	refs, err := getRefIds(refOutputFile)
+	if err != nil {
+		return errors.New("Failed to get ref ids: " + err.Error())
+	}
+
+	lineDir := "temp/lines"
+	db_lineDir := "temp/DBines"
 
 	if generateLines {
-		os.RemoveAll("./temp/lines")
-		os.RemoveAll("./temp/DBLines")
-		os.Mkdir("./temp/lines", 0755)
-		for i, refId := range refs {
-			lineOsmFile, _ := filepath.Abs("./temp/lines/" + refId + ".xml")
+		if err = os.RemoveAll(lineDir); err != nil {
+			return errors.New("Failed to remove lines folder: " + err.Error())
+		}
+		if err = os.RemoveAll(db_lineDir); err != nil {
+			return errors.New("Failed to remove DBLines folder: " + err.Error())
+		}
+		if err = os.Mkdir(lineDir, 0755); err != nil {
+			return errors.New("Failed to create lines folder: " + err.Error())
+		}
+
+		for _, refId := range refs {
+			lineOsmFile, err := filepath.Abs(lineDir+"/"+ refId + ".xml")
+			if err != nil {
+				return errors.New("Failed to get line file path: " + err.Error())
+			}
 			osmUtils.ExecuteOsmFilterCommand([]string{
 				tracksFile,
 				"-o",
@@ -58,36 +121,34 @@ func main() {
 				"ref=" + refId,
 				"--overwrite",
 			})
-			fmt.Printf("Processed %d/%d: %s\r", i+1, len(refs), refId)
 		}
 		DBParser.Parse(refs)
+
+		fmt.Println("Generated all lines")
 	}
 
 	// Combine all the lines into one file
-	osmData := combineLines.CombineAllLines()
+	osmData, err := combineLines.CombineAllLines()
+	if err != nil && errors.Is(err, combineLines.ErrLinesDirNotFound) {
+		return errors.New("You need to generate lines first")
+	} else if err != nil {
+		return errors.New("Failed to combine lines: " + err.Error())
+	}
 	osmData.Version = "0.6"
 	osmData.Generator = "osmium/1.14.0"
 
 	// Create stations file
 	stattionsUnfilteredFile, _ := filepath.Abs("./temp/stationsUnfiltered.osm.pbf")
-	stattionsUnfilteredV2File, _ := filepath.Abs("./temp/stationsUnfilteredV2.osm.pbf")
 	stationsFile, _ := filepath.Abs("./temp/stations.xml")
 	osmUtils.ExecuteOsmFilterCommand([]string{
-		baseOsm,
+		inputFile,
 		"-o",
 		stattionsUnfilteredFile,
-		"n/public_transport=station,stop_position",
+		"n/railway=station,halt,facility",
 		"--overwrite",
 	})
 	osmUtils.ExecuteOsmFilterCommand([]string{
 		stattionsUnfilteredFile,
-		"-o",
-		stattionsUnfilteredV2File,
-		"n/railway=station,halt",
-		"--overwrite",
-	})
-	osmUtils.ExecuteOsmFilterCommand([]string{
-		stattionsUnfilteredV2File,
 		"-o",
 		stationsFile,
 		"-i",
@@ -109,8 +170,6 @@ func main() {
 	osmData.Way = append(osmData.Way, stationsOsm.Way...)
 	osmData.Node = append(osmData.Node, stationsOsm.Node...)
 	osmData.Relation = append(osmData.Relation, stationsOsm.Relation...)
-	fmt.Println("Version: ", osmData.Version)
-	fmt.Println("Generator: ", osmData.Generator)
 
 	sortedOsmData := osmUtils.SortOsm(osmData)
 	output, err = xml.MarshalIndent(sortedOsmData, "", "     ")
@@ -119,15 +178,19 @@ func main() {
 	}
 	output = []byte(xml.Header + string(output))
 	os.WriteFile("./temp/finalOsm.xml", output, 0644)
+
+	return nil
 }
 
-func getRefIds(trackRefFile string) []string {
-	data, _ := os.ReadFile(trackRefFile)
+func getRefIds(trackRefFile string) (refs []string, err error) {
+	var data []byte
+	if data, err = os.ReadFile(trackRefFile); err != nil {
+		return nil, errors.New("Failed to read track ref file: " + err.Error())
+	}
 	var osmData osmUtils.Osm
 	if err := xml.Unmarshal([]byte(data), &osmData); err != nil {
-		panic(err)
+		return nil, err
 	}
-	var refs []string
 	for _, s := range osmData.Relation {
 		for _, m := range s.Tag {
 			if m.K == "ref" {
@@ -136,5 +199,5 @@ func getRefIds(trackRefFile string) []string {
 		}
 	}
 
-	return refs
+	return refs, nil
 }

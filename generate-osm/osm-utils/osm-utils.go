@@ -2,6 +2,7 @@ package osmUtils
 
 import (
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -62,17 +63,13 @@ type Osm struct {
 	Relation  []*Relation `xml:"relation"`
 }
 
-func ExecuteOsmFilterCommand(args []string) {
-	logOsmCommands := false
+func ExecuteOsmFilterCommand(args []string) error {
 	osmExecutable, _ := exec.LookPath("osmium")
 	argsArray := []string{
 		osmExecutable,
 		"tags-filter",
 	}
 	argsArray = append(argsArray, args...)
-	if logOsmCommands {
-		fmt.Println(argsArray)
-	}
 
 	cmd := &exec.Cmd{
 		Path:   osmExecutable,
@@ -82,6 +79,8 @@ func ExecuteOsmFilterCommand(args []string) {
 	}
 
 	if err := cmd.Run(); err != nil {
-		fmt.Println("Error:", err)
+		return errors.New(fmt.Errorf("osmium command failed: %w", err).Error())
 	}
+
+	return nil
 }

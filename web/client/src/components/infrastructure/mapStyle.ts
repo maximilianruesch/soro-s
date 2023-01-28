@@ -1,5 +1,6 @@
 import { elementTypes } from './elementTypes';
 import { StyleSpecification } from 'maplibre-gl';
+import { transformUrl } from '@/api/api-client';
 
 export const mapLayers = elementTypes.map(type => type + '-layer');
 
@@ -27,7 +28,7 @@ export const infrastructureMapStyle = (() => {
                 }
             }
         },
-        'glyphs': `${origin}/font/{fontstack}/{range}.pbf`,
+        'glyphs': transformUrl('/font/{fontstack}/{range}.pbf'),
         'layers': [
             {
                 'id': 'background',
@@ -54,7 +55,11 @@ export const infrastructureMapStyle = (() => {
                 'source-layer': 'rail',
                 'filter': ['==', 'rail', 'primary'],
                 'paint': {
-                    'line-color': '#444',
+                    'line-color': [
+                        'case',
+                        ['has', 'color'], ['get', 'color'],
+                        '#444'
+                    ],
                     'line-width': 2.0
                 }
             },
