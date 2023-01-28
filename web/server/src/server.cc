@@ -145,15 +145,15 @@ int main(int argc, char const** argv) {
 
       auto const osm_server_file = infra_res_dir / osm_file.filename();
 
-      std::filesystem::copy_options copy_options = std::filesystem::copy_options::skip_existing;
+      std::filesystem::copy_options options_for_copy = std::filesystem::copy_options::skip_existing;
 
       if (s.regenerate_) {
-          copy_options = std::filesystem::copy_options::overwrite_existing;
+          options_for_copy = std::filesystem::copy_options::overwrite_existing;
       }
 
       //copy to new location
       try {
-          std::filesystem::copy(osm_file.c_str(), osm_server_file.c_str(), copy_options);
+          std::filesystem::copy(osm_file.c_str(), osm_server_file.c_str(), options_for_copy);
           all_osm_paths.push_back(osm_server_file);
       }
       catch (const std::filesystem::filesystem_error& e) {
