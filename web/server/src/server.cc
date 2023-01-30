@@ -103,7 +103,7 @@ int main(int argc, char const** argv) {
   // Create paths for infraFiles files
   std::vector<fs::path> all_osm_paths;
 
-  //OSM data is generated from the Infrastructure XML files in server_resources\resources\infrastructure and stored in server_resources\infrastructure\"Name Of Infrastructure"\\"Name Of Infrastructure".osm
+  //OSM data is generated from the Infrastructure XML files in server_resources\resources\infrastructure and stored in server_resources\infrastructure\"Name Of Infrastructure"\"Name Of Infrastructure".osm
   for (auto const& infra_file : infra_todo) {
     auto const infra_res_dir = infra_dir / infra_file.filename();
     exists_or_create_dir(infra_res_dir);
@@ -119,7 +119,7 @@ int main(int argc, char const** argv) {
 
       auto const osm_file =
           infra_res_dir / infra_file.filename().replace_extension(".osm");
-      //This generates a new OSMFile from the infrasData
+      //This generates a new OSMFile from the infraData
       soro::server::osm_export::export_and_write(*infra, osm_file);
 
       all_osm_paths.push_back(osm_file);
@@ -132,8 +132,10 @@ int main(int argc, char const** argv) {
   //All real osm files are collected from folder server_resources\resources\osm
   auto osm_path = s.resource_dir_ / "osm";
   if (fs::exists(osm_path)) { // if folder "osm" folder exists, generate paths to osm files
-      for (auto&& dir_entry : fs::directory_iterator{ osm_path }) {
-          osm_paths.emplace_back(dir_entry);
+      for (auto&& dir_entry : fs::directory_iterator{ osm_path }) { //if the files already exist in server_resources\infrastructure\"Name Of OSM"\\"Name Of OSM".osm  they are not marked to be copied
+          if (!std::filesystem::exists(infra_dir / dir_entry.path().filename().replace_extension("") / dir_entry.path().filename()) || s.regenerate_) {
+              osm_paths.emplace_back(dir_entry);
+          }
       }
   }
 
