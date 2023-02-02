@@ -12,6 +12,7 @@ import (
 	osmUtils "transform-osm/osm-utils"
 	stationsHaltsDisplay "transform-osm/stations-halts-display"
 	DBParser "transform-osm/db-parser"
+	Mapper "transform-osm/map-db"
 
 	"github.com/urfave/cli/v2"
 )
@@ -123,6 +124,8 @@ func generateOsm(generateLines bool, inputFile string) error {
 			})
 		}
 		relevant_refs := DBParser.Parse(refs)
+
+		// Mapper.MapDB(relevant_refs, lineDir, db_lineDir)
 
 		fmt.Println("Generated all lines")
 	}

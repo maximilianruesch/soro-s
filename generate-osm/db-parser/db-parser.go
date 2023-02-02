@@ -5,7 +5,7 @@ import (
 	"os"
 	"log"
 	"fmt"
-	Util "transform-osm/db-parser/DBUtils"
+	Util "transform-osm/db-utils"
 )
 
 func Parse(refs []string) []string {
