@@ -33,10 +33,12 @@ func MapDB([]string refs, string osmDir, string DBDir) {
 			panic(err)	
 		}
 
-		/*
 		mapSignals(&osmData, dbData, &mappedItems)
-		mapPoints(&osmData, dbData, &mappedItems)
-		mapRest(&osmData, dbData, &mappedItems) 
-		*/
+		// mapPoints(&osmData, dbData, &mappedItems)
+		// mapRest(&osmData, dbData, &mappedItems) 
 	}
+}
+
+func mapSignals(*OSMUtil.Osm OSMData, DBUtil.XmlIssDaten DBData, *map[string]OSMUtil.Node) {
+	
 }
