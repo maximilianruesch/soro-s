@@ -8,7 +8,7 @@ import (
 	Util "transform-osm/db-parser/DBUtils"
 )
 
-func Parse(refs []string) {
+func Parse(refs []string) []string {
 	const resourceDir = "db-parser/resources"
 	const tempDir = "DBLines"
 
@@ -77,29 +77,25 @@ func Parse(refs []string) {
 			}
 		}
 	}
-
-	print("Didn't find in OSM: [")
-	for key, _ := range missingMap {
-		fmt.Printf("%s, ", key)
-	}
-	print("] \n")
 	
+	relevant_refs := []string{}
 	os.Mkdir("temp/"+tempDir+"/", 0755)
 	var new_Data []byte 	
 	//final work-loop: For all collected lines, .xml-files must be marshelled
-	print("No DB-data available for: [")
 	for line, data := range lineMap {
 		if (len(data.Betriebsstellen) == 0) {
-			fmt.Printf("%s, ", line)
 			continue
 		}
+
 		if new_Data, err = xml.MarshalIndent(data, "", "	"); err != nil {
 			panic(err)
 		} else {
 			if err := os.WriteFile("temp/"+tempDir+"/"+line+"_DB.xml", []byte(xml.Header + string(new_Data)), 0644); err != nil {
 				panic(err)
 			}
+			relevant_refs = append(relevant_refs, line)
 		}
 	}	
-	print("] \n")
+	
+	return relevant_refs
 }

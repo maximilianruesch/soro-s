@@ -122,7 +122,7 @@ func generateOsm(generateLines bool, inputFile string) error {
 				"--overwrite",
 			})
 		}
-		DBParser.Parse(refs)
+		relevant_refs := DBParser.Parse(refs)
 
 		fmt.Println("Generated all lines")
 	}
