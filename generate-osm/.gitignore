@@ -2,3 +2,6 @@
 temp/*
 output/*
 *.exe
+
+#as well as all DB-data files
+db-parser/resources/*
