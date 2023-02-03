@@ -97,7 +97,7 @@ func generateOsm(generateLines bool, inputFile string) error {
 	}
 
 	lineDir := "temp/lines"
-	db_lineDir := "temp/DBines"
+	db_lineDir := "temp/DBLines"
 
 	if generateLines {
 		if err = os.RemoveAll(lineDir); err != nil {
