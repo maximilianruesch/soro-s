@@ -123,6 +123,7 @@ func generateOsm(generateLines bool, inputFile string) error {
 				"--overwrite",
 			})
 		}
+
 		relevant_refs := DBParser.Parse(refs)
 
 		Mapper.MapDB(relevant_refs, lineDir, db_lineDir)

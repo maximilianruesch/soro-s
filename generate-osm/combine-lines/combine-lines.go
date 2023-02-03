@@ -9,15 +9,17 @@ import (
 	osmUtils "transform-osm/osm-utils"
 )
 
-func CombineAllLines() osmUtils.Osm {
+var ErrLinesDirNotFound = errors.New("lines directory not found")
+
+func CombineAllLines() (osmUtils.Osm, error) {
 	const tempLineDir = "temp/lines"
 	files, err := os.ReadDir(tempLineDir)
-
-	var ErrLinesDirNotFound = errors.New("lines directory not found")
-
+	
 	if err != nil {
 		return osmUtils.Osm{}, ErrLinesDirNotFound
 	}
+
+	var osmData osmUtils.Osm
 
 	for _, file := range files {
 		fmt.Printf("Processing %s... ", file.Name())
