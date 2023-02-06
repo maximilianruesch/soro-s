@@ -6,6 +6,7 @@ type InfrastructureState = {
     infrastructures: string[],
     currentInfrastructure?: string,
     currentSearchedMapPosition?: MapPosition,
+    currentSearchError?: string,
     highlightedSignalStationRouteID?: string,
     highlightedStationRouteID?: string,
 }
@@ -22,6 +23,7 @@ export const InfrastructureStore: Module<InfrastructureState, undefined> = {
             infrastructures: [],
             currentInfrastructure: undefined,
             currentSearchedMapPosition: undefined,
+            currentSearchError: undefined,
             highlightedSignalStationRouteID: undefined,
             highlightedStationRouteID: undefined,
         };
@@ -38,6 +40,10 @@ export const InfrastructureStore: Module<InfrastructureState, undefined> = {
 
         setCurrentSearchedMapPosition(state, currentSearchedMapPosition) {
             state.currentSearchedMapPosition = currentSearchedMapPosition;
+        },
+
+        setCurrentSearchError(state, currentSearchError) {
+            state.currentSearchError = currentSearchError;
         },
 
         setHighlightedSignalStationRouteID(state, highlightedSignalStationRouteID) {
@@ -82,7 +88,16 @@ export const InfrastructureStore: Module<InfrastructureState, undefined> = {
 
             fetch(`${window.origin}/search?query=${query}&infrastructure=${state.currentInfrastructure}`)
                 .then(response => response.json())
-                .then(position => commit('setCurrentSearchedMapPosition', position));
+                .then(position => {
+                    commit('setCurrentSearchedMapPosition', position);
+                    commit('setCurrentSearchError', undefined);
+
+                })
+                .catch(() => {
+                    commit('setCurrentSearchError', 'Not found!');
+
+                    return;
+                });
         }
     },
 };

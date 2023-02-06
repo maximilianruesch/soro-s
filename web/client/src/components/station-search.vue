@@ -3,6 +3,7 @@
         <v-text-field
             :disabled="!currentInfrastructure"
             label="Search for station or halt by name:"
+            :error-messages="currentSearchError"
             hide-details="auto"
             @change="event => currentQuery = event.target.value"
         />
@@ -34,7 +35,10 @@ export default defineComponent({
     },
 
     computed: {
-        ...mapState(InfrastructureNamespace, ['currentInfrastructure']),
+        ...mapState(InfrastructureNamespace, [
+            'currentInfrastructure',
+            'currentSearchError',
+        ]),
     },
 
     methods: {
