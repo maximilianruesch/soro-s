@@ -1,9 +1,10 @@
 <template>
     <div class="station-search">
-        <soro-text-field
+        <v-text-field
+            :disabled="!currentInfrastructure"
             label="Search for station or halt by name:"
-            class="search-text-field"
-            @change="event => currentQuery = event"
+            hide-details="auto"
+            @change="event => currentQuery = event.target.value"
         />
 
         <soro-button
@@ -15,14 +16,13 @@
 </template>
 
 <script setup lang="ts">
-import SoroTextField from '@/components/common/soro-text-field.vue';
 import SoroButton from '@/components/soro-button.vue';
 </script>
 
 <script lang="ts">
 import { defineComponent } from 'vue';
 import { InfrastructureNamespace } from '@/stores/infrastructure-store';
-import { mapActions } from 'vuex';
+import { mapActions, mapState } from 'vuex';
 
 export default defineComponent({
     name: 'StationSearch',
@@ -31,6 +31,10 @@ export default defineComponent({
         return {
             currentQuery: null
         };
+    },
+
+    computed: {
+        ...mapState(InfrastructureNamespace, ['currentInfrastructure']),
     },
 
     methods: {
@@ -51,16 +55,10 @@ export default defineComponent({
 <style scoped>
 .station-search {
     display: flex;
-    height: 60px;
-}
-
-.search-text-field {
-    width: 80%;
-    height: 100%;
 }
 
 .search-button {
-    width: 20%;
-    height: 100%;
+    margin-left: 10px;
+    height: auto;
 }
 </style>

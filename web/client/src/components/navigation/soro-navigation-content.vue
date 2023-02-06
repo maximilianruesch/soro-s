@@ -234,25 +234,6 @@ export default defineComponent({
     margin-bottom: 0.2em;
 }
 
-.station-search-field {
-    width: 94%;
-}
-
-.dev-tools {
-    width: 94%;
-    justify-content: space-around;
-    padding: 3%;
-    margin-top: 0.5em;
-    margin-bottom: 0.5em;
-    position: absolute;
-    bottom: 0;
-}
-
-.dev-tools .soro-button {
-    margin-top: 0.2em;
-    margin-bottom: 0.2em;
-}
-
 .data-selects {
     display: flex;
     flex-flow: column wrap;
@@ -262,7 +243,16 @@ export default defineComponent({
     margin-bottom: 0.5em;
 }
 
-.settings {
+.station-search-field {
     padding: 3%;
+}
+
+.settings, .dev-tools {
+    padding: 3%;
+}
+
+.dev-tools > .soro-button {
+    margin-top: 0.2em;
+    margin-bottom: 0.2em;
 }
 </style>
