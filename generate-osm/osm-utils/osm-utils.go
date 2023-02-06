@@ -23,8 +23,6 @@ type Way struct {
 	XMLName   xml.Name `xml:"way"`
 	Tag       []*Tag   `xml:"tag"`
 	Id        string   `xml:"id,attr"`
-	Version   string   `xml:"version,attr"`
-	Timestamp string   `xml:"timestamp,attr"`
 	Nd        []*Nd    `xml:"nd"`
 }
 
@@ -32,8 +30,6 @@ type Node struct {
 	XMLName   xml.Name `xml:"node"`
 	Tag       []*Tag   `xml:"tag"`
 	Id        string   `xml:"id,attr"`
-	Version   string   `xml:"version,attr"`
-	Timestamp string   `xml:"timestamp,attr"`
 	Lat       string   `xml:"lat,attr"`
 	Lon       string   `xml:"lon,attr"`
 }
@@ -50,8 +46,6 @@ type Relation struct {
 	Member    []*Member `xml:"member"`
 	Tag       []*Tag    `xml:"tag"`
 	Id        string    `xml:"id,attr"`
-	Version   string    `xml:"version,attr"`
-	Timestamp string    `xml:"timestamp,attr"`
 }
 
 type Osm struct {
@@ -83,4 +77,30 @@ func ExecuteOsmFilterCommand(args []string) error {
 	}
 
 	return nil
+}
+
+func GetTag(node Node, key string) (string, error) {
+	for _, tag := range node.Tag {
+		if tag.K == key {
+			return tag.V, nil
+		}
+	}
+	return "", errors.New(fmt.Errorf("did not find tag %s", key).Error())
+}
+
+func InsertNode(node *Node, other_node_id string, data *Osm) {
+	data.Node = append(data.Node, node)
+	for _, way := range data.Way {
+		index := -1
+		for i, nd := range way.Nd {
+			if nd.Ref == other_node_id {
+				index = i
+				break
+			}
+		}
+		if index != -1 {
+			temp := append(way.Nd[:index], &Nd{Ref: node.Id})
+			way.Nd = append(temp, way.Nd[index+1:]...)
+		}
+	}
 }
