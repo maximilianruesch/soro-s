@@ -6,7 +6,7 @@ export const iconUrl = transformUrl('/icons/');
 export const iconExtension = '.png';
 
 export function addIcons(map: Map) {
-    return Promise.all(Object.values(ElementTypes).map((elementType) => {
+    return Promise.all(ElementTypes.map((elementType) => {
         const iconName = 'icon-' + elementType;
 
         return new Promise<void>((resolve: () => void, reject) => {

@@ -1,4 +1,4 @@
-import { ElementTypes } from './elementTypes';
+import { ElementType, ElementTypes } from './elementTypes';
 import { StyleSpecification } from 'maplibre-gl';
 import { transformUrl } from '@/api/api-client';
 
@@ -112,8 +112,8 @@ export const infrastructureMapStyle = (() => {
         ]
     };
 
-    Object.values(ElementTypes).forEach(type => {
-        if (type === ElementTypes.STATION) {
+    ElementTypes.forEach(type => {
+        if (type === ElementType.STATION) {
             style.layers.push({
                 'id': type + '-layer',
                 'source': 'osm',
@@ -157,14 +157,14 @@ export const infrastructureMapStyle = (() => {
                 'source': 'osm',
                 'source-layer': type,
                 'type': 'symbol',
-                'minzoom': type === ElementTypes.HALT ? 10 : 15,
+                'minzoom': type === ElementType.HALT ? 10 : 15,
                 'maxzoom': 24,
                 'paint': {
                     'text-halo-width': 1,
                     'text-halo-color': '#ffffff',
                 },
                 'layout': {
-                    'text-field': ['get', type === ElementTypes.HALT ? 'name' : 'id'],
+                    'text-field': ['get', type === ElementType.HALT ? 'name' : 'id'],
                     'text-anchor': 'top',
                     'text-offset': [0, 1],
                     'text-font': ['Noto Sans Display Regular'],

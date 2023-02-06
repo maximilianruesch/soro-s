@@ -59,20 +59,20 @@ import {
 import { FilterSpecification, Map } from 'maplibre-gl';
 import { infrastructureMapStyle } from './mapStyle';
 import { addIcons, iconExtension, iconUrl } from './addIcons';
-import { ElementTypes, ElementTypeLabels } from './elementTypes';
+import { ElementTypes, ElementType, ElementTypeLabels } from './elementTypes';
 import { defineComponent } from 'vue';
 import { transformUrl } from '@/api/api-client';
 
 const specialLayoutControls = ['Rising', 'Falling'];
 const initiallyCheckedControls = [
-    ElementTypes.STATION,
-    ElementTypes.MAIN_SIGNAL,
-    ElementTypes.APPROACH_SIGNAL,
-    ElementTypes.END_OF_TRAIN_DETECTOR,
+    ElementType.STATION,
+    ElementType.MAIN_SIGNAL,
+    ElementType.APPROACH_SIGNAL,
+    ElementType.END_OF_TRAIN_DETECTOR,
     ...specialLayoutControls,
 ];
 const legendControlTypes = [
-    ...Object.values(ElementTypes),
+    ...ElementTypes,
     ...specialLayoutControls
 ];
 
@@ -216,8 +216,8 @@ export default defineComponent({
                 filter = ['boolean', false];
             }
 
-            Object.values(ElementTypes).forEach((elementType) => {
-                if (elementType === ElementTypes.STATION) {
+            ElementTypes.forEach((elementType) => {
+                if (elementType === ElementType.STATION) {
                     return;
                 }
 
@@ -242,7 +242,7 @@ export default defineComponent({
 
             map.on('load', async () => {
                 await addIcons(map);
-                Object.values(ElementTypes).forEach((type) => this.setElementTypeVisibility(type, this.checkedControls.includes(type)));
+                ElementTypes.forEach((type) => this.setElementTypeVisibility(type, this.checkedControls.includes(type)));
             });
 
             map.dragPan.enable({

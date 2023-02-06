@@ -1,4 +1,4 @@
-export const ElementTypes = {
+export const ElementType = {
     BUMPER: 'bumper',
     BORDER: 'border',
     TRACK_END: 'track_end',
@@ -19,23 +19,25 @@ export const ElementTypes = {
     STATION: 'station',
 };
 
+export const ElementTypes = Object.values(ElementType);
+
 export const ElementTypeLabels = {
-    [ElementTypes.BUMPER]: 'Bumper',
-    [ElementTypes.BORDER]: 'Border',
-    [ElementTypes.TRACK_END]: 'Track End',
-    [ElementTypes.SWITCH]: 'Switch',
-    [ElementTypes.APPROACH_SIGNAL]: 'Approach Signal',
-    [ElementTypes.MAIN_SIGNAL]: 'Main Signal',
-    [ElementTypes.PROTECTION_SIGNAL]: 'Protection Signal',
-    [ElementTypes.END_OF_TRAIN_DETECTOR]: 'End of Train Detector',
-    [ElementTypes.SPEED_LIMIT]: 'Speed Limit',
-    [ElementTypes.TUNNEL]: 'Tunnel',
-    [ElementTypes.HALT]: 'Halt',
-    [ElementTypes.RTCP]: 'RTCP',
-    [ElementTypes.KM_JUMP]: 'KM Jump',
-    [ElementTypes.LINE_SWITCH]: 'Line Switch',
-    [ElementTypes.SLOPE]: 'Slope',
-    [ElementTypes.CROSS]: 'Cross',
-    [ElementTypes.CTC]: 'CTC',
-    [ElementTypes.STATION]: 'Station'
+    [ElementType.BUMPER]: 'Bumper',
+    [ElementType.BORDER]: 'Border',
+    [ElementType.TRACK_END]: 'Track End',
+    [ElementType.SWITCH]: 'Switch',
+    [ElementType.APPROACH_SIGNAL]: 'Approach Signal',
+    [ElementType.MAIN_SIGNAL]: 'Main Signal',
+    [ElementType.PROTECTION_SIGNAL]: 'Protection Signal',
+    [ElementType.END_OF_TRAIN_DETECTOR]: 'End of Train Detector',
+    [ElementType.SPEED_LIMIT]: 'Speed Limit',
+    [ElementType.TUNNEL]: 'Tunnel',
+    [ElementType.HALT]: 'Halt',
+    [ElementType.RTCP]: 'RTCP',
+    [ElementType.KM_JUMP]: 'KM Jump',
+    [ElementType.LINE_SWITCH]: 'Line Switch',
+    [ElementType.SLOPE]: 'Slope',
+    [ElementType.CROSS]: 'Cross',
+    [ElementType.CTC]: 'CTC',
+    [ElementType.STATION]: 'Station'
 };
