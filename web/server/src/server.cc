@@ -57,27 +57,22 @@ int failed_startup() { return 1; }
 
 // Filtering osm station and stops
 
-// Finter for station and stop nodes
+// Filter for station and stop nodes
 std::vector<pugi::xml_node> filter_halt(const pugi::xml_document& xml_doc) {
   std::vector<pugi::xml_node> filtered;
   auto osm_node = xml_doc.child("osm");
 
   auto children = osm_node.children();
-  for (auto child = children.begin(); child != children.end(); ++child) {
-    if (std::string("node").compare(child->name()) == 0) {
-      auto tags = child->children();
+  for (auto child:children) {
+    if (std::string("node") == child.name()) {
+      auto tags = child.children();
 
-      for (auto tag = tags.begin(); tag != tags.end(); ++tag) {
-        auto name = tag->name();
-        auto attrib = tag->attribute("k");
-        if (std::string("railway").compare(tag->attribute("k").as_string()) ==
-            0) {
-          if (std::string("station").compare(tag->attribute("v").as_string()) ==
-              0) {
-            filtered.push_back(*child);
-          } else if (std::string("halt").compare(
-                         tag->attribute("v").as_string()) == 0) {
-            filtered.push_back(*child);
+      for (auto tag:tags) {
+        if (std::string("railway") == tag.attribute("k").as_string()) {
+          if (std::string("station") == tag.attribute("v").as_string()) {
+            filtered.push_back(child);
+          } else if (std::string("halt") == tag.attribute("v").as_string()){
+            filtered.push_back(child);
           }
         }
       }
@@ -94,21 +89,19 @@ std::vector<soro::server::osm_halt> extract_halt_info(
     const std::vector<pugi::xml_node>& nodes) {
   std::vector<soro::server::osm_halt> result;
 
-  //std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-
   for (const auto& node : nodes) {
-    double lon = node.attribute("lon").as_double();
-    double lat = node.attribute("lat").as_double();
+    const double lon = node.attribute("lon").as_double();
+    const double lat = node.attribute("lat").as_double();
     std::string name = "default";
 
     auto tags = node.children();
 
-    for (auto tag = tags.begin(); tag != tags.end(); ++tag) {
-      if (std::string("name").compare(tag->attribute("k").as_string()) == 0)
-        name = tag->attribute("v").as_string();
+    for (auto tag:tags) {
+      if (std::string("name") == tag.attribute("k").as_string())
+        name = tag.attribute("v").as_string();
     }
 
-    result.push_back(soro::server::osm_halt(name, true, lon, lat));
+    result.emplace_back(soro::server::osm_halt(name, true, lon, lat));
   }
 
   return result;
@@ -199,8 +192,6 @@ int main(int argc, char const** argv) {
       }
   }
 
-  //std::vector<soro::server::osm_halt> halts;
-
   std::unordered_map<std::string, std::vector<soro::server::osm_halt>> halts;
 
   // Copy every osm file to server
@@ -214,10 +205,8 @@ int main(int argc, char const** argv) {
       pugi::xml_document osm_data;
       auto const error = osm_data.load_file(osm_file.c_str()); // load
 
-      // TODO Filter for Stations (and Stops)
       const auto filtered = filter_halt(osm_data);
       const auto fileName = osm_file.filename().replace_extension("").string();
-
       halts[fileName] = extract_halt_info(filtered);
 
 
