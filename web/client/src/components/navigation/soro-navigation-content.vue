@@ -247,7 +247,8 @@ export default defineComponent({
     padding: 3%;
 }
 
-.settings, .dev-tools {
+.settings,
+.dev-tools {
     padding: 3%;
 }
 
