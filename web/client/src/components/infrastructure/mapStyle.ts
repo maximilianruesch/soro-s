@@ -39,13 +39,28 @@ export const createInfrastructureMapStyle = ({ currentTheme, activatedElements }
                 }
             },
             {
+                'id': 'yards',
+                'type': 'line',
+                'source': 'osm',
+                'source-layer': 'rail',
+                'filter': ['==', 'rail', 'detail'],
+                'paint': {
+                    'line-color': '#ccc',
+                    'line-width': 2.0
+                }
+            },
+            {
                 'id': 'rail',
                 'type': 'line',
                 'source': 'osm',
                 'source-layer': 'rail',
                 'filter': ['==', 'rail', 'primary'],
                 'paint': {
-                    'line-color': '#444',
+                    'line-color': [
+                        'case',
+                        ['has', 'color'], ['get', 'color'],
+                        '#444'
+                    ],
                     'line-width': 2.0
                 }
             },
