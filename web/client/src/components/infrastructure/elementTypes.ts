@@ -20,5 +20,3 @@ export const elementTypeLabels = {
 };
 
 export const elementTypesWithLabels = Object.values(elementTypeLabels);
-
-
