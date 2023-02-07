@@ -19,4 +19,4 @@ export const elementTypeLabels = {
     'station': 'Station'
 };
 
-export const elementTypesWithLabels = Object.values(elementTypeLabels);
+export const elementTypes = Object.keys(elementTypeLabels);
