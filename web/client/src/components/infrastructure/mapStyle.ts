@@ -1,8 +1,6 @@
-import { elementTypes } from './elementTypes';
+import { ElementType, ElementTypes } from './elementTypes';
 import { StyleSpecification } from 'maplibre-gl';
 import { transformUrl } from '@/api/api-client';
-
-export const mapLayers = elementTypes.map(type => type + '-layer');
 
 export const infrastructureMapStyle = (() => {
     const style: StyleSpecification = {
@@ -38,13 +36,28 @@ export const infrastructureMapStyle = (() => {
                 }
             },
             {
+                'id': 'yards',
+                'type': 'line',
+                'source': 'osm',
+                'source-layer': 'rail',
+                'filter': ['==', 'rail', 'detail'],
+                'paint': {
+                    'line-color': '#ccc',
+                    'line-width': 2.0
+                }
+            },
+            {
                 'id': 'rail',
                 'type': 'line',
                 'source': 'osm',
                 'source-layer': 'rail',
                 'filter': ['==', 'rail', 'primary'],
                 'paint': {
-                    'line-color': '#444',
+                    'line-color': [
+                        'case',
+                        ['has', 'color'], ['get', 'color'],
+                        '#444'
+                    ],
                     'line-width': 2.0
                 }
             },
@@ -99,8 +112,8 @@ export const infrastructureMapStyle = (() => {
         ]
     };
 
-    elementTypes.forEach(type => {
-        if (type === 'station') {
+    ElementTypes.forEach(type => {
+        if (type === ElementType.STATION) {
             style.layers.push({
                 'id': type + '-layer',
                 'source': 'osm',
@@ -144,10 +157,14 @@ export const infrastructureMapStyle = (() => {
                 'source': 'osm',
                 'source-layer': type,
                 'type': 'symbol',
-                'minzoom': 15,
+                'minzoom': type === ElementType.HALT ? 10 : 15,
                 'maxzoom': 24,
+                'paint': {
+                    'text-halo-width': 1,
+                    'text-halo-color': '#ffffff',
+                },
                 'layout': {
-                    'text-field': ['get', 'id'],
+                    'text-field': ['get', type === ElementType.HALT ? 'name' : 'id'],
                     'text-anchor': 'top',
                     'text-offset': [0, 1],
                     'text-font': ['Noto Sans Display Regular'],
