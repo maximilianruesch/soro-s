@@ -6,6 +6,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	//"math"
 	DBUtil "transform-osm/db-utils"
 	OSMUtil "transform-osm/osm-utils"
 )
@@ -15,8 +16,7 @@ var id_counter = 1
 
 func MapDB(refs []string, osmDir string, DBDir string) {
 	for _, line := range refs {	
-		var mappedItems map[string](*OSMUtil.Node)
-		mappedItems = make(map[string](*OSMUtil.Node))
+		var mappedItems = make(map[string](*OSMUtil.Node))
 		
 		var osmData OSMUtil.Osm
 		var dbData DBUtil.XmlIssDaten
@@ -41,8 +41,21 @@ func MapDB(refs []string, osmDir string, DBDir string) {
 		print(line)
 		print("\n")
 
-		mapSignals(&osmData, dbData, &mappedItems)
-		// mapPoints(&osmData, dbData, &mappedItems)
+		mainF, mainS := mapSignals(&osmData, dbData, &mappedItems)
+		// mapPoints(&osmData, dbData, &mappedItems)		
+
+		var restData = DBUtil.XmlIssDaten{
+			Betriebsstellen: []*DBUtil.Spurplanbetriebsstelle{
+				&DBUtil.Spurplanbetriebsstelle{
+					Abschnitte: []*DBUtil.Spurplanabschnitt{
+						&DBUtil.Spurplanabschnitt{
+							Knoten: []*DBUtil.Spurplanknoten{
+								&DBUtil.Spurplanknoten{
+									HauptsigF: mainF,
+									HauptsigS: mainS } } } } } } }
+
+		mainF, mainS = mapSignals(&osmData, restData, &mappedItems) // TODO: Different function for searching signals!
+		// mapPoints(&osmData, restData, &mappedItems)
 		// mapRest(&osmData, dbData, &mappedItems) 
 
 		if new_Data, err := xml.MarshalIndent(osmData, "", "	"); err != nil {
@@ -55,21 +68,28 @@ func MapDB(refs []string, osmDir string, DBDir string) {
 	}
 }
 
-func mapSignals(OSMData *OSMUtil.Osm, DBData DBUtil.XmlIssDaten, anchors *map[string](*OSMUtil.Node)) {
+func mapSignals(OSMData *OSMUtil.Osm, DBData DBUtil.XmlIssDaten, anchors *map[string](*OSMUtil.Node)) ([]*DBUtil.Signal, []*DBUtil.Signal){
+	var main_sigF, main_sigS []*DBUtil.Signal
 	for _, stelle := range DBData.Betriebsstellen {
 		for _, abschnitt := range stelle.Abschnitte {
 			for _, knoten := range abschnitt.Knoten {
-				processHauptsigF(*knoten, OSMData, anchors)
-				processHauptsigS(*knoten, OSMData, anchors)
+				main_sigF = processHauptsigF(*knoten, OSMData, anchors)							
+				print("final length: ")
+				print(len(*anchors))
+				print("\n")		
+				main_sigS = processHauptsigS(*knoten, OSMData, anchors)
 			}
 		}
 	}
+	return main_sigF, main_sigS
 }
 
-func processHauptsigF(knoten DBUtil.Spurplanknoten, OSMData *OSMUtil.Osm, anchors *map[string](*OSMUtil.Node)) {
+func processHauptsigF(knoten DBUtil.Spurplanknoten, OSMData *OSMUtil.Osm, anchors *map[string](*OSMUtil.Node)) []*DBUtil.Signal {
+	var notFound = []*DBUtil.Signal{}
 	for _, signal := range knoten.HauptsigF {
-		
-		if node := (*anchors)[signal.KnotenTyp.Kilometrierung[0].Value]; node != nil {
+		found := false
+		kilometrage := signal.KnotenTyp.Kilometrierung[0].Value
+		if node := (*anchors)[kilometrage]; node != nil {
 			typ, err1 := OSMUtil.GetTag(*node, "type")
 			subtyp, err2 := OSMUtil.GetTag(*node, "subtype")
 			id, err3 := OSMUtil.GetTag(*node, "id")
@@ -83,8 +103,6 @@ func processHauptsigF(knoten DBUtil.Spurplanknoten, OSMData *OSMUtil.Osm, anchor
 				&OSMUtil.Tag{TagName, "id", signal.Name[0].Value},
 				&OSMUtil.Tag{TagName, "direction", "falling"}}}
 			OSMUtil.InsertNode(&newNode, node.Id, OSMData)
-			//(*anchors)[signal.KnotenTyp.Kilometrierung[0].Value] = &newNode
-			print("Added node \n")
 			id_counter++
 			continue 
 		}
@@ -99,7 +117,7 @@ func processHauptsigF(knoten DBUtil.Spurplanknoten, OSMData *OSMUtil.Osm, anchor
 				if tag.K == "railway" && tag.V == "signal" {
 					is_signal = true
 				}	
-				if tag.K == "ref" && tag.V == signal.Name[0].Value {
+				if tag.K == "ref" && strings.ReplaceAll(tag.V, " ", "") == signal.Name[0].Value {
 					has_correct_id = true
 				}	
 			}
@@ -111,31 +129,64 @@ func processHauptsigF(knoten DBUtil.Spurplanknoten, OSMData *OSMUtil.Osm, anchor
 						&OSMUtil.Tag{TagName, "subtype", "ms"}, 
 						&OSMUtil.Tag{TagName, "id", signal.Name[0].Value},
 						&OSMUtil.Tag{TagName, "direction", "falling"}}...)
-				(*anchors)[signal.KnotenTyp.Kilometrierung[0].Value] = OSMData.Node[i]
+				(*anchors)[kilometrage] = OSMData.Node[i]	
+				print("Length before: ")
+				print(len(*anchors))
+				print("\n")
+				found = true
+				break
 			} 
+		}					
+		print("Length after: ")
+		print(len(*anchors))
+		print("\n")					
+		if found {
+			continue
 		}
+
+		notFound = append(notFound, signal)
+
+		/*
+		nearest := -1.0
+		for key, _ := range *anchors {
+			if nearest == -1.0 {
+				nearest = key
+			}
+			if math.Abs(key - kilometrage) < math.Abs(nearest - kilometrage) {
+				nearest = key
+			}
+			print("Doing something... \n")
+		}
+		/*
+		nearest_Lat, nearest_Lon := (*anchors)[nearest].Lat, (*anchors)[nearest].Lon
+		dist := math.Abs(nearest - kilometrage)
+
+		print(dist)
+		*/
 		// TODO: Node not found, find closest mapped Node and work from there
 	}
+	return notFound
 }
 
-func processHauptsigS(knoten DBUtil.Spurplanknoten, OSMData *OSMUtil.Osm, anchors *map[string](*OSMUtil.Node)) {
-	for _, signal := range knoten.HauptsigS {
-		
-		if node := (*anchors)[signal.KnotenTyp.Kilometrierung[0].Value]; node != nil {
+func processHauptsigS(knoten DBUtil.Spurplanknoten, OSMData *OSMUtil.Osm, anchors *map[string](*OSMUtil.Node)) []*DBUtil.Signal {
+	var notFound = []*DBUtil.Signal{}
+	for _, signal := range knoten.HauptsigS {		
+		found := false
+		kilometrage := signal.KnotenTyp.Kilometrierung[0].Value
+		if node := (*anchors)[kilometrage]; node != nil {
 			typ, err1 := OSMUtil.GetTag(*node, "type")
 			subtyp, err2 := OSMUtil.GetTag(*node, "subtype")
 			id, err3 := OSMUtil.GetTag(*node, "id")
 			direction, err4 := OSMUtil.GetTag(*node, "direction")
 			if err1 == nil && typ == "element" && err2 == nil && subtyp == "ms" && err3 == nil && id == signal.Name[0].Value && err4 == nil && direction == "rising" {
 				continue
-			}	
+			}			
 			newNode := OSMUtil.Node{Id: strconv.Itoa(id_counter), Lat: node.Lat, Lon: node.Lon, Tag:[]*OSMUtil.Tag{
 				&OSMUtil.Tag{TagName, "type", "element"}, 
 				&OSMUtil.Tag{TagName, "subtype", "ms"}, 
 				&OSMUtil.Tag{TagName, "id", signal.Name[0].Value},
 				&OSMUtil.Tag{TagName, "direction", "rising"}}}
 			OSMUtil.InsertNode(&newNode, node.Id, OSMData)
-			//(*anchors)[signal.KnotenTyp.Kilometrierung[0].Value] = &newNode
 			id_counter++
 			continue 
 		}
@@ -162,9 +213,16 @@ func processHauptsigS(knoten DBUtil.Spurplanknoten, OSMData *OSMUtil.Osm, anchor
 						&OSMUtil.Tag{TagName, "subtype", "ms"}, 
 						&OSMUtil.Tag{TagName, "id", signal.Name[0].Value},
 						&OSMUtil.Tag{TagName, "direction", "rising"}}...)
-				(*anchors)[signal.KnotenTyp.Kilometrierung[0].Value] = OSMData.Node[i]
+				(*anchors)[kilometrage] = OSMData.Node[i]	
+				found = true
+				break
 			} 
 		}
-		// TODO: Node not found, find closest mapped Node and work from there
+		if found {
+			continue
+		}
+
+		notFound = append(notFound, signal)
 	}
+	return notFound
 }

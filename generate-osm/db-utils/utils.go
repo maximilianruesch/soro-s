@@ -40,7 +40,7 @@ type Weichenknoten struct {
 
 type Kreuzungsknoten struct {
 	XMLName xml.Name
-	ID string `xml:"ID,atrr"`
+	ID string `xml:"ID,attr"`
 }
 
 type KreuzungsweicheAnfangLinks struct {
