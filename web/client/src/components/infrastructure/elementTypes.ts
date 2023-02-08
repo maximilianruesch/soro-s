@@ -20,3 +20,4 @@ export const elementTypeLabels = {
 };
 
 export const elementTypes = Object.keys(elementTypeLabels);
+
