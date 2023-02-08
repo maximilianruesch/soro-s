@@ -1,9 +1,7 @@
-import { elementTypes } from './elementTypes';
+import { ElementType, ElementTypes } from './elementTypes';
 import { StyleSpecification } from 'maplibre-gl';
 import { transformUrl } from '@/api/api-client';
 import { ThemeDefinition } from 'vuetify';
-
-export const mapLayers = elementTypes.map(type => type + '-layer');
 
 export const createInfrastructureMapStyle = ({ currentTheme, activatedElements }: { currentTheme: ThemeDefinition, activatedElements: typeof elementTypes }) => {
     const style: StyleSpecification = {
@@ -115,8 +113,8 @@ export const createInfrastructureMapStyle = ({ currentTheme, activatedElements }
         ]
     };
 
-    elementTypes.forEach(type => {
-        if (type === 'station') {
+    ElementTypes.forEach(type => {
+        if (type === ElementType.STATION) {
             style.layers.push({
                 'id': type + '-layer',
                 'source': 'osm',
@@ -165,11 +163,15 @@ export const createInfrastructureMapStyle = ({ currentTheme, activatedElements }
                 'source': 'osm',
                 'source-layer': type,
                 'type': 'symbol',
-                'minzoom': 15,
+                'minzoom': type === ElementType.HALT ? 10 : 15,
                 'maxzoom': 24,
+                'paint': {
+                    'text-halo-width': 1,
+                    'text-halo-color': '#ffffff',
+                },
                 'layout': {
                     'visibility': (activatedElements.includes(type) ? 'visible' : 'none'),
-                    'text-field': ['get', 'id'],
+                    'text-field': ['get', type === ElementType.HALT ? 'name' : 'id'],
                     'text-anchor': 'top',
                     'text-offset': [0, 1],
                     'text-font': ['Noto Sans Display Regular'],
