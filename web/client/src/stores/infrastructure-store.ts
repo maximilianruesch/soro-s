@@ -1,6 +1,6 @@
 import { Module } from 'vuex';
 import { MapPosition } from '@/components/infrastructure/infrastructure-map.vue';
-import { sendRequest } from '@/api/api-client';
+import { sendRequest, transformUrl } from '@/api/api-client';
 
 type InfrastructureState = {
     infrastructures: string[],
@@ -86,12 +86,11 @@ export const InfrastructureStore: Module<InfrastructureState, undefined> = {
                 return;
             }
 
-            fetch(`${window.origin}/search?query=${query}&infrastructure=${state.currentInfrastructure}`)
+            fetch(transformUrl(`search?query=${query}&infrastructure=${state.currentInfrastructure}`))
                 .then(response => response.json())
                 .then(position => {
                     commit('setCurrentSearchedMapPosition', position);
                     commit('setCurrentSearchError', undefined);
-
                 })
                 .catch(() => {
                     commit('setCurrentSearchError', 'Not found!');
