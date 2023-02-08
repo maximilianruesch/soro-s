@@ -337,21 +337,41 @@ func searchHauptsigF(knoten DBUtil.Spurplanknoten, OSMData *OSMUtil.Osm, anchors
 				if !strings.Contains(second_nearest_string, ",") {
 					second_nearest_string += ","
 				}
-			}
-
-			dist1 := math.Abs(nearest - kilometrage)
-			dist2 := math.Abs(second_nearest - kilometrage)
-			nearest_Lat, nearest_Lon := ((*anchors)[nearest_string])[0].Lat, ((*anchors)[nearest_string])[0].Lon
-			second_nearest_Lat, second_nearest_Lon := ((*anchors)[second_nearest_string])[0].Lat, ((*anchors)[second_nearest_string])[0].Lon
+			}	
 			
-			fmt.Printf("%f, %f \n", dist1, dist2)
-
-			_, _, _, _ = nearest_Lat, nearest_Lon, second_nearest_Lat, second_nearest_Lon
+			newLat, newLon := findNewCoordinates(*((*anchors)[nearest_string])[0], *((*anchors)[second_nearest_string])[0], nearest, second_nearest, kilometrage)
+			fmt.Printf("%f, %f \n \n", newLat, newLon)
 		}
-	}
-	
-	
-	
-	
+	}	
 	// TODO: Node not found, find closest mapped Node and work from there
+}
+
+func findNewCoordinates(nearestNode OSMUtil.Node, second_nearestNode OSMUtil.Node, nearest float64, second_nearest float64, kilometrage float64) (float64, float64) {
+	dist1 := float64(math.Abs(nearest - kilometrage))	
+	nearest_Lat, _ := strconv.ParseFloat(nearestNode.Lat, 64)
+	nearest_Lon, _ := strconv.ParseFloat(nearestNode.Lon, 64)
+	if dist1 == 0.0 {
+		return nearest_Lat, nearest_Lon
+	}
+
+	dist2 := float64(math.Abs(second_nearest - kilometrage))
+	second_nearest_Lat, _ := strconv.ParseFloat(second_nearestNode.Lat, 64)
+	second_nearest_Lon, _ := strconv.ParseFloat(second_nearestNode.Lon, 64)
+	
+	diffx, diffy := second_nearest_Lat - nearest_Lat, second_nearest_Lon - nearest_Lon
+	length := math.Sqrt(diffx*diffx + diffy*diffy)
+	diffx, diffy = diffx/length, diffy/length
+
+	var newLat, newLon float64
+
+	if length > dist2 {
+		newLat, newLon = nearest_Lat + diffx*dist1, nearest_Lon + diffy*dist1
+	} else {
+		newLat, newLon = nearest_Lat + diffx*dist1, nearest_Lon + diffy*dist1
+	}
+
+	fmt.Printf("%f, %f \n", nearest_Lat, nearest_Lon)
+	fmt.Printf("%f, %f \n", second_nearest_Lat, second_nearest_Lon)
+
+	return newLat, newLon
 }
