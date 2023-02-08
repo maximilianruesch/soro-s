@@ -200,7 +200,7 @@ std::string to_lower(std::string str) {
 }
 
 
-std::optional<soro::server::osm_halt> get_halt_info(const std::vector<soro::server::osm_halt>& osm_halts, std::string name) {
+std::optional<soro::server::osm_halt> get_halt_info(const std::vector<soro::server::osm_halt>& osm_halts, const std::string& name) {
     std::vector<soro::server::osm_halt> matches;
 
     for (const auto& halt : osm_halts) {

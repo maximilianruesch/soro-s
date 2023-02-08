@@ -67,13 +67,13 @@ std::vector<pugi::xml_node> filter_halt(const pugi::xml_document& xml_doc) {
     if (std::string("node") == child.name()) {
       auto tags = child.children();
 
+
       for (auto tag:tags) {
-        if (std::string("railway") == tag.attribute("k").as_string()) {
-          if (std::string("station") == tag.attribute("v").as_string()) {
-            filtered.push_back(child);
-          } else if (std::string("halt") == tag.attribute("v").as_string()){
-            filtered.push_back(child);
-          }
+        if (std::string("railway") != tag.attribute("k").as_string()) continue;
+
+        if (std::string("station") == tag.attribute("v").as_string() ||
+            std::string("halt") == tag.attribute("v").as_string()) {
+          filtered.push_back(child);
         }
       }
     }
@@ -101,7 +101,7 @@ std::vector<soro::server::osm_halt> extract_halt_info(
         name = tag.attribute("v").as_string();
     }
 
-    result.emplace_back(soro::server::osm_halt(name, true, lon, lat));
+    result.emplace_back(name, true, lon, lat);
   }
 
   return result;
