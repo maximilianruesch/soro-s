@@ -29,7 +29,7 @@ import { mapActions, mapState } from 'vuex';
 export default defineComponent({
     name: 'StationSearch',
 
-    data() {
+    data(): { currentQuery: string | null } {
         return {
             currentQuery: null
         };
@@ -43,11 +43,11 @@ export default defineComponent({
     },
 
     methods: {
-        updateQuery(event: any) {
+        updateQuery(event: { target: HTMLInputElement }) {
             this.currentQuery = event.target?.value;
         },
 
-        updateQueryAndSearch(event: any) {
+        updateQueryAndSearch(event: never) {
             this.updateQuery(event);
             this.searchName();
         },
