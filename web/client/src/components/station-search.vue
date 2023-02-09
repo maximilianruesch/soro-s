@@ -1,18 +1,38 @@
 <template>
-    <div class="station-search">
-        <v-text-field
-            :disabled="!currentInfrastructure"
-            label="Search for station or halt by name:"
-            :error-messages="currentSearchError"
-            hide-details="auto"
-            @change="event => currentQuery = event.target.value"
-        />
+    <div>
+        <div class="station-search">
+            <v-text-field
+                :disabled="!currentInfrastructure"
+                label="Search for station or halt by name:"
+                :error-messages="currentSearchError"
+                hide-details="auto"
+                @change="event => currentQuery = event.target.value"
+            />
 
-        <soro-button
-            label="Search"
-            class="search-button"
-            @click="searchName"
-        />
+            <soro-button
+                label="Search"
+                class="search-button"
+                @click="searchName"
+            />
+        </div>
+
+        <v-list
+            v-if="currentSearchedMapPositions.length > 1"
+            density="compact"
+            elevation="5"
+        >
+            <v-list-subheader>SEARCH RESULTS</v-list-subheader>
+            <v-list-item
+                v-for="(mapPosition, i) in currentSearchedMapPositions"
+                :key="mapPosition.name"
+                :value="mapPosition.name"
+                @click="setCurrentSearchedMapPosition(mapPosition.position)"
+            >
+                <v-list-item-title>
+                    {{ mapPosition.name }}
+                </v-list-item-title>
+            </v-list-item>
+        </v-list>
     </div>
 </template>
 
@@ -23,7 +43,7 @@ import SoroButton from '@/components/soro-button.vue';
 <script lang="ts">
 import { defineComponent } from 'vue';
 import { InfrastructureNamespace } from '@/stores/infrastructure-store';
-import { mapActions, mapState } from 'vuex';
+import { mapActions, mapMutations, mapState } from 'vuex';
 
 export default defineComponent({
     name: 'StationSearch',
@@ -38,6 +58,7 @@ export default defineComponent({
         ...mapState(InfrastructureNamespace, [
             'currentInfrastructure',
             'currentSearchError',
+            'currentSearchedMapPositions',
         ]),
     },
 
@@ -51,6 +72,7 @@ export default defineComponent({
             this.searchPositionFromName(this.currentQuery);
         },
 
+        ...mapMutations(InfrastructureNamespace, ['setCurrentSearchedMapPosition']),
         ...mapActions(InfrastructureNamespace, ['searchPositionFromName']),
     },
 });
@@ -59,6 +81,7 @@ export default defineComponent({
 <style scoped>
 .station-search {
     display: flex;
+    margin-bottom: 10px;
 }
 
 .search-button {

@@ -6,6 +6,10 @@ type InfrastructureState = {
     infrastructures: string[],
     currentInfrastructure?: string,
     currentSearchedMapPosition?: MapPosition,
+    currentSearchedMapPositions: {
+        name: string,
+        position: MapPosition,
+    }[],
     currentSearchError?: string,
     highlightedSignalStationRouteID?: string,
     highlightedStationRouteID?: string,
@@ -23,6 +27,7 @@ export const InfrastructureStore: Module<InfrastructureState, undefined> = {
             infrastructures: [],
             currentInfrastructure: undefined,
             currentSearchedMapPosition: undefined,
+            currentSearchedMapPositions: [],
             currentSearchError: undefined,
             highlightedSignalStationRouteID: undefined,
             highlightedStationRouteID: undefined,
@@ -40,6 +45,10 @@ export const InfrastructureStore: Module<InfrastructureState, undefined> = {
 
         setCurrentSearchedMapPosition(state, currentSearchedMapPosition) {
             state.currentSearchedMapPosition = currentSearchedMapPosition;
+        },
+
+        setCurrentSearchedMapPositions(state, currentSearchedMapPositions) {
+            state.currentSearchedMapPositions = currentSearchedMapPositions;
         },
 
         setCurrentSearchError(state, currentSearchError) {
@@ -89,7 +98,33 @@ export const InfrastructureStore: Module<InfrastructureState, undefined> = {
             fetch(transformUrl(`search?query=${query}&infrastructure=${state.currentInfrastructure}`))
                 .then(response => response.json())
                 .then(position => {
-                    commit('setCurrentSearchedMapPosition', position);
+                    const somePositions = [
+                        {
+                            name: 'Darmstadt-Eberstadt',
+                            position: {
+                                lat: 49.8144694,
+                                lon: 8.6259571,
+                            },
+                        },
+                        {
+                            name: 'Frankfurt',
+                            position: {
+                                lat: 50.1039142,
+                                lon: 8.6448659,
+                            },
+                        },
+                        {
+                            name: 'Kassel',
+                            position: {
+                                lat: 51.3113881,
+                                lon: 9.4477049,
+                            },
+                        }
+                    ];
+                    const realPositions = Array.isArray(position) ? position : somePositions;
+
+                    commit('setCurrentSearchedMapPositions', realPositions);
+                    commit('setCurrentSearchedMapPosition', realPositions[0]?.position);
                     commit('setCurrentSearchError', undefined);
                 })
                 .catch(() => {
