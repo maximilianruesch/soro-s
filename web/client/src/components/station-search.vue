@@ -5,7 +5,8 @@
             label="Search for station or halt by name:"
             :error-messages="currentSearchError"
             hide-details="auto"
-            @change="event => currentQuery = event.target.value"
+            @change="updateQuery"
+            @keydown.enter.prevent="updateQueryAndSearch"
         />
 
         <soro-button
@@ -42,6 +43,15 @@ export default defineComponent({
     },
 
     methods: {
+        updateQuery(event: any) {
+            this.currentQuery = event.target?.value;
+        },
+
+        updateQueryAndSearch(event: any) {
+            this.updateQuery(event);
+            this.searchName();
+        },
+
         searchName() {
             if (!this.currentQuery) {
                 return;
