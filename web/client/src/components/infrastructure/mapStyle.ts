@@ -3,7 +3,7 @@ import { StyleSpecification } from 'maplibre-gl';
 import { transformUrl } from '@/api/api-client';
 import { ThemeDefinition } from 'vuetify';
 
-export const createInfrastructureMapStyle = ({ currentTheme, activatedElements }: { currentTheme: ThemeDefinition, activatedElements: typeof elementTypes }) => {
+export const createInfrastructureMapStyle = ({ currentTheme, activatedElements }: { currentTheme: ThemeDefinition, activatedElements: typeof ElementTypes }) => {
     const style: StyleSpecification = {
         version: 8,
         sources: {
