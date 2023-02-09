@@ -70,10 +70,8 @@
                         class="d-flex accent-color-picker"
                     >
                         <div class="flex-grow-0 accent-color-display" />
-
                         <v-btn class="flex-grow-1 ms-2">
                             Select color
-
                             <v-menu
                                 activator="parent"
                                 :close-on-content-click="false"
