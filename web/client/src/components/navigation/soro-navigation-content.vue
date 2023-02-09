@@ -71,10 +71,7 @@
                     >
                         <div class="flex-grow-0 accent-color-display" />
 
-                        <v-btn
-                            class="flex-grow-1 ms-2"
-                            @click="setPrimaryColor(colorSelection)"
-                        >
+                        <v-btn class="flex-grow-1 ms-2">
                             Select color
 
                             <v-menu
@@ -141,7 +138,7 @@ import SoroCollapsible from '@/components/soro-collapsible.vue';
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import { mapActions, mapMutations, mapState } from 'vuex';
+import { mapActions, mapState } from 'vuex';
 import { InfrastructureNamespace } from '@/stores/infrastructure-store';
 import { TimetableNamespace } from '@/stores/timetable-store';
 import { GLComponentTitles, ComponentTechnicalName } from '@/golden-layout/golden-layout-constants';
@@ -177,8 +174,7 @@ export default defineComponent({
         ]),
     },
 
-    created() {
-        this.setPrimaryColor(this.$vuetify.theme.global.current.colors.primary);
+    mounted() {
         this.colorSelection = this.primaryColor;
     },
 
@@ -198,8 +194,10 @@ export default defineComponent({
             this.colorSelection = newColor;
         },
 
-        ...mapMutations(SettingsNamespace, ['setPrimaryColor']),
-        ...mapActions(SettingsNamespace, ['setDarkLightModePreference']),
+        ...mapActions(SettingsNamespace, [
+            'setDarkLightModePreference',
+            'setPrimaryColor',
+        ]),
         ...mapActions(InfrastructureNamespace, { loadInfrastructure: 'load' }),
         ...mapActions(TimetableNamespace, { loadTimetable: 'load' }),
     }
