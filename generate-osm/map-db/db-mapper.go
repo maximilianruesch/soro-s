@@ -10,7 +10,6 @@ import (
 	"math"
 	DBUtil "transform-osm/db-utils"
 	OSMUtil "transform-osm/osm-utils"
-	"gonum.org/v1/gonum/mat"
 )
 
 var TagName = xml.Name{" ", "tag"}
@@ -345,7 +344,7 @@ func searchHauptsigF(knoten DBUtil.Spurplanknoten, OSMData *OSMUtil.Osm, anchors
 			second_nearest_Lat, _ := strconv.ParseFloat(((*anchors)[second_nearest_string])[0].Lat, 64)
 			second_nearest_Lon, _ := strconv.ParseFloat(((*anchors)[second_nearest_string])[0].Lon, 64)
 			
-			newLat, newLon := findNewCoordinates(
+			newLat, newLon := DBUtil.FindNewCoordinates(
 				nearest_Lat, second_nearest_Lat, 
 				nearest_Lon, second_nearest_Lon, 
 				math.Abs(nearest - kilometrage), math.Abs(second_nearest - kilometrage))
@@ -356,38 +355,3 @@ func searchHauptsigF(knoten DBUtil.Spurplanknoten, OSMData *OSMUtil.Osm, anchors
 	// TODO: Node not found, find closest mapped Node and work from there
 }
 
-func findNewCoordinates(phi1 float64, phi2 float64, lambda1 float64, lambda2 float64, d1 float64, d2 float64) (float64, float64) {
-	r := 6371.0
-
-	result := mat.NewDense(2, 1, []float64{phi1, lambda1})
-	cosPhi1 := math.Cos(phi1)
-	cosPhi2 := math.Cos(phi2)
-	const1 := math.Pow(math.Sin(d1 / (2*r)), 2)
-	const2 := math.Pow(math.Sin(d2 / (2*r)), 2)	
-
-	for ; true; {
-		var f = mat.NewDense(2, 1, []float64{
-			math.Pow(math.Sin((result.At(0, 0) - phi1)/2), 2) + math.Cos(result.At(0, 0))*cosPhi1*math.Pow(math.Sin((result.At(1, 0) - lambda1)/2), 2) - const1,
-			math.Pow(math.Sin((result.At(0, 0) - phi2)/2), 2) + math.Cos(result.At(0, 0))*cosPhi2*math.Pow(math.Sin((result.At(1, 0) - lambda2)/2), 2) - const2 })
-
-		if f.At(0, 0) < 1.0e-8 && f.At(1, 0) < 1.0e-8 {
-			break
-		}
-
-		gaussian := mat.NewDense(2, 2, []float64{
-			0.5 * math.Sin(result.At(0, 0) - phi1) - cosPhi1*math.Pow(math.Sin((result.At(1, 0) - lambda1)/2), 2)*math.Sin(result.At(0, 0)), 0.5 * cosPhi1*math.Cos(result.At(0, 0))*math.Sin(result.At(1, 0) - lambda1), 
-			0.5 * math.Sin(result.At(0, 0) - phi2) - cosPhi2*math.Pow(math.Sin((result.At(1, 0) - lambda2)/2), 2)*math.Sin(result.At(0, 0)), 0.5 * cosPhi2*math.Cos(result.At(0, 0))*math.Sin(result.At(1, 0) - lambda2) })
-
-		err := gaussian.Inverse(gaussian)
-		if err != nil {
-			panic(err)
-		}
-
-		var temp mat.Dense		
-		temp.Mul(gaussian, f)
-
-		result.Sub(f, &temp)
-	}
-
-	return result.At(0, 0), result.At(1, 0)
-}
