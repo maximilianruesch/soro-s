@@ -5,7 +5,8 @@
             label="Search for station or halt by name:"
             :error-messages="currentSearchError"
             hide-details="auto"
-            @change="event => currentQuery = event.target.value"
+            @change="updateQuery"
+            @keydown.enter.prevent="updateQueryAndSearch"
         />
 
         <soro-button
@@ -28,7 +29,7 @@ import { mapActions, mapState } from 'vuex';
 export default defineComponent({
     name: 'StationSearch',
 
-    data() {
+    data(): { currentQuery: string | null } {
         return {
             currentQuery: null
         };
@@ -42,6 +43,15 @@ export default defineComponent({
     },
 
     methods: {
+        updateQuery(event: { target: HTMLInputElement }) {
+            this.currentQuery = event.target?.value;
+        },
+
+        updateQueryAndSearch(event: never) {
+            this.updateQuery(event);
+            this.searchName();
+        },
+
         searchName() {
             if (!this.currentQuery) {
                 return;
