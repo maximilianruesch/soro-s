@@ -10,7 +10,7 @@ var phi1, phi2, lambda1, lambda2, dist1, dist2 float64
 var cosPhi1, cosPhi2, const1, const2 float64
 const r = 6371.0
 const delta = 1.0e-2
-const eps = 1.0e-3
+const eps = 1.0e-4
 
 func FindNewCoordinates(p1 float64, p2 float64, l1 float64, l2 float64, d1 float64, d2 float64) (float64, float64) {
 

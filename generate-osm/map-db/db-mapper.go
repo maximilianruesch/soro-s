@@ -277,7 +277,7 @@ func processHauptsigS(knoten DBUtil.Spurplanknoten, OSMData *OSMUtil.Osm, anchor
 	return notFound	
 }
 
-func searchHauptsigF(knoten DBUtil.Spurplanknoten, OSMData *OSMUtil.Osm, anchors *map[string]([]*OSMUtil.Node)) {
+func searchHauptsigF(knoten DBUtil.Spurplanknoten, osmData *OSMUtil.Osm, anchors *map[string]([]*OSMUtil.Node)) {
 	switch len(*anchors) {
 	case 0:
 		fmt.Print("Could not find anchors! \n")
@@ -350,6 +350,41 @@ func searchHauptsigF(knoten DBUtil.Spurplanknoten, OSMData *OSMUtil.Osm, anchors
 				math.Abs(nearest - kilometrage), math.Abs(second_nearest - kilometrage))
 			
 			fmt.Printf("%f, %f \n \n", newLat, newLon)
+
+			newLat_string := strconv.FormatFloat(newLat, 'f', -1, 64)
+			newLon_string := strconv.FormatFloat(newLat, 'f', -1, 64)
+
+			var maxLength = 0
+			var maxNode *OSMUtil.Node
+
+			for _, node := range osmData.Node {
+				var length = 0
+				var i int
+				for i = 0; node.Lat[i] == newLat_string[i]; i++ {
+					length++
+				}
+				for i = 0; node.Lon[i] == newLon_string[i]; i++ {
+					length++
+				}
+
+				if length > maxLength {
+					maxLength = length
+					maxNode = node
+				}
+			}
+
+			print(maxNode)
+
+			maxNode.Tag = append(maxNode.Tag, []*OSMUtil.Tag{
+				&OSMUtil.Tag{TagName, "type", "element"}, 
+				&OSMUtil.Tag{TagName, "subtype", "ms"}, 
+				&OSMUtil.Tag{TagName, "id", signal.Name[0].Value},
+				&OSMUtil.Tag{TagName, "direction", "rising"}}...)
+			if len((*anchors)[signal.KnotenTyp.Kilometrierung[0].Value]) == 0 {
+				(*anchors)[signal.KnotenTyp.Kilometrierung[0].Value] = []*OSMUtil.Node{maxNode}
+			} else {
+				(*anchors)[signal.KnotenTyp.Kilometrierung[0].Value] = append((*anchors)[signal.KnotenTyp.Kilometrierung[0].Value], maxNode)
+			}			
 		}
 	}	
 	// TODO: Node not found, find closest mapped Node and work from there
