@@ -6,6 +6,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"errors"
 	"fmt"
 	"math"
 	DBUtil "transform-osm/db-utils"
@@ -278,102 +279,21 @@ func processHauptsigS(knoten DBUtil.Spurplanknoten, OSMData *OSMUtil.Osm, anchor
 }
 
 func searchHauptsigF(knoten DBUtil.Spurplanknoten, osmData *OSMUtil.Osm, anchors *map[string]([]*OSMUtil.Node)) {
+	var not_found = []*DBUtil.Signal{} 
 	switch len(*anchors) {
 	case 0:
 		fmt.Print("Could not find anchors! \n")
 	case 1:
-		// TODO: Try to find a node and guess the correct one, or throw error also
+		fmt.Print("Could not find enough anchors! \n")
 	default:
 		for _, signal := range knoten.HauptsigF {
-			nearest := -1.0
-			second_nearest := -1.0
 			kilometrage, _ := strconv.ParseFloat(strings.ReplaceAll(signal.KnotenTyp.Kilometrierung[0].Value, ",", "."), 64)
 
-			for key, _ := range *anchors {
-				if strings.Contains(key, "+") {
-					continue
-				}
-				float_key, _ := strconv.ParseFloat(strings.ReplaceAll(key, ",", "."), 64)
-				if nearest == -1.0 {
-					nearest = float_key
-				}
-				if math.Abs(float_key - kilometrage) < math.Abs(nearest - kilometrage) {
-					second_nearest = nearest
-					nearest = float_key
-				}
-			}	
-
-			if second_nearest == -1.0  {
-				for key, _ := range *anchors {
-					if strings.Contains(key, "+") {
-						continue
-					}
-					float_key, _ := strconv.ParseFloat(strings.ReplaceAll(key, ",", "."), 64)
-					if float_key == nearest {
-						continue
-					}
-					if second_nearest == -1.0 {
-						second_nearest = float_key
-					}
-					if math.Abs(float_key - kilometrage) < math.Abs(second_nearest - kilometrage) {
-						second_nearest = float_key
-					}
-				}	
-			}
-
-			if nearest == -1.0 || second_nearest == -1.0 {
+			maxNode, err := findBestOSMNode(kilometrage, anchors, osmData)
+			if err != nil {
+				not_found = append(not_found, signal)
 				continue
-			}
-
-			nearest_string := strings.ReplaceAll(strconv.FormatFloat(nearest, 'f', -1, 64), ".", ",")
-			second_nearest_string := strings.ReplaceAll(strconv.FormatFloat(second_nearest, 'f', -1, 64), ".", ",")
-
-			for ; len((*anchors)[nearest_string]) == 0; nearest_string += "0" {
-				if !strings.Contains(nearest_string, ",") {
-					nearest_string += ","
-				}
-			}
-			for ; len((*anchors)[second_nearest_string]) == 0; second_nearest_string += "0" {
-				if !strings.Contains(second_nearest_string, ",") {
-					second_nearest_string += ","
-				}
-			}	
-
-			nearest_Lat, _ := strconv.ParseFloat(((*anchors)[nearest_string])[0].Lat, 64)
-			nearest_Lon, _ := strconv.ParseFloat(((*anchors)[nearest_string])[0].Lon, 64)
-			second_nearest_Lat, _ := strconv.ParseFloat(((*anchors)[second_nearest_string])[0].Lat, 64)
-			second_nearest_Lon, _ := strconv.ParseFloat(((*anchors)[second_nearest_string])[0].Lon, 64)
-			
-			newLat, newLon := DBUtil.FindNewCoordinates(
-				nearest_Lat, second_nearest_Lat, 
-				nearest_Lon, second_nearest_Lon, 
-				math.Abs(nearest - kilometrage), math.Abs(second_nearest - kilometrage))
-			
-			fmt.Printf("%f, %f \n \n", newLat, newLon)
-
-			newLat_string := strconv.FormatFloat(newLat, 'f', -1, 64)
-			newLon_string := strconv.FormatFloat(newLat, 'f', -1, 64)
-
-			var maxLength = 0
-			var maxNode *OSMUtil.Node
-
-			for _, node := range osmData.Node {
-				var length = 0
-				var i int
-				for i = 0; node.Lat[i] == newLat_string[i]; i++ {
-					length++
-				}
-				for i = 0; node.Lon[i] == newLon_string[i]; i++ {
-					length++
-				}
-
-				if length > maxLength {
-					maxLength = length
-					maxNode = node
-				}
-			}
-
-			print(maxNode)
+			}			
 
 			maxNode.Tag = append(maxNode.Tag, []*OSMUtil.Tag{
 				&OSMUtil.Tag{TagName, "type", "element"}, 
@@ -390,3 +310,101 @@ func searchHauptsigF(knoten DBUtil.Spurplanknoten, osmData *OSMUtil.Osm, anchors
 	// TODO: Node not found, find closest mapped Node and work from there
 }
 
+func findTwoNearest(kilometrage float64, anchors *map[string]([]*OSMUtil.Node)) (nearest float64, second_nearest float64) {	
+	nearest = -1.0
+	second_nearest = -1.0
+
+	for key, _ := range *anchors {
+		if strings.Contains(key, "+") {
+			continue
+		}
+		float_key, _ := strconv.ParseFloat(strings.ReplaceAll(key, ",", "."), 64)
+		if nearest == -1.0 {
+			nearest = float_key
+		}
+		if math.Abs(float_key - kilometrage) < math.Abs(nearest - kilometrage) {
+			second_nearest = nearest
+			nearest = float_key
+		}
+	}	
+
+	if second_nearest != -1.0  { 
+		return
+	}
+	for key, _ := range *anchors {
+		if strings.Contains(key, "+") {
+			continue
+		}
+		float_key, _ := strconv.ParseFloat(strings.ReplaceAll(key, ",", "."), 64)
+		if float_key == nearest {
+			continue
+		}
+		if second_nearest == -1.0 {
+			second_nearest = float_key
+		}
+		if math.Abs(float_key - kilometrage) < math.Abs(second_nearest - kilometrage) {
+			second_nearest = float_key
+		}
+	}	
+	return
+}
+
+func formatKilometrage (in float64, anchors *map[string]([]*OSMUtil.Node)) (out string) {
+	out = strings.ReplaceAll(strconv.FormatFloat(in, 'f', -1, 64), ".", ",")
+
+	for ; len((*anchors)[out]) == 0; out += "0" {
+		if !strings.Contains(out, ",") {
+			out += ","
+		}
+	}
+	return
+}
+
+func findBestOSMNode (kilometrage float64, anchors *map[string]([]*OSMUtil.Node), osmData *OSMUtil.Osm) (*OSMUtil.Node, error){
+	nearest, second_nearest := findTwoNearest(kilometrage, anchors)
+
+	if nearest == -1.0 || second_nearest == -1.0 {
+		return nil, errors.New(fmt.Errorf("Could not find node.").Error());
+	}
+
+	nearest_string := formatKilometrage(nearest, anchors)
+	second_nearest_string := formatKilometrage(second_nearest, anchors)
+
+	nearest_Lat, _ := strconv.ParseFloat(((*anchors)[nearest_string])[0].Lat, 64)
+	nearest_Lon, _ := strconv.ParseFloat(((*anchors)[nearest_string])[0].Lon, 64)
+	second_nearest_Lat, _ := strconv.ParseFloat(((*anchors)[second_nearest_string])[0].Lat, 64)
+	second_nearest_Lon, _ := strconv.ParseFloat(((*anchors)[second_nearest_string])[0].Lon, 64)
+		
+	newLat, newLon, err := DBUtil.FindNewCoordinates(
+		nearest_Lat, second_nearest_Lat, 
+		nearest_Lon, second_nearest_Lon, 
+		math.Abs(nearest - kilometrage), math.Abs(second_nearest - kilometrage))
+
+	if err != nil {
+		return nil, errors.New(fmt.Errorf("Could not find node.").Error());
+	}
+
+	newLat_string := strconv.FormatFloat(newLat, 'f', -1, 64)
+	newLon_string := strconv.FormatFloat(newLon, 'f', -1, 64)
+
+	var maxLength = 0
+	var maxNode *OSMUtil.Node
+
+	for _, node := range osmData.Node {
+		var length = 0
+		var i int
+		for i = 0; i < len(newLat_string) && i < len(node.Lat) && node.Lat[i] == newLat_string[i]; i++ {
+			length++
+		}
+		for i = 0; i < len(newLon_string) && i < len(node.Lon) && node.Lon[i] == newLon_string[i]; i++ {
+			length++
+		}
+
+		if length > maxLength {
+			maxLength = length
+			maxNode = node
+		}
+	}
+
+	return maxNode, nil
+}

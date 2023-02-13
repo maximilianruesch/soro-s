@@ -3,6 +3,7 @@ package DBUtils
 import(
 	"math"
 	"fmt"
+	"errors"
 	"gonum.org/v1/gonum/mat"
 )
 
@@ -11,8 +12,9 @@ var cosPhi1, cosPhi2, const1, const2 float64
 const r = 6371.0
 const delta = 1.0e-2
 const eps = 1.0e-4
+const num_it = 1000
 
-func FindNewCoordinates(p1 float64, p2 float64, l1 float64, l2 float64, d1 float64, d2 float64) (float64, float64) {
+func FindNewCoordinates(p1 float64, p2 float64, l1 float64, l2 float64, d1 float64, d2 float64) (float64, float64, error) {
 
 	phi1, phi2, lambda1, lambda2, dist1, dist2 = p1, p2, l1, l2, d1, d2
 	cosPhi1, cosPhi2, const1, const2 = math.Cos(phi1), math.Cos(phi2), math.Pow(math.Sin(dist1 / (2*r)), 2), math.Pow(math.Sin(dist2 / (2*r)), 2)	
@@ -21,7 +23,8 @@ func FindNewCoordinates(p1 float64, p2 float64, l1 float64, l2 float64, d1 float
 	var x_k_old mat.Dense 
 	var f mat.Dense
 
-	for ; true; {
+	var i int
+	for i = 0; i < num_it; i++{
 		f = function(*x_k)
 
 		if math.Abs(f.At(0, 0)) < eps && math.Abs(f.At(1, 0)) < eps {
@@ -54,13 +57,12 @@ func FindNewCoordinates(p1 float64, p2 float64, l1 float64, l2 float64, d1 float
 		x_k_old.CloneFrom(x_k)
 		x_k.Add(x_k, &s)
 		
-		if mat.Equal(x_k, &x_k_old) {
-			fmt.Print("Could not find zero-point. \n")
-			break;
+		if mat.Equal(x_k, &x_k_old) || i == num_it-1 {
+			return 0, 0, errors.New(fmt.Errorf("Could not find zero-point.").Error());
 		}
 	}
 
-	return x_k.At(0, 0), x_k.At(1, 0)
+	return x_k.At(0, 0), x_k.At(1, 0), nil
 }
 
 func function (in mat.Dense) mat.Dense {
