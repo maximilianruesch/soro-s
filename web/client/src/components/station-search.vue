@@ -7,7 +7,7 @@
                 :error-messages="currentSearchError"
                 hide-details="auto"
                 @change="updateQuery"
-            @keydown.enter.prevent="updateQueryAndSearch"
+                @keydown.enter.prevent="updateQueryAndSearch"
             />
 
             <soro-button
