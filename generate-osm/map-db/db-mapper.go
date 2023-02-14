@@ -17,6 +17,7 @@ var TagName = xml.Name{" ", "tag"}
 var id_counter = 1
 var anchors map[string]([]*OSMUtil.Node)
 var osmData OSMUtil.Osm
+var num_found = 0
 
 func MapDB(refs []string, osmDir string, DBDir string) {
 	for _, line := range refs {	
@@ -63,7 +64,7 @@ func MapDB(refs []string, osmDir string, DBDir string) {
 
 		mainF, mainS = mapSignals(restData, findAnchors) 
 		// mapPoints(restData)
-		// mapRest(dbData) 
+		// mapRest(dbData) 		
 
 		if new_Data, err := xml.MarshalIndent(osmData, "", "	"); err != nil {
 			panic(err)
@@ -73,6 +74,7 @@ func MapDB(refs []string, osmDir string, DBDir string) {
 			}
 		}
 	}
+	fmt.Printf("Found: %d \n", num_found)
 }
 
 func mapSignals(DBData DBUtil.XmlIssDaten, firstPass bool) ([]*DBUtil.Signal, []*DBUtil.Signal){
@@ -138,7 +140,7 @@ func processHauptsigF(knoten DBUtil.Spurplanknoten) []*DBUtil.Signal {
 
 		if !found {
 			notFound = append(notFound, signal)
-		}
+		} 
 	}
 
 	return notFound	
@@ -211,7 +213,10 @@ func searchHauptsigF(knoten DBUtil.Spurplanknoten) {
 			}			
 
 			found := insertNewHauptsig(maxNode, signal.KnotenTyp.Kilometrierung[0].Value, *signal, "falling", &not_found)	
-			_ = found
+			// _ = found
+			if found {
+				num_found++
+			}
 		}
 	}	
 	// TODO: Node not found, find closest mapped Node and work from there
@@ -277,43 +282,9 @@ func findBestOSMNode(kilometrage float64) (*OSMUtil.Node, error){
 	nearest_string := formatKilometrage(nearest)
 	second_nearest_string := formatKilometrage(second_nearest)
 
-	nearest_Lat, _ := strconv.ParseFloat((anchors[nearest_string])[0].Lat, 64)
-	nearest_Lon, _ := strconv.ParseFloat((anchors[nearest_string])[0].Lon, 64)
-	second_nearest_Lat, _ := strconv.ParseFloat((anchors[second_nearest_string])[0].Lat, 64)
-	second_nearest_Lon, _ := strconv.ParseFloat((anchors[second_nearest_string])[0].Lon, 64)
-		
-	newLat, newLon, err := DBUtil.FindNewCoordinates(
-		nearest_Lat, second_nearest_Lat, 
-		nearest_Lon, second_nearest_Lon, 
-		math.Abs(nearest - kilometrage), math.Abs(second_nearest - kilometrage))
-
-	if err != nil {
-		return nil, errors.New(fmt.Errorf("Could not find node.").Error());
-	}
-
-	newLat_string := strconv.FormatFloat(newLat, 'f', -1, 64)
-	newLon_string := strconv.FormatFloat(newLon, 'f', -1, 64)
-
-	var maxLength = 0
-	var maxNode *OSMUtil.Node
-
-	for _, node := range osmData.Node {
-		var length = 0
-		var i int
-		for i = 0; i < len(newLat_string) && i < len(node.Lat) && node.Lat[i] == newLat_string[i]; i++ {
-			length++
-		}
-		for i = 0; i < len(newLon_string) && i < len(node.Lon) && node.Lon[i] == newLon_string[i]; i++ {
-			length++
-		}
-
-		if length > maxLength {
-			maxLength = length
-			maxNode = node
-		}
-	}
-
-	return maxNode, nil
+	newNode := DBUtil.FindNewNode(*(anchors[nearest_string])[0], *(anchors[second_nearest_string])[0], math.Abs(nearest - kilometrage), math.Abs(second_nearest - kilometrage), osmData)
+	
+	return &newNode, nil
 }
 
 func insertNewHauptsig(node *OSMUtil.Node, kilometrage string, signal DBUtil.Signal, direction string, notFound *[]*DBUtil.Signal) bool{
