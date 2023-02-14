@@ -11,8 +11,7 @@ import (
 
 var ErrLinesDirNotFound = errors.New("lines directory not found")
 
-func CombineAllLines() (osmUtils.Osm, error) {
-	const tempLineDir = "temp/lines"
+func CombineAllLines(tempLineDir string) (osmUtils.Osm, error) {
 	files, err := os.ReadDir(tempLineDir)
 	
 	if err != nil {
