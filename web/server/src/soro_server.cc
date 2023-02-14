@@ -215,6 +215,8 @@ void serve_search(
 
   if (!info.has_value()) {
     res.result(http::status::no_content);
+
+    return;
   }
 
   rapidjson::Document doc;
