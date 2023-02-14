@@ -183,7 +183,7 @@ std::string to_lower(std::string str) {
   return str;
 }
 
-std::optional<soro::server::osm_halt> get_halt_info(const std::vector<soro::server::osm_halt>& osm_halts, const std::string& name) {
+std::vector<soro::server::osm_halt> get_halt_info(const std::vector<soro::server::osm_halt>& osm_halts, const std::string& name) {
     std::vector<soro::server::osm_halt> matches;
 
     for (const auto& halt : osm_halts) {
@@ -192,13 +192,7 @@ std::optional<soro::server::osm_halt> get_halt_info(const std::vector<soro::serv
         }
     }
 
-    // exact match?
-    for (const auto& match : matches) 
-        if (match.name_.length() == name.length()) return match;
-
-    if (!matches.empty()) return matches[0];
-
-    return {};
+    return matches;
 }
 
 void serve_search(
@@ -213,23 +207,30 @@ void serve_search(
 
   const auto info = get_halt_info(osm_halts.at(infra_name), halt_name);
 
-  if (!info.has_value()) {
-    res.result(http::status::no_content);
+ 
+  rapidjson::Document ret;
+  ret.SetArray();
 
-    return;
+  for (const auto& elem : info) {
+      rapidjson::Value pos;
+      pos.SetObject();
+      pos["lat"] = elem.lat_;
+      pos["lon"] = elem.lon_;
+
+      rapidjson::Value entry;
+      entry.SetObject();
+      entry["name"] = elem.name_;
+      entry["position"] = pos;
+
+      ret.PushBack(entry, ret.GetAllocator());
   }
-
-  rapidjson::Document doc;
-  doc.SetObject();
-  doc.AddMember("lat", info.value().lat_, doc.GetAllocator());
-  doc.AddMember("lon", info.value().lon_, doc.GetAllocator());
 
   rapidjson::StringBuffer buffer;
 
   buffer.Clear();
 
   rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-  doc.Accept(writer);
+  ret.Accept(writer);
 
   res.body() = buffer.GetString();
   res.result(http::status::ok);
