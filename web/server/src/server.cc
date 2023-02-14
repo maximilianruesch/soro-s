@@ -1,9 +1,8 @@
 #include <filesystem>
 
-#include <codecvt>
-
 #include "utl/cmd_line_parser.h"
 #include "utl/to_vec.h"
+#include "utl/logging.h"
 
 #include "soro/infrastructure/infrastructure.h"
 
@@ -142,8 +141,6 @@ int main(int argc, char const** argv) {
       infra_todo.emplace_back(dir_entry.path());
     }
   }
-  //For debuging purposes only. Technically it only needs to run this once
-  s.regenerate_ = true;
 
   if (s.regenerate_) {
     infra_todo.clear();
@@ -160,12 +157,12 @@ int main(int argc, char const** argv) {
 
   //OSM data is generated from the XML files in Infrastructure and stored in /Serverresources
   for (auto const& infra_file : infra_todo) {
-      auto const infra_res_dir = infra_dir / infra_file.filename();
-      exists_or_create_dir(infra_res_dir);
+    auto const infra_res_dir = infra_dir / infra_file.filename();
+    exists_or_create_dir(infra_res_dir);
 
-      soro::infra::infrastructure_options opts;
-      opts.infrastructure_path_ = infra_file;
-      opts.gps_coord_path_ = coord_file;
+    soro::infra::infrastructure_options opts;
+    opts.infrastructure_path_ = infra_file;
+    opts.gps_coord_path_ = coord_file;
     opts.determine_layout_ = true;
     opts.determine_interlocking_ = false;
     opts.determine_conflicts_ = false;
@@ -192,31 +189,31 @@ int main(int argc, char const** argv) {
       }
   }
 
-  std::unordered_map<std::string, std::vector<soro::server::osm_halt>> halts;
-
   // Copy every osm file to server
+  std::unordered_map<std::string, std::vector<soro::server::osm_halt>> halts;
   for (const auto& osm_file : osm_paths) {
       auto const infra_res_dir = infra_dir / osm_file.filename().replace_extension("");
       exists_or_create_dir(infra_res_dir);
 
       auto const osm_server_file = infra_res_dir / osm_file.filename();
 
-      // load and copy
+      // load, filter and save to a new location
       pugi::xml_document osm_data;
-      auto const error = osm_data.load_file(osm_file.c_str()); // load
+      auto const load_result = osm_data.load_file(osm_file.c_str());
 
       const auto filtered = filter_halt(osm_data);
       const auto fileName = osm_file.filename().replace_extension("").string();
       halts[fileName] = extract_halt_info(filtered);
 
-
-      if (error) {
-          osm_data.save_file(osm_server_file.c_str()); // copy
-      }
-      else {
-          std::cout << "Failed to read real OSM Data. Will resume without it \n";
+      if (!load_result) {
+          uLOG(utl::err)
+              << "Failed to read real OSM Data. Will resume without it. Error: "
+              << load_result.description()
+              << "\n";
           continue;
       }
+
+      osm_data.save_file(osm_server_file.c_str());
       all_osm_paths.push_back(osm_server_file);
   }
 

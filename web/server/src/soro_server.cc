@@ -1,10 +1,6 @@
 #include "soro/server/soro_server.h"
 
 #include <chrono>
-#include <regex>
-
-#include <iostream>
-#include <algorithm>
 
 #include "utl/logging.h"
 #include "utl/parser/mmap_reader.h"
@@ -138,19 +134,8 @@ void serve_file(std::string const& decoded_url,
 
 bool serve_tile(server::serve_context& sc, std::string const& decoded_url,
                 auto const& req, auto& res) {
-
-
-    std::cmatch regmatch;
-    
-    tiles::regex_matcher::match_result_t match;
-
-    if (std::regex_match(decoded_url.c_str(), regmatch, std::regex(R"(\/(\d+)\/(\d+)\/(\d+).mvt)"))) {
-
-        match = utl::to_vec(regmatch, [](auto const& m) {
-            return std::string_view{ m.first, static_cast<size_t>(m.length()) };
-            });
-    }
-
+  static tiles::regex_matcher const matcher{R"(\/(\d+)\/(\d+)\/(\d+).mvt)"};
+  auto const match = matcher.match(decoded_url);
   if (!match) {
     return false;
   }
@@ -192,13 +177,11 @@ void initialize_serve_contexts(server::serve_contexts& contexts,
   }
 }
 
-
 std::string to_lower(std::string str) {
   std::transform(str.begin(), str.end(), str.begin(),
                  [](unsigned char c) { return std::tolower(c); });
   return str;
 }
-
 
 std::optional<soro::server::osm_halt> get_halt_info(const std::vector<soro::server::osm_halt>& osm_halts, const std::string& name) {
     std::vector<soro::server::osm_halt> matches;
@@ -212,13 +195,11 @@ std::optional<soro::server::osm_halt> get_halt_info(const std::vector<soro::serv
     // exact match?
     for (const auto& match : matches) 
         if (match.name_.length() == name.length()) return match;
-    
 
     if (!matches.empty()) return matches[0];
 
     return {};
 }
-
 
 void serve_search(
     std::string const& decoded_url, response_t& res, const std::unordered_map<std::string, std::vector<soro::server::osm_halt>>& osm_halts) {
@@ -232,34 +213,32 @@ void serve_search(
 
   const auto info = get_halt_info(osm_halts.at(infra_name), halt_name);
 
-  if (info.has_value()) {
-
-    rapidjson::Document doc;
-    doc.SetObject();
-    doc.AddMember("lat", info.value().lat_, doc.GetAllocator());
-    doc.AddMember("lon", info.value().lon_, doc.GetAllocator());
-
-    rapidjson::StringBuffer buffer;
-
-    buffer.Clear();
-
-    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-    doc.Accept(writer);
-
-    res.body() = buffer.GetString();
-    res.result(http::status::ok);
-  } else {
+  if (!info.has_value()) {
     res.result(http::status::no_content);
+
+    return;
   }
 
+  rapidjson::Document doc;
+  doc.SetObject();
+  doc.AddMember("lat", info.value().lat_, doc.GetAllocator());
+  doc.AddMember("lon", info.value().lon_, doc.GetAllocator());
+
+  rapidjson::StringBuffer buffer;
+
+  buffer.Clear();
+
+  rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+  doc.Accept(writer);
+
+  res.body() = buffer.GetString();
+  res.result(http::status::ok);
 }
-
-
 
 server::server(std::string const& address, port_t const port,
                fs::path const& server_resource_dir, bool const test,
-    const std::unordered_map<std::string, std::vector<soro::server::osm_halt>>&
-        osm_halts) {
+    const std::unordered_map<std::string,
+    std::vector<soro::server::osm_halt>>&osm_halts) {
   initialize_serve_contexts(contexts_, server_resource_dir);
 
   serve_forever(
@@ -296,8 +275,7 @@ server::server(std::string const& address, port_t const port,
               serve_tile(sc_it->second, url.substr(tiles_pos + 6), req, res);
             } else if (should_send_pos) {
               serve_search(url, res, osm_halts);
-            }
-            else {
+            } else {
               serve_file(url, server_resource_dir, res);
             }
             break;
