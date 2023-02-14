@@ -198,14 +198,6 @@ std::vector<soro::server::osm_halt> get_halt_info(const std::vector<soro::server
 void serve_search(
     request_t const& req, response_t& res, const std::unordered_map<std::string, std::vector<soro::server::osm_halt>>& osm_halts) {
   
-  //const auto index = decoded_url.find('?') + 1;
-  //const auto msg = decoded_url.substr(index, decoded_url.length() - index);
-
-  //const auto params = utls::split(msg, "&");
-
-  //const auto halt_name = params[0].substr(6);  // len("query=") = 6
-  //const auto infra_name = params[1].substr(15);  // len("infrastructure=") = 15
-
   std::string body;
 
   auto m_buffer = req.body();
