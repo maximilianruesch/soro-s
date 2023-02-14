@@ -210,8 +210,8 @@ void serve_search(
   rapidjson::Document req_body;
   req_body.Parse(body.c_str());
 
-  std::string infra_name = req_body["infrastructure"].GetString();
-  std::string halt_name = req_body["query"].GetString();
+  std::string const infra_name = req_body["infrastructure"].GetString();
+  std::string const halt_name = req_body["query"].GetString();
 
   const auto info = get_halt_info(osm_halts.at(infra_name), halt_name);
 
