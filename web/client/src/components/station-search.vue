@@ -24,7 +24,7 @@
         >
             <v-list-subheader>SEARCH RESULTS</v-list-subheader>
             <v-list-item
-                v-for="(mapPosition, i) in currentSearchedMapPositions"
+                v-for="(mapPosition) in currentSearchedMapPositions"
                 :key="mapPosition.name"
                 :value="mapPosition.name"
                 @click="setCurrentSearchedMapPosition(mapPosition.position)"
