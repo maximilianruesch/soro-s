@@ -1,6 +1,6 @@
 import { Module } from 'vuex';
 import { MapPosition } from '@/components/infrastructure/infrastructure-map.vue';
-import { sendRequest, transformUrl } from '@/api/api-client';
+import { sendPostData, sendRequest, transformUrl } from '@/api/api-client';
 
 type InfrastructureState = {
     infrastructures: string[],
@@ -95,7 +95,13 @@ export const InfrastructureStore: Module<InfrastructureState, undefined> = {
                 return;
             }
 
-            fetch(transformUrl(`search?query=${query}&infrastructure=${state.currentInfrastructure}`))
+            sendPostData({
+                url: 'search',
+                data: {
+                    query,
+                    infrastructure: state.currentInfrastructure,
+                },
+            })
                 .then(response => response.json())
                 .then(position => {
                     const somePositions = [
