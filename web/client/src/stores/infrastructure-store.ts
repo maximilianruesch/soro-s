@@ -103,38 +103,20 @@ export const InfrastructureStore: Module<InfrastructureState, undefined> = {
                 },
             })
                 .then(response => response.json())
-                .then(position => {
-                    const somePositions = [
-                        {
-                            name: 'Darmstadt-Eberstadt',
-                            position: {
-                                lat: 49.8144694,
-                                lon: 8.6259571,
-                            },
-                        },
-                        {
-                            name: 'Frankfurt',
-                            position: {
-                                lat: 50.1039142,
-                                lon: 8.6448659,
-                            },
-                        },
-                        {
-                            name: 'Kassel',
-                            position: {
-                                lat: 51.3113881,
-                                lon: 9.4477049,
-                            },
-                        }
-                    ];
-                    const realPositions = Array.isArray(position) ? position : somePositions;
+                .then(positions => {
+                    commit('setCurrentSearchedMapPositions', positions);
 
-                    commit('setCurrentSearchedMapPositions', realPositions);
-                    commit('setCurrentSearchedMapPosition', realPositions[0]?.position);
+                    if (positions.length === 0) {
+                        commit('setCurrentSearchError', 'Not found!');
+
+                        return;
+                    }
+
+                    commit('setCurrentSearchedMapPosition', positions[0]?.position);
                     commit('setCurrentSearchError', undefined);
                 })
                 .catch(() => {
-                    commit('setCurrentSearchError', 'Not found!');
+                    commit('setCurrentSearchError', 'An error occurred!');
 
                     return;
                 });
