@@ -1,6 +1,6 @@
 import { Module } from 'vuex';
 import { MapPosition } from '@/components/infrastructure/infrastructure-map.vue';
-import { sendPostData, sendRequest, transformUrl } from '@/api/api-client';
+import { sendPostData, sendRequest } from '@/api/api-client';
 
 type InfrastructureState = {
     infrastructures: string[],
