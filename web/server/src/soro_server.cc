@@ -234,7 +234,7 @@ void serve_search(
       pos.AddMember("lon", elem.lon_, ret.GetAllocator());
 
       rapidjson::Value name;
-      name.SetString(elem.name_.c_str(), elem.name_.length());
+      name.SetString(elem.name_.c_str(), static_cast<unsigned int>(elem.name_.length()));
 
       rapidjson::Value entry;
       entry.SetObject();
@@ -300,6 +300,8 @@ server::server(std::string const& address, port_t const port,
           }
           case http::verb::post: {
             if (should_send_pos) serve_search(req, res, osm_halts);
+
+            break;
           }
 
           default: {
