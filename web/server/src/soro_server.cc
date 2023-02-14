@@ -192,6 +192,13 @@ std::vector<soro::server::osm_halt> get_halt_info(const std::vector<soro::server
         }
     }
 
+   std::sort(matches.begin(), matches.end(),
+        [](const soro::server::osm_halt& a, const soro::server::osm_halt& b) {
+            if (a.name_.length() < b.name_.length()) return true;
+            if (a.name_.length() > b.name_.length()) return false;
+            return a.name_ < b.name_;
+        });
+
     return matches;
 }
 
@@ -214,7 +221,6 @@ void serve_search(
   std::string halt_name = req_body["query"].GetString();
 
   const auto info = get_halt_info(osm_halts.at(infra_name), halt_name);
-
  
   rapidjson::Document ret;
   ret.SetArray();
