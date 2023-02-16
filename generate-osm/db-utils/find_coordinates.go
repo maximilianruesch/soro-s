@@ -5,7 +5,6 @@ import(
 	"errors"
 	"strconv"
 	"sort"
-	"fmt"
 	OSMUtil "transform-osm/osm-utils"
 )
 
@@ -91,8 +90,6 @@ func findNodes(node OSMUtil.Node, dist float64) (upId string, upDist float64, do
 		panic(err)
 	}	
 
-	fmt.Printf("node: %s, length: %d \n", node.Id, len(startWay))
-
 	switch (len(startWay)) {
 	case 1:
 		runningWay := startWay[0]
@@ -111,7 +108,8 @@ func findNodes(node OSMUtil.Node, dist float64) (upId string, upDist float64, do
 			runningWay = startWay[1]
 			downId, downDist = goDown(runningWay, 0, dist)
 		} else {
-			panic(errors.New("Error with ways!"))
+			err = errors.New("Error with ways!")
+			return
 		}
 	default: 
 		err = errors.New("Too many ways!")
