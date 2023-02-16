@@ -12,8 +12,7 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - name: Dependent issues
-        uses: z0al/dependent-issues@v1
+      - uses: z0al/dependent-issues@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
