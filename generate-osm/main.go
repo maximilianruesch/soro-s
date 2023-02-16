@@ -125,8 +125,7 @@ func generateOsm(generateLines bool, inputFile string) error {
 		}
 
 		relevant_refs := DBParser.Parse(refs)
-		_ = relevant_refs
-		Mapper.MapDB([]string{"3601"}, lineDir, db_lineDir)
+		Mapper.MapDB(relevant_refs, lineDir, db_lineDir)
 
 		fmt.Println("Generated all lines")
 	}

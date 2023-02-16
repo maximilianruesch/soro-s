@@ -213,7 +213,6 @@ func searchHauptsigF(knoten DBUtil.Spurplanknoten) {
 			}			
 
 			found := insertNewHauptsig(maxNode, signal.KnotenTyp.Kilometrierung[0].Value, *signal, "falling", &not_found)	
-			// _ = found
 			if found {
 				num_found++
 			}
@@ -276,14 +275,17 @@ func findBestOSMNode(kilometrage float64) (*OSMUtil.Node, error){
 	nearest, second_nearest := findTwoNearest(kilometrage)
 
 	if nearest == -1.0 || second_nearest == -1.0 {
-		return nil, errors.New(fmt.Errorf("Could not find node.").Error());
+		return nil, errors.New("Could not find node.")
 	}
 
 	nearest_string := formatKilometrage(nearest)
 	second_nearest_string := formatKilometrage(second_nearest)
 
-	newNode := DBUtil.FindNewNode(*(anchors[nearest_string])[0], *(anchors[second_nearest_string])[0], math.Abs(nearest - kilometrage), math.Abs(second_nearest - kilometrage), osmData)
-	
+	newNode, err := DBUtil.FindNewNode(*(anchors[nearest_string])[0], *(anchors[second_nearest_string])[0], math.Abs(nearest - kilometrage), math.Abs(second_nearest - kilometrage), osmData)
+	if err != nil {
+		return nil, errors.New("Could not find node.")
+	}
+
 	return &newNode, nil
 }
 

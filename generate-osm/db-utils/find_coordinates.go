@@ -5,6 +5,7 @@ import(
 	"errors"
 	"strconv"
 	"sort"
+	"fmt"
 	OSMUtil "transform-osm/osm-utils"
 )
 
@@ -19,15 +20,20 @@ type nodePair struct {
 const r = 6371.0
 var osmData OSMUtil.Osm
 
-func FindNewNode(node1 OSMUtil.Node, node2 OSMUtil.Node, dist1 float64, dist2 float64, data OSMUtil.Osm) (node OSMUtil.Node) {
+func FindNewNode(node1 OSMUtil.Node, node2 OSMUtil.Node, dist1 float64, dist2 float64, data OSMUtil.Osm) (node OSMUtil.Node, err error) {
 	osmData = data
+	err = nil
 
 	if dist1 == 0.0 {
-		return node1
+		return node1, nil
 	}
 
-	up1, upDist1, down1, downDist1 := findNodes(node1, dist1)
-	up2, upDist2, down2, downDist2 := findNodes(node2, dist2)
+	up1, upDist1, down1, downDist1, err1 := findNodes(node1, dist1)
+	up2, upDist2, down2, downDist2, err2 := findNodes(node2, dist2)
+
+	if err1 != nil || err2 != nil {
+		return OSMUtil.Node{}, errors.New("Insufficient anchor!")
+	}
 
 	if up1 == up2 {
 		node, _ = getNode(up1)
@@ -79,11 +85,13 @@ func FindNewNode(node1 OSMUtil.Node, node2 OSMUtil.Node, dist1 float64, dist2 fl
 	return 
 }
 
-func findNodes(node OSMUtil.Node, dist float64) (upId string, upDist float64, downId string, downDist float64) {
+func findNodes(node OSMUtil.Node, dist float64) (upId string, upDist float64, downId string, downDist float64, err error) {
 	startWay, err := findWay(node.Id)
 	if err != nil {
 		panic(err)
 	}	
+
+	fmt.Printf("node: %s, length: %d \n", node.Id, len(startWay))
 
 	switch (len(startWay)) {
 	case 1:
@@ -106,10 +114,11 @@ func findNodes(node OSMUtil.Node, dist float64) (upId string, upDist float64, do
 			panic(errors.New("Error with ways!"))
 		}
 	default: 
-		panic(errors.New("Too many ways!"))
+		err = errors.New("Too many ways!")
+		return
 	}
-
-	return
+	err = nil
+	return 
 }
 
 func goUp(runningWay OSMUtil.Way, index int, dist float64) (string, float64) {	
@@ -192,7 +201,7 @@ func findNextWay(wayDirUp bool, index int, runningNode OSMUtil.Node, oldNode OSM
 		if err != nil || len(nextWays) == 0 {
 			panic(errors.New("No ways!"))
 		}
-		if len(nextWays) == 1 {
+		if len(nextWays) == 1 || len(nextWays) > 2 {
 			return runningWay, -1, false, OSMUtil.Node{}
 		}
 
@@ -220,7 +229,7 @@ func findNextWay(wayDirUp bool, index int, runningNode OSMUtil.Node, oldNode OSM
 		if err != nil || len(nextWays) == 0 {
 			panic(errors.New("No ways!"))
 		}
-		if len(nextWays) == 1 {
+		if len(nextWays) == 1 || len(nextWays) > 2 {
 			return runningWay, -1, false, OSMUtil.Node{}
 		}
 
