@@ -1,0 +1,27 @@
+name: Dependent Issues
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - edited
+      - closed
+      - reopened
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dependent issues
+        uses: z0al/dependent-issues@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          label: dependent
+          keywords: depends on, blocked by
+          comment: >
+            This PR/issue depends on:
+
+            {{ dependencies }}
+
+            By **[Dependent Issues](https://github.com/z0al/dependent-issues)** (🤖). Happy coding!
