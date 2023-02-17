@@ -31,7 +31,6 @@ export const GoldenLayoutStore: Module<GoldenLayoutState, undefined> = {
             const storage = window.localStorage;
             const layout = storage.getItem('goldenLayout.layout');
             if (layout) {
-                console.log(JSON.parse(layout));
                 await state.rootComponent?.loadGLLayout(JSON.parse(layout));
             }
         },
@@ -48,7 +47,7 @@ export const GoldenLayoutStore: Module<GoldenLayoutState, undefined> = {
             await dispatch('loadSettings');
         },
 
-        async addGoldenLayoutTab({ state, dispatch }, { componentTechnicalName, title }: { componentTechnicalName: ComponentTechnicalName, title: string}) {
+        async addGoldenLayoutTab({ state }, { componentTechnicalName, title }: { componentTechnicalName: ComponentTechnicalName, title: string}) {
             await state.rootComponent?.addGLComponent(GLComponentNames[componentTechnicalName], title);
         },
     },
