@@ -98,9 +98,16 @@ func InsertNode(node *Node, other_node_id string, data *Osm) {
 				break
 			}
 		}
-		if index != -1 {
-			temp := append(way.Nd[:index], &Nd{Ref: node.Id})
-			way.Nd = append(temp, way.Nd[index+1:]...)
+		if index == -1 {
+			return
 		}
+		if index == len(way.Nd)-1 {
+			element := way.Nd[index]
+			temp := append(way.Nd[:index], &Nd{Ref: node.Id})
+			way.Nd = append(temp, element)
+			return
+		}
+		temp := append(way.Nd[:index+1], &Nd{Ref: node.Id})
+		way.Nd = append(temp, way.Nd[index+1:]...)
 	}
 }
