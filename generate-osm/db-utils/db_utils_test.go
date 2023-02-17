@@ -73,14 +73,14 @@ func TestGetNode(t *testing.T) {
 	var testCases = []testGetNodeTuple{
 		{testData, "1", &testNode1, nil},
 		{testData, "3", &testNode3, nil},
-		{testData, "42", nil, nodeNotFound},
-		{OSMUtil.Osm{}, "1", nil, nodeNotFound}}	
+		{testData, "42", nil, nodeNotFound("42")},
+		{OSMUtil.Osm{}, "1", nil, nodeNotFound("1")}}	
 
 	for _, vals := range testCases {
-		setOSMData(vals.osmData)
+		SetOSMData(&vals.osmData)
 		node, err := getNode(vals.id)
-		if err != vals.expectedError {
-			t.Log("Wrong error: ", err)
+		if (err != nil || vals.expectedError != nil) && err.Error() != vals.expectedError.Error() {
+			t.Log("Wrong error: ", err, vals.expectedError)
 			t.Fail()
 		}
 		if node != vals.expectedNode {
