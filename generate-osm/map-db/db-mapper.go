@@ -47,6 +47,8 @@ func MapDB(refs []string, osmDir string, DBDir string) {
 		print(line)
 		print("\n")
 
+		DBUtil.SetOSMData(osmData)
+
 		mainF, mainS := mapSignals(dbData, findAnchors)
 		// mapPoints(&osmData, dbData)		
 
@@ -281,7 +283,7 @@ func findBestOSMNode(kilometrage float64) (*OSMUtil.Node, error){
 	nearest_string := formatKilometrage(nearest)
 	second_nearest_string := formatKilometrage(second_nearest)
 
-	newNode, err := DBUtil.FindNewNode((anchors[nearest_string])[0], (anchors[second_nearest_string])[0], math.Abs(nearest - kilometrage), math.Abs(second_nearest - kilometrage), &osmData)
+	newNode, err := DBUtil.FindNewNode((anchors[nearest_string])[0], (anchors[second_nearest_string])[0], math.Abs(nearest - kilometrage), math.Abs(second_nearest - kilometrage))
 	if err != nil {
 		return nil, errors.New("Could not find node.")
 	}
