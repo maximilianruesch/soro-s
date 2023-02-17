@@ -5,7 +5,6 @@ import(
 	"errors"
 	"strconv"
 	"sort"
-	//"fmt"
 	OSMUtil "transform-osm/osm-utils"
 )
 
@@ -288,13 +287,9 @@ func getIndex(id string, way OSMUtil.Way) int {
 
 func findWay(id string) ([]OSMUtil.Way, error) {
 	ways := []OSMUtil.Way{}
-	//fmt.Printf("Looking for %s \n", id)
 	for _, way := range osmData.Way {
-		//fmt.Printf("Looking in %s \n", way.Id)
 		for _, node := range way.Nd {
-			//fmt.Printf("Looking into %s \n", node.Ref)
 			if node.Ref == id {
-				//fmt.Printf("Found %s \n", way.Id)
 				ways = append(ways, *way)
 				break
 			}

@@ -74,7 +74,7 @@ func MapDB(refs []string, osmDir string, DBDir string) {
 			}
 		}
 	}
-	fmt.Printf("Found: %d \n", num_found)
+	fmt.Printf("Could not find: %d \n", num_found)
 }
 
 func mapSignals(DBData DBUtil.XmlIssDaten, firstPass bool) ([]*DBUtil.Signal, []*DBUtil.Signal){
@@ -213,8 +213,7 @@ func searchHauptsigF(knoten DBUtil.Spurplanknoten) {
 			}			
 
 			found := insertNewHauptsig(maxNode, signal.KnotenTyp.Kilometrierung[0].Value, *signal, "falling", &not_found)	
-			if found {
-				//fmt.Printf("Found node %s \n", maxNode.Id)
+			if !found {
 				num_found++
 			}
 		}
