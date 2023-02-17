@@ -19,7 +19,7 @@ type nodePair struct {
 const r = 6371.0
 var osmData *OSMUtil.Osm
 
-var nodeNotFound = errors.New("Could not find node!")
+func nodeNotFound(id string) error {return errors.New("Could not find node: "+id)}
 
 func FindNewNode(node1 *OSMUtil.Node, node2 *OSMUtil.Node, dist1 float64, dist2 float64) (node *OSMUtil.Node, err error) {
 	err = nil
@@ -274,7 +274,7 @@ func getNode(id string) (*OSMUtil.Node, error){
 			return node, nil
 		}
 	}
-	return nil, nodeNotFound
+	return nil, nodeNotFound(id)
 }
 
 func getIndex(id string, way OSMUtil.Way) int {
@@ -310,7 +310,7 @@ func distance(phi1 float64, phi2 float64, lambda1 float64, lambda2 float64) floa
 			math.Cos(phi1)*math.Cos(phi2)*math.Pow(math.Sin((lambda2 - lambda1)/2), 2)))
 }
 
-func SetOSMData(data OSMUtil.Osm) {
-	osmData = &data
+func SetOSMData(data *OSMUtil.Osm) {
+	osmData = data
 	return
 }

@@ -47,7 +47,7 @@ func MapDB(refs []string, osmDir string, DBDir string) {
 		print(line)
 		print("\n")
 
-		DBUtil.SetOSMData(osmData)
+		DBUtil.SetOSMData(&osmData)
 
 		mainF, mainS := mapSignals(dbData, findAnchors)
 		// mapPoints(&osmData, dbData)		
