@@ -49,6 +49,23 @@ export const infrastructureMapStyle = (() => {
                 }
             },
             {
+                'id': 'tunnel',
+                'type': 'line',
+                'source': 'osm',
+                'source-layer': 'rail',
+                'filter': ['==', 'rail', 'underground'],
+                'paint': {
+                    'line-color': [
+                        'case',
+                        ['has', 'color'], ['get', 'color'],
+                        '#444'
+                    ],
+                    'line-width': 2.0,
+                    'line-opacity': 0.4
+                }
+            },
+
+            {
                 'id': 'rail',
                 'type': 'line',
                 'source': 'osm',
