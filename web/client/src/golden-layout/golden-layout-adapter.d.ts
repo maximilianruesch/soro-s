@@ -1,8 +1,8 @@
-import { ResolvedLayoutConfig } from 'golden-layout';
+import { LayoutConfig, ResolvedLayoutConfig } from 'golden-layout';
 
 export type GoldenLayoutAdapter = {
     addGLComponent: (componentType: string, title: string) => void,
-    loadGLLayout: (layout: ResolvedLayoutConfig) => void,
+    loadGLLayout: (layout: LayoutConfig | ResolvedLayoutConfig) => void,
     getLayoutConfig: () => ResolvedLayoutConfig,
 }
 
