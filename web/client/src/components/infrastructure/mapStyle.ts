@@ -1,10 +1,9 @@
-import { elementTypes } from './elementTypes';
+import { ElementType, ElementTypes } from './elementTypes';
 import { StyleSpecification } from 'maplibre-gl';
 import { transformUrl } from '@/api/api-client';
+import { ThemeDefinition } from 'vuetify';
 
-export const mapLayers = elementTypes.map(type => type + '-layer');
-
-export const infrastructureMapStyle = (() => {
+export const createInfrastructureMapStyle = ({ currentTheme, activatedElements }: { currentTheme: ThemeDefinition, activatedElements: typeof ElementTypes }) => {
     const style: StyleSpecification = {
         version: 8,
         sources: {
@@ -34,7 +33,7 @@ export const infrastructureMapStyle = (() => {
                 'id': 'background',
                 'type': 'background',
                 'paint': {
-                    'background-color': '#e0e0e0'
+                    'background-color': currentTheme.colors?.background,
                 }
             },
             {
@@ -131,8 +130,8 @@ export const infrastructureMapStyle = (() => {
         ]
     };
 
-    elementTypes.forEach(type => {
-        if (type === 'station') {
+    ElementTypes.forEach(type => {
+        if (type === ElementType.STATION) {
             style.layers.push({
                 'id': type + '-layer',
                 'source': 'osm',
@@ -141,10 +140,12 @@ export const infrastructureMapStyle = (() => {
                 'minzoom': 5,
                 'maxzoom': 24,
                 'paint': {
+                    'icon-color': '#ffffff',
                     'text-halo-width': 1,
                     'text-halo-color': '#ffffff',
                 },
                 'layout': {
+                    'visibility': (activatedElements.includes(type) ? 'visible' : 'none'),
                     'text-field': ['get', 'name'],
                     'text-anchor': 'top',
                     'text-offset': [0, 1],
@@ -167,7 +168,10 @@ export const infrastructureMapStyle = (() => {
                     'circle-color': '#000000',
                     'circle-stroke-width': 1,
                     'circle-stroke-color': '#FFFFFF'
-                }
+                },
+                'layout': {
+                    'visibility': (activatedElements.includes(type) ? 'visible' : 'none'),
+                },
             });
 
             // gives us the elements as icons
@@ -176,10 +180,15 @@ export const infrastructureMapStyle = (() => {
                 'source': 'osm',
                 'source-layer': type,
                 'type': 'symbol',
-                'minzoom': 15,
+                'minzoom': type === ElementType.HALT ? 10 : 15,
                 'maxzoom': 24,
+                'paint': {
+                    'icon-color': '#ffffff',
+                    'text-color': currentTheme.colors?.['on-surface'],
+                },
                 'layout': {
-                    'text-field': ['get', 'id'],
+                    'visibility': (activatedElements.includes(type) ? 'visible' : 'none'),
+                    'text-field': ['get', type === ElementType.HALT ? 'name' : 'id'],
                     'text-anchor': 'top',
                     'text-offset': [0, 1],
                     'text-font': ['Noto Sans Display Regular'],
@@ -192,4 +201,4 @@ export const infrastructureMapStyle = (() => {
     });
 
     return style;
-})();
+};

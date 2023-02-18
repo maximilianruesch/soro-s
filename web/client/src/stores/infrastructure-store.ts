@@ -1,9 +1,17 @@
 import { Module } from 'vuex';
-import { sendRequest } from '@/api/api-client';
+import { MapPosition } from '@/components/infrastructure/infrastructure-map.vue';
+import { sendPostData, sendRequest } from '@/api/api-client';
 
 type InfrastructureState = {
     infrastructures: string[],
     currentInfrastructure?: string,
+    currentSearchedMapPosition?: MapPosition,
+    currentSearchedMapPositions: {
+        name: string,
+        position: MapPosition,
+    }[],
+    currentSearchTerm?: string,
+    currentSearchError?: string,
     highlightedSignalStationRouteID?: string,
     highlightedStationRouteID?: string,
 }
@@ -19,6 +27,10 @@ export const InfrastructureStore: Module<InfrastructureState, undefined> = {
         return {
             infrastructures: [],
             currentInfrastructure: undefined,
+            currentSearchedMapPosition: undefined,
+            currentSearchedMapPositions: [],
+            currentSearchTerm: undefined,
+            currentSearchError: undefined,
             highlightedSignalStationRouteID: undefined,
             highlightedStationRouteID: undefined,
         };
@@ -31,6 +43,22 @@ export const InfrastructureStore: Module<InfrastructureState, undefined> = {
 
         setCurrentInfrastructure(state, currentInfrastructure) {
             state.currentInfrastructure = currentInfrastructure;
+        },
+
+        setCurrentSearchedMapPosition(state, currentSearchedMapPosition) {
+            state.currentSearchedMapPosition = currentSearchedMapPosition;
+        },
+
+        setCurrentSearchedMapPositions(state, currentSearchedMapPositions) {
+            state.currentSearchedMapPositions = currentSearchedMapPositions;
+        },
+
+        setCurrentSearchTerm(state, currentSearchTerm) {
+            state.currentSearchTerm = currentSearchTerm;
+        },
+
+        setCurrentSearchError(state, currentSearchError) {
+            state.currentSearchError = currentSearchError;
         },
 
         setHighlightedSignalStationRouteID(state, highlightedSignalStationRouteID) {
@@ -59,5 +87,46 @@ export const InfrastructureStore: Module<InfrastructureState, undefined> = {
         unload({ commit }) {
             commit('setCurrentInfrastructure', null);
         },
+
+        searchPositionFromName({ commit, state }, query) {
+            if (!state.currentInfrastructure) {
+                console.error('Tried search with no selected infrastructure');
+
+                return;
+            }
+
+            if (!query) {
+                commit('setCurrentSearchedMapPosition', null);
+
+                return;
+            }
+
+            sendPostData({
+                url: 'search',
+                data: {
+                    query,
+                    infrastructure: state.currentInfrastructure,
+                },
+            })
+                .then(response => response.json())
+                .then(positions => {
+                    commit('setCurrentSearchedMapPositions', positions);
+                    commit('setCurrentSearchTerm', query);
+
+                    if (positions.length === 0) {
+                        commit('setCurrentSearchError', 'Not found!');
+
+                        return;
+                    }
+
+                    commit('setCurrentSearchedMapPosition', positions[0]?.position);
+                    commit('setCurrentSearchError', undefined);
+                })
+                .catch(() => {
+                    commit('setCurrentSearchError', 'An error occurred!');
+
+                    return;
+                });
+        }
     },
 };

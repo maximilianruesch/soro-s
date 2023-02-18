@@ -1,16 +1,21 @@
 <template>
     <div class="full-height">
-        <soro-overlay @add-golden-layout-tab="addGoldenLayoutTab" />
-        <golden-layout-adapter
-            ref="GLayoutRoot"
-            class="golden-layout-root"
-        />
+        <v-theme-provider :theme="theme">
+            <v-layout>
+                <soro-navigation @add-golden-layout-tab="addGoldenLayoutTab" />
+            </v-layout>
+            <golden-layout-adapter
+                ref="GLayoutRoot"
+                class="golden-layout-root"
+                :class="$vuetify.theme.themeClasses"
+            />
+        </v-theme-provider>
     </div>
 </template>
 
 <script setup lang="ts">
 import GoldenLayoutAdapter from '@/golden-layout/golden-layout-adapter.vue';
-import SoroOverlay from '@/components/soro-overlay.vue';
+import SoroNavigation from '@/components/navigation/soro-navigation.vue';
 </script>
 
 <script lang="ts">
@@ -20,8 +25,10 @@ import { TimetableNamespace } from '@/stores/timetable-store';
 import { defineComponent, ref } from 'vue';
 import { LayoutConfig } from 'golden-layout';
 import { ComponentTechnicalName, GLComponentNames, GLComponentTitles } from '@/golden-layout/golden-layout-constants';
+import { SettingsNamespace } from '@/stores/settings-store';
 
 const initLayout: LayoutConfig = {
+    dimensions: { headerHeight: 36 },
     root: {
         type: 'row',
         content: [
@@ -42,12 +49,6 @@ const initLayout: LayoutConfig = {
 const GLayoutRoot = ref();
 
 export default defineComponent({
-    data() {
-        return {
-            overlay: false,
-        };
-    },
-
     computed: {
         ...mapState(InfrastructureNamespace, [
             'currentInfrastructure',
@@ -57,9 +58,11 @@ export default defineComponent({
             'currentTimetable',
             'timetables',
         ]),
+        ...mapState(SettingsNamespace, ['theme']),
     },
 
     mounted() {
+        this.loadSettings();
         this.loadInfrastructures();
         this.loadTimetables();
         GLayoutRoot.value.loadGLLayout(initLayout);
@@ -79,6 +82,8 @@ export default defineComponent({
             loadTimetables: 'initialLoad',
             loadTimetable: 'load',
         }),
+
+        ...mapActions(SettingsNamespace, ['loadSettings']),
     },
 });
 </script>

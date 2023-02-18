@@ -4,38 +4,38 @@
             ref="map"
             class="map infrastructure-map"
         />
-        <div
+        <v-sheet
             ref="mapLegend"
             class="map-overlay infrastructure-map-legend"
+            :elevation="5"
         >
             <template
                 v-for="(elementType, index) in legendControlTypes"
                 :key="index"
             >
-                <input
-                    :id="elementType"
+                <v-checkbox
                     :ref="elementType"
+                    v-model="checkedControls"
+                    :name="elementType"
                     :value="elementType"
-                    :checked="initiallyCheckedControls.includes(elementType)"
-                    type="checkbox"
-                    @input="onLegendControlClicked"
-                >
-                <label
                     class="legend-key"
-                    :for="elementType"
+                    color="primary"
+                    density="compact"
+                    min-height="0px"
+                    hide-details
                 >
-                    <img
-                        v-if="hasImage(elementType)"
-                        class="legend-key-icon"
-                        :src="iconUrl + elementType + iconExtension"
-                        alt=""
-                    >
-                    {{ elementTypeLabels[elementType] ?? elementType }}
-                </label>
-                <br>
+                    <template #label>
+                        <img
+                            v-if="hasImage(elementType)"
+                            class="legend-key-icon"
+                            :src="iconUrl + elementType + iconExtension"
+                            alt=""
+                        >
+                        {{ elementTypeLabels[elementType] ?? elementType }}
+                    </template>
+                </v-checkbox>
             </template>
-        </div>
-
+        </v-sheet>
         <div
             ref="infrastructureTooltip"
             class="infrastructureTooltip infrastructure-tooltip"
@@ -58,21 +58,27 @@ import {
     highlightStationRoute
 } from './infrastructureMap';
 import { FilterSpecification, Map } from 'maplibre-gl';
-import { infrastructureMapStyle } from './mapStyle';
+import { createInfrastructureMapStyle } from './mapStyle';
 import { addIcons, iconExtension, iconUrl } from './addIcons';
-import { elementTypes, elementTypeLabels } from './elementTypes';
+import { ElementTypes, ElementType, ElementTypeLabels } from './elementTypes';
 import { defineComponent } from 'vue';
 import { transformUrl } from '@/api/api-client';
+import { ThemeInstance, useTheme } from 'vuetify';
 
 const specialLayoutControls = ['Rising', 'Falling'];
-const initiallyCheckedControls = ['station', 'ms', 'as', 'eotd', ...specialLayoutControls];
+const initiallyCheckedControls = [
+    ElementType.STATION,
+    ElementType.MAIN_SIGNAL,
+    ElementType.APPROACH_SIGNAL,
+    ElementType.END_OF_TRAIN_DETECTOR,
+    ...specialLayoutControls,
+];
 const legendControlTypes = [
-    ...elementTypes,
+    ...ElementTypes,
     ...specialLayoutControls
 ];
 
 const mapDefaults = {
-    style: infrastructureMapStyle,
     attributionControl: false,
     zoom: 18,
     hash: 'location',
@@ -81,23 +87,33 @@ const mapDefaults = {
     bearing: 0,
 };
 
+export type MapPosition = {
+    lat: number,
+    lon: number,
+};
+
 export default defineComponent({
     name: 'InfrastructureMap',
+
+    setup() {
+        return { currentTheme: useTheme().global };
+    },
 
     data() {
         return {
             libreGLMap: null as (Map | null),
             legendControlTypes,
-            initiallyCheckedControls,
+            checkedControls: Array.from(initiallyCheckedControls),
             iconUrl,
             iconExtension,
-            elementTypeLabels: elementTypeLabels as { [elementType: string]: string },
+            elementTypeLabels: ElementTypeLabels as { [elementType: string]: string },
         };
     },
 
     computed: {
         ...mapState(InfrastructureNamespace, [
             'currentInfrastructure',
+            'currentSearchedMapPosition',
             'highlightedSignalStationRouteID',
             'highlightedStationRouteID',
         ]),
@@ -108,6 +124,61 @@ export default defineComponent({
             // Re-instantiating the map on infrastructure change currently leads to duplicated icon fetching on change.
             // @ts-ignore type instantiation for some reason is too deep
             this.libreGLMap = newInfrastructure ? this.createMap(newInfrastructure) : null;
+        },
+
+        checkedControls(newCheckedControls: string[], oldCheckedControls: string[]) {
+            if (!this.libreGLMap) {
+                return;
+            }
+
+            const controlsToDeactivate = oldCheckedControls.filter((control) => !newCheckedControls.includes(control));
+            const controlsToActivate = newCheckedControls.filter((control) => !oldCheckedControls.includes(control));
+
+            controlsToDeactivate.forEach((control) => {
+                if (specialLayoutControls.includes(control)) {
+                    this.evaluateSpecialLegendControls();
+
+                    return;
+                }
+
+                this.setElementTypeVisibility(control, false);
+            });
+
+            controlsToActivate.forEach((control) => {
+                if (specialLayoutControls.includes(control)) {
+                    this.evaluateSpecialLegendControls();
+
+                    return;
+                }
+
+                this.setElementTypeVisibility(control, true);
+            });
+        },
+
+        currentSearchedMapPosition(mapPosition: MapPosition) {
+            if (!this.libreGLMap) {
+                return;
+            }
+
+            console.log('Jumping to: ' + JSON.stringify(mapPosition));
+            this.libreGLMap.jumpTo({
+                center: mapPosition,
+                zoom: 14,
+            });
+        },
+
+        currentTheme: {
+            handler(newTheme: ThemeInstance) {
+                if (!this.libreGLMap) {
+                    return;
+                }
+
+                this.libreGLMap.setStyle(createInfrastructureMapStyle({
+                    currentTheme: newTheme.current.value,
+                    activatedElements: this.checkedControls,
+                }));
+            },
+            deep: true,
         },
 
         highlightedSignalStationRouteID(newID, oldID) {
@@ -148,28 +219,20 @@ export default defineComponent({
             return !specialLayoutControls.includes(elementType);
         },
 
-        onLegendControlClicked(event: Event) {
-            if (specialLayoutControls.includes((event.target as HTMLInputElement).id)) {
-                this.evaluateSpecialLegendControls();
-
-                return;
+        setElementTypeVisibility(elementType: string, visible: boolean) {
+            if (elementType !== 'station') {
+                this.libreGLMap?.setLayoutProperty(
+                    `circle-${elementType}-layer`,
+                    'visibility',
+                    visible ? 'visible': 'none',
+                );
             }
 
-            this.evaluateLegendControlForControlType((event.target as HTMLInputElement).value);
-        },
-
-        evaluateLegendControlForControlType(type: string) {
-            if (!this.libreGLMap) {
-                return;
-            }
-
-            // @ts-ignore
-            this.libreGLMap.setLayoutProperty(type + '-layer', 'visibility', this.$refs[type][0].checked ? 'visible' : 'none');
-
-            if (type !== 'station') {
-                // @ts-ignore
-                this.libreGLMap.setLayoutProperty('circle-' + type + '-layer', 'visibility', this.$refs[type][0].checked ? 'visible' : 'none');
-            }
+            this.libreGLMap?.setLayoutProperty(
+                `${elementType}-layer`,
+                'visibility',
+                visible ? 'visible': 'none',
+            );
         },
 
         evaluateSpecialLegendControls() {
@@ -189,8 +252,8 @@ export default defineComponent({
                 filter = ['boolean', false];
             }
 
-            elementTypes.forEach((elementType) => {
-                if (elementType === 'station') {
+            ElementTypes.forEach((elementType) => {
+                if (elementType === ElementType.STATION) {
                     return;
                 }
 
@@ -210,12 +273,16 @@ export default defineComponent({
                     if (relative_url.startsWith('/')) {
                         return { url: transformUrl(`/${infrastructure}${relative_url}`) };
                     }
-                }
+                },
+                style: createInfrastructureMapStyle({
+                    currentTheme: this.$vuetify.theme.current,
+                    activatedElements: this.checkedControls,
+                }),
             });
 
             map.on('load', async () => {
                 await addIcons(map);
-                elementTypes.forEach((type) => this.evaluateLegendControlForControlType(type));
+                ElementTypes.forEach((type) => this.setElementTypeVisibility(type, this.checkedControls.includes(type)));
             });
 
             map.dragPan.enable({
@@ -253,31 +320,25 @@ export default defineComponent({
     position: absolute;
     bottom: 0;
     right: 0;
-    background: var(--overlay-color);
     margin-right: 20px;
-    font-family: var(--main-font-family);
-    overflow: auto;
-    border-radius: var(--border-radius);
 }
 
 .infrastructure-map-legend {
-    padding: 10px;
-    box-shadow: 0 1px 2px rgb(0 0 0 / 10%);
-    line-height: 18px;
+    padding: 10px 10px 20px;
     height: fit-content;
     margin-bottom: 40px;
     width: fit-content;
-    background: var(--overlay-color);
 }
 
 .legend-key {
-    height: 1em;
+    height: 1.5em;
     margin-right: 5px;
     margin-left: 5px;
 }
 
 .legend-key-icon {
     margin-right: 7px;
+    margin-left: 7px;
     display: inline-block;
     height: 1em;
 }
