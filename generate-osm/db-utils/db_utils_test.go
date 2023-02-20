@@ -7,6 +7,7 @@ import (
 )
 
 func TestDistance(t *testing.T) {
+	print("Testing distance function. \n")
 	var simpleTestCases = [][]float64{ // {phi1, phi2, lambda1, lambda2, expectedResult}
 		[]float64{50, 50, 8, 8, 0},
 		[]float64{0, -180, 0, 0, 20015.086796020572}, // ~half earth circumference
@@ -40,6 +41,7 @@ type testIndexTuple struct {
 }
 
 func TestGetIndex(t *testing.T) {
+	print("Testing getIndex function. \n")
 	testWay := OSMUtil.Way{Nd: []*OSMUtil.Nd{
 		&OSMUtil.Nd{Ref:"1"}, &OSMUtil.Nd{Ref:"2"}, &OSMUtil.Nd{Ref:"3"}}}
 
@@ -65,6 +67,7 @@ type testGetNodeTuple struct {
 }
 
 func TestGetNode(t *testing.T) {
+	print("Testing getNode function. \n")
 	testNode1 := OSMUtil.Node{Id:"1"}
 	testNode3 := OSMUtil.Node{Id:"3"}
 	testData := OSMUtil.Osm{Node: []*OSMUtil.Node{
@@ -85,6 +88,127 @@ func TestGetNode(t *testing.T) {
 		}
 		if node != vals.expectedNode {
 			t.Log("Expected "+vals.expectedNode.Id+", got "+node.Id)
+			t.Fail()
+		}
+	}
+}
+
+type testFindWayTuple struct {
+	osmData OSMUtil.Osm
+	id string
+	expectedWays []OSMUtil.Way
+	expectedError error
+}
+
+func TestFindWay(t *testing.T) {
+	print("Testing findWay function. \n")
+	testWay1 := OSMUtil.Way{Id:"1", Nd: []*OSMUtil.Nd{
+		&OSMUtil.Nd{Ref:"100"}, &OSMUtil.Nd{Ref:"101"}, &OSMUtil.Nd{Ref:"102"}}}
+	testWay2 := OSMUtil.Way{Id:"2", Nd: []*OSMUtil.Nd{
+		&OSMUtil.Nd{Ref:"102"}, &OSMUtil.Nd{Ref:"103"}, &OSMUtil.Nd{Ref:"104"}}}
+	testData1 := OSMUtil.Osm{Way:[]*OSMUtil.Way{&testWay1, &testWay2}}
+	testData2 := OSMUtil.Osm{Way:[]*OSMUtil.Way{&testWay1, &OSMUtil.Way{}, &testWay2}}
+
+	testCases := []testFindWayTuple{
+		{testData1, "103", []OSMUtil.Way{testWay2}, nil},
+		{testData1, "102", []OSMUtil.Way{testWay1, testWay2}, nil},
+		{testData1, "42", []OSMUtil.Way{}, wayNotFound("42")},
+		{testData2, "101", []OSMUtil.Way{testWay1}, nil},
+		{testData2, "102", []OSMUtil.Way{testWay1, testWay2}, nil},
+		{testData2, "42", []OSMUtil.Way{}, wayNotFound("42")},
+		{OSMUtil.Osm{}, "100", []OSMUtil.Way{}, wayNotFound("100")}}
+
+	for _, vals := range testCases {
+		SetOSMData(&vals.osmData)
+		ways, err := findWay(vals.id)
+		if (err != nil || vals.expectedError != nil) && err.Error() != vals.expectedError.Error() {
+			t.Log("Wrong error: ", err, vals.expectedError)
+			t.Fail()
+		}
+		for i, _ := range ways {
+			if ways[i].Id != vals.expectedWays[i].Id {
+				t.Log("Wrong Id, got:", ways[i].Id)
+				t.Fail()
+			}
+		}
+	}
+}
+
+type testFindNextWayTuple struct {
+	osmData OSMUtil.Osm
+	currWayDirUp bool
+	currIndex int
+	currRunningNode *OSMUtil.Node
+	oldNode *OSMUtil.Node
+	currRunningWay OSMUtil.Way
+	expectedRunningWay OSMUtil.Way
+	expectedIndex int
+	expectedWayDirUp bool
+	expectedNextNode *OSMUtil.Node
+}
+
+func TestFindNextWay(t *testing.T) {	
+	print("Testing findNextWay function. \n")
+	testNode1 := OSMUtil.Node{Id: "1"}
+	testNode2 := OSMUtil.Node{Id: "2"}
+	testNode3 := OSMUtil.Node{Id: "3"}
+	testNode4 := OSMUtil.Node{Id: "4"}
+	testNode5 := OSMUtil.Node{Id: "5"}
+	testNode6 := OSMUtil.Node{Id: "6"}
+	testNode7 := OSMUtil.Node{Id: "7"}
+
+	testWay1 := OSMUtil.Way{Nd: []*OSMUtil.Nd{
+		&OSMUtil.Nd{Ref: "1"}, &OSMUtil.Nd{Ref: "2"}, &OSMUtil.Nd{Ref: "3"}}}
+	testWay2 := OSMUtil.Way{Nd: []*OSMUtil.Nd{
+		&OSMUtil.Nd{Ref: "3"}, &OSMUtil.Nd{Ref: "4"}}}
+	testWay3 := OSMUtil.Way{Nd: []*OSMUtil.Nd{
+		&OSMUtil.Nd{Ref: "5"}, &OSMUtil.Nd{Ref: "4"}}}
+	testWay4 := OSMUtil.Way{Nd: []*OSMUtil.Nd{
+		&OSMUtil.Nd{Ref: "5"}, &OSMUtil.Nd{Ref: "6"}, &OSMUtil.Nd{Ref: "7"}}}
+
+	testData1 := OSMUtil.Osm{
+		Node: []*OSMUtil.Node{
+			&testNode1, &testNode2, &testNode3, &testNode4, &testNode5, &testNode6, &testNode7},
+		Way: []*OSMUtil.Way{
+			&testWay1, &testWay2, &testWay3, &testWay4}}
+	testData2 := OSMUtil.Osm{
+		Node: []*OSMUtil.Node{
+			&testNode1, &testNode2, &testNode3, &testNode4, &testNode5, &testNode6, &testNode7},
+		Way: []*OSMUtil.Way{
+			&testWay4, &testWay3, &testWay2, &testWay1}}
+
+	testCases := []testFindNextWayTuple{
+		{testData1, true, 1, &testNode2, &testNode3, testWay1, testWay1, 1, true, &testNode1}, // No searching of any next ways
+		{testData1, false, 1, &testNode2, &testNode1, testWay1, testWay1, 1, false, &testNode3},
+		{testData1, true, 0, &testNode1, &testNode2, testWay1, testWay1, -1, false, nil}, // Reached upper/lower end of ways
+		{testData1, false, 2, &testNode7, &testNode6, testWay4, testWay4, -1, false, nil},
+		{testData1, true, 0, &testNode3, &testNode4, testWay2, testWay1, 2, true, &testNode2}, // No change in direction when going up
+		{testData2, true, 0, &testNode3, &testNode4, testWay2, testWay1, 2, true, &testNode2}, // independent of order of ways
+		{testData1, false, 2, &testNode3, &testNode2, testWay1, testWay2, 0, false, &testNode4}, // No change in direction when going down
+		{testData2, false, 2, &testNode3, &testNode2, testWay1, testWay2, 0, false, &testNode4},
+		{testData1, true, 0, &testNode5, &testNode6, testWay4, testWay3, 0, false, &testNode4}, // Change of direction when going up
+		{testData2, true, 0, &testNode5, &testNode6, testWay4, testWay3, 0, false, &testNode4},
+		{testData1, false, 1, &testNode4, &testNode3, testWay2, testWay3, 1, true, &testNode5}, // Change of direction when going down
+		{testData2, false, 1, &testNode4, &testNode3, testWay2, testWay3, 1, true, &testNode5}} 
+
+	for _, vals := range testCases {
+		SetOSMData(&vals.osmData)
+		runningWay, index, wayDirUp, nextNode := findNextWay(vals.currWayDirUp, vals.currIndex, vals.currRunningNode, vals.oldNode, vals.currRunningWay)
+
+		if runningWay.Id != vals.expectedRunningWay.Id {
+			t.Log("Wrong way:", runningWay.Id)
+			t.Fail()
+		}
+		if index != vals.expectedIndex {
+			t.Log("Wrong index:", index)
+			t.Fail()
+		}
+		if wayDirUp != vals.expectedWayDirUp {
+			t.Log("Wrong direction:", wayDirUp)
+			t.Fail()
+		}
+		if !(nextNode == nil && vals.expectedNextNode == nil) && nextNode.Id != vals.expectedNextNode.Id {
+			t.Log("Wrong node:", nextNode.Id, vals.expectedNextNode.Id)
 			t.Fail()
 		}
 	}
