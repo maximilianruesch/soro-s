@@ -22,13 +22,13 @@ func TestDistance(t *testing.T) {
 	
 	for _, vals := range simpleTestCases {
 		if dist := distance(vals[0], vals[1], vals[2], vals[3]); vals[4] != dist {
-			t.Log("result was wrongly", dist)
+			t.Errorf("Expected distance %f, got: %f \n", vals[4], dist)
 			t.Fail()
 		}
 	}
 	for _, vals := range idemTestCases {
 		if dist1, dist2 := distance(vals[0], vals[1], vals[2], vals[3]), distance(vals[4], vals[5], vals[6], vals[7]); dist1 != dist2{
-			t.Log("Function not symmetric!", dist1, dist2)
+			t.Errorf("Function not symmetric, got results %f and %f \n", dist1, dist2)
 			t.Fail()
 		}
 	}
@@ -53,7 +53,7 @@ func TestGetIndex(t *testing.T) {
 
 	for _, vals := range testCases {
 		if index := getIndex(vals.id, vals.way); index != vals.expectedResult {
-			t.Log("Wrong index: ", vals.expectedResult, index)
+			t.Errorf("Expected index %d, got %d \n", vals.expectedResult, index)
 			t.Fail()
 		}
 	}
@@ -83,7 +83,7 @@ func TestGetNode(t *testing.T) {
 		SetOSMData(&vals.osmData)
 		node, err := getNode(vals.id)
 		if (err != nil || vals.expectedError != nil) && err.Error() != vals.expectedError.Error() {
-			t.Log("Wrong error: ", err, vals.expectedError)
+			t.Errorf("Wrong error: Expected '%s' got '%s' \n ", err.Error(), vals.expectedError.Error())
 			t.Fail()
 		}
 		if node != vals.expectedNode {
@@ -122,12 +122,12 @@ func TestFindWay(t *testing.T) {
 		SetOSMData(&vals.osmData)
 		ways, err := findWay(vals.id)
 		if (err != nil || vals.expectedError != nil) && err.Error() != vals.expectedError.Error() {
-			t.Log("Wrong error: ", err, vals.expectedError)
+			t.Errorf("Wrong error: Expected '%s' got '%s' \n ", err.Error(), vals.expectedError.Error())
 			t.Fail()
 		}
 		for i, _ := range ways {
 			if ways[i].Id != vals.expectedWays[i].Id {
-				t.Log("Wrong Id, got:", ways[i].Id)
+				t.Errorf("Wrong Id, expected %s, got %s \n", vals.expectedWays[i].Id, ways[i].Id)
 				t.Fail()
 			}
 		}
@@ -157,11 +157,11 @@ func TestFindNextWay(t *testing.T) {
 	testNode6 := OSMUtil.Node{Id: "6"}
 	testNode7 := OSMUtil.Node{Id: "7"}
 
-	testWay1 := OSMUtil.Way{Nd: []*OSMUtil.Nd{
+	testWay1 := OSMUtil.Way{Id: "101", Nd: []*OSMUtil.Nd{
 		&OSMUtil.Nd{Ref: "1"}, &OSMUtil.Nd{Ref: "2"}, &OSMUtil.Nd{Ref: "3"}}}
-	testWay2 := OSMUtil.Way{Nd: []*OSMUtil.Nd{
+	testWay2 := OSMUtil.Way{Id: "102", Nd: []*OSMUtil.Nd{
 		&OSMUtil.Nd{Ref: "3"}, &OSMUtil.Nd{Ref: "4"}}}
-	testWay3 := OSMUtil.Way{Nd: []*OSMUtil.Nd{
+	testWay3 := OSMUtil.Way{Id: "103", Nd: []*OSMUtil.Nd{
 		&OSMUtil.Nd{Ref: "5"}, &OSMUtil.Nd{Ref: "4"}}}
 	testWay4 := OSMUtil.Way{Nd: []*OSMUtil.Nd{
 		&OSMUtil.Nd{Ref: "5"}, &OSMUtil.Nd{Ref: "6"}, &OSMUtil.Nd{Ref: "7"}}}
@@ -196,19 +196,19 @@ func TestFindNextWay(t *testing.T) {
 		runningWay, index, wayDirUp, nextNode := findNextWay(vals.currWayDirUp, vals.currIndex, vals.currRunningNode, vals.oldNode, vals.currRunningWay)
 
 		if runningWay.Id != vals.expectedRunningWay.Id {
-			t.Log("Wrong way:", runningWay.Id)
+			t.Log("Expected way "+vals.expectedRunningWay.Id+", got "+runningWay.Id)
 			t.Fail()
 		}
 		if index != vals.expectedIndex {
-			t.Log("Wrong index:", index)
+			t.Errorf("Expected index %d, got %d \n", vals.expectedIndex, index)
 			t.Fail()
 		}
 		if wayDirUp != vals.expectedWayDirUp {
-			t.Log("Wrong direction:", wayDirUp)
+			t.Errorf("Wrong direction, expected %t, got %t \n", vals.expectedWayDirUp, wayDirUp)
 			t.Fail()
 		}
 		if !(nextNode == nil && vals.expectedNextNode == nil) && nextNode.Id != vals.expectedNextNode.Id {
-			t.Log("Wrong node:", nextNode.Id, vals.expectedNextNode.Id)
+			t.Log("Wrong node: Expected "+nextNode.Id+", got "+vals.expectedNextNode.Id)
 			t.Fail()
 		}
 	}
