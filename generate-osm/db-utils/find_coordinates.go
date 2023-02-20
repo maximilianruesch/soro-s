@@ -20,6 +20,7 @@ const r = 6371.0
 var osmData *OSMUtil.Osm
 
 func nodeNotFound(id string) error {return errors.New("Could not find node: "+id)}
+func wayNotFound(id string) error {return errors.New("Could not find way: "+id)}
 
 func FindNewNode(node1 *OSMUtil.Node, node2 *OSMUtil.Node, dist1 float64, dist2 float64) (node *OSMUtil.Node, err error) {
 	err = nil
@@ -297,7 +298,7 @@ func findWay(id string) ([]OSMUtil.Way, error) {
 		}
 	}
 	if len(ways) == 0 {
-		return []OSMUtil.Way{}, errors.New("Could not find way!")
+		return []OSMUtil.Way{}, wayNotFound(id)
 	}
 	return ways, nil
 }
