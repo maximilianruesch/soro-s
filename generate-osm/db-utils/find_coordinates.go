@@ -21,6 +21,7 @@ var osmData *OSMUtil.Osm
 
 func nodeNotFound(id string) error {return errors.New("Could not find node: "+id)}
 func wayNotFound(id string) error {return errors.New("Could not find way: "+id)}
+var endReached = errors.New("Reached end of track.")
 
 func FindNewNode(node1 *OSMUtil.Node, node2 *OSMUtil.Node, dist1 float64, dist2 float64) (*OSMUtil.Node, error) {
 	var node *OSMUtil.Node
@@ -136,12 +137,20 @@ func goDir(runningWay OSMUtil.Way, index int, dist float64, initialWayDirUp bool
 	totalDist := 0.0
 	wayDirUp := initialWayDirUp
 
-	for ; totalDist < dist; {
-		runningWay, index, wayDirUp, nextNode = findNextWay(wayDirUp, index, runningNode, oldNode, runningWay)
+	var err error
 
-		if index == -1 {
-			return runningNode.Id, totalDist
+	for ; totalDist < dist; {
+		if (wayDirUp && index == 0) || (!wayDirUp && index == len(runningWay.Nd)-1) {
+			runningWay, index, wayDirUp, err = findNextWay(wayDirUp, index, runningNode, oldNode, runningWay)
+			if err == endReached {
+				return runningNode.Id, totalDist
+			}
+			if err != nil {
+				panic(err)
+			}			
 		}
+		
+		nextNode = getNextNode(wayDirUp, index, runningWay)		
 		
 		phi1, _ := strconv.ParseFloat(runningNode.Lat, 64)
 		phi2, _ := strconv.ParseFloat(nextNode.Lat, 64)
@@ -166,78 +175,93 @@ func goDir(runningWay OSMUtil.Way, index int, dist float64, initialWayDirUp bool
 	return runningNode.Id, totalDist
 }
 
-func findNextWay(wayDirUp bool, index int, runningNode *OSMUtil.Node, oldNode *OSMUtil.Node, runningWay OSMUtil.Way) (OSMUtil.Way, int, bool, *OSMUtil.Node) {
-	if wayDirUp && index == 0 {
-		nextWays, err := findWay(runningNode.Id)
-		if err != nil || len(nextWays) == 0 {
-			panic(errors.New("No ways!"))
-		}
-		if len(nextWays) == 1 || len(nextWays) > 2 {
-			return runningWay, -1, false, nil
-		}
-
-		if nextWays[0].Nd[0].Ref == nextWays[1].Nd[len(nextWays[1].Nd)-1].Ref && nextWays[0].Nd[0].Ref == runningNode.Id {
-			runningWay = nextWays[1]
-			index = len(nextWays[1].Nd)-1
-			wayDirUp = true
-		} else if nextWays[1].Nd[0].Ref == nextWays[0].Nd[len(nextWays[0].Nd)-1].Ref && nextWays[1].Nd[0].Ref == runningNode.Id {
-			runningWay = nextWays[0]
-			index = len(nextWays[0].Nd)-1
-			wayDirUp = true
-		} else if nextWays[0].Nd[0].Ref == nextWays[1].Nd[0].Ref && nextWays[0].Nd[0].Ref == runningNode.Id && nextWays[0].Nd[1].Ref == oldNode.Id {
-			runningWay = nextWays[1]
-			index = 0
-			wayDirUp = false
-		} else if nextWays[1].Nd[0].Ref == nextWays[0].Nd[0].Ref && nextWays[1].Nd[0].Ref == runningNode.Id && nextWays[1].Nd[1].Ref == oldNode.Id {
-			runningWay = nextWays[0]
-			index = 0
-			wayDirUp = false
-		} else {
-			panic(errors.New("Could not find way up!"))
-		}
-	} else if !wayDirUp && index == len(runningWay.Nd)-1 {
-		nextWays, err := findWay(runningNode.Id)
-		if err != nil || len(nextWays) == 0 {
-			panic(errors.New("No ways!"))
-		}
-		if len(nextWays) == 1 || len(nextWays) > 2 {
-			return runningWay, -1, false, nil
-		}
-
-		if nextWays[0].Nd[0].Ref == nextWays[1].Nd[len(nextWays[1].Nd)-1].Ref && nextWays[0].Nd[0].Ref == runningNode.Id {
-			runningWay = nextWays[0]
-			index = 0
-			wayDirUp = false
-		} else if nextWays[1].Nd[0].Ref == nextWays[0].Nd[len(nextWays[0].Nd)-1].Ref && nextWays[1].Nd[0].Ref == runningNode.Id {
-			runningWay = nextWays[1]
-			index = 0
-			wayDirUp = false
-		} else if nextWays[0].Nd[len(nextWays[0].Nd)-1].Ref == nextWays[1].Nd[len(nextWays[1].Nd)-1].Ref && nextWays[0].Nd[len(nextWays[0].Nd)-1].Ref == runningNode.Id && nextWays[0].Nd[len(nextWays[0].Nd)-2].Ref == oldNode.Id {
-			runningWay = nextWays[1]
-			index = len(nextWays[1].Nd)-1
-			wayDirUp = true
-		} else if nextWays[1].Nd[len(nextWays[1].Nd)-1].Ref == nextWays[0].Nd[len(nextWays[0].Nd)-1].Ref && nextWays[1].Nd[len(nextWays[1].Nd)-1].Ref == runningNode.Id && nextWays[1].Nd[len(nextWays[1].Nd)-2].Ref == oldNode.Id {
-			runningWay = nextWays[0]
-			index = len(nextWays[0].Nd)-1
-			wayDirUp = true
-		} else {
-			panic(errors.New("Could not find way down!"))
-		}
-	}
-
+func getNextNode(wayDirUp bool, index int, runningWay OSMUtil.Way) *OSMUtil.Node {
 	if wayDirUp {
 		nextNode, err := getNode(runningWay.Nd[index-1].Ref)
 		if err != nil {
 			panic(err)
 		}
-		return runningWay, index, wayDirUp, nextNode
-	} else {
-		nextNode, err := getNode(runningWay.Nd[index+1].Ref)
-		if err != nil {
-			panic(err)
-		}
-		return runningWay, index, wayDirUp, nextNode
+		return nextNode
+	} 
+
+	nextNode, err := getNode(runningWay.Nd[index+1].Ref)
+	if err != nil {
+		panic(err)
 	}
+	return nextNode
+}
+
+func findNextWay(wayDirUp bool, index int, runningNode *OSMUtil.Node, oldNode *OSMUtil.Node, runningWay OSMUtil.Way) (OSMUtil.Way, int, bool, error) {
+	nextWays, err := findWay(runningNode.Id)
+	if err != nil || len(nextWays) == 0 {
+		panic(errors.New("No ways!"))
+	}
+	if len(nextWays) == 1 {
+		return OSMUtil.Way{}, 0, false, endReached
+	}
+	if len(nextWays) > 2 {
+		return OSMUtil.Way{}, 0, false, endReached
+	}
+
+	// Ways can be "linked" in different ways. The usual ones are:
+	// Index0 beginning links with index1 end
+	wayConnection01 := nextWays[0].Nd[0].Ref == nextWays[1].Nd[len(nextWays[1].Nd)-1].Ref && nextWays[0].Nd[0].Ref == runningNode.Id 
+	// or Index1 beginning links with index0 end
+	wayConnection10 := nextWays[1].Nd[0].Ref == nextWays[0].Nd[len(nextWays[0].Nd)-1].Ref && nextWays[1].Nd[0].Ref == runningNode.Id
+
+	if wayDirUp && index == 0 {
+		// More complicated ways, Ways can be "linked" include:
+		// Index0 beginning links with Index1 beginning and Index0 is the way we are currently climbing up, as the second item is the old node
+		wayConnection00comingFrom0 := nextWays[0].Nd[0].Ref == nextWays[1].Nd[0].Ref && nextWays[0].Nd[0].Ref == runningNode.Id && nextWays[0].Nd[1].Ref == oldNode.Id
+		// or both beginnings link up, however we come from index1 [second item is also known!]
+		wayConnection00comingFrom1 := nextWays[1].Nd[0].Ref == nextWays[0].Nd[0].Ref && nextWays[1].Nd[0].Ref == runningNode.Id && nextWays[1].Nd[1].Ref == oldNode.Id
+		if wayConnection01 {
+			runningWay = nextWays[1]
+			index = len(nextWays[1].Nd)-1
+			wayDirUp = true
+		} else if wayConnection10 {
+			runningWay = nextWays[0]
+			index = len(nextWays[0].Nd)-1
+			wayDirUp = true
+		} else if wayConnection00comingFrom0 {
+			runningWay = nextWays[1]
+			index = 0
+			wayDirUp = false
+		} else if wayConnection00comingFrom1 {
+			runningWay = nextWays[0]
+			index = 0
+			wayDirUp = false
+		} else {
+			return OSMUtil.Way{}, 0, false, errors.New("Could not find way up!")
+		}
+	} else if !wayDirUp && index == len(runningWay.Nd)-1 {
+		// In the downward direction, ways can also be linked via the ends:
+		// End-linkage and coming from Index0, as second-to-last is known as oldNode
+		wayConnectionEndEndComingFrom0 := nextWays[0].Nd[len(nextWays[0].Nd)-1].Ref == nextWays[1].Nd[len(nextWays[1].Nd)-1].Ref && nextWays[0].Nd[len(nextWays[0].Nd)-1].Ref == runningNode.Id && nextWays[0].Nd[len(nextWays[0].Nd)-2].Ref == oldNode.Id
+		// or end-linkage and coming from Index1
+		wayConnectionEndEndComingFrom1 := nextWays[1].Nd[len(nextWays[1].Nd)-1].Ref == nextWays[0].Nd[len(nextWays[0].Nd)-1].Ref && nextWays[1].Nd[len(nextWays[1].Nd)-1].Ref == runningNode.Id && nextWays[1].Nd[len(nextWays[1].Nd)-2].Ref == oldNode.Id
+		if wayConnection01 {
+			runningWay = nextWays[0]
+			index = 0
+			wayDirUp = false
+		} else if wayConnection10 {
+			runningWay = nextWays[1]
+			index = 0
+			wayDirUp = false
+		} else if wayConnectionEndEndComingFrom0 {
+			runningWay = nextWays[1]
+			index = len(nextWays[1].Nd)-1
+			wayDirUp = true
+		} else if wayConnectionEndEndComingFrom1 {
+			runningWay = nextWays[0]
+			index = len(nextWays[0].Nd)-1
+			wayDirUp = true
+		} else {
+			return OSMUtil.Way{}, 0, false, errors.New("Could not find way down!")
+		}
+	}
+
+	return runningWay, index, wayDirUp, nil
 }
 
 func getNode(id string) (*OSMUtil.Node, error){
