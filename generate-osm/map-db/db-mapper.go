@@ -122,22 +122,20 @@ func processHauptsigF(knoten DBUtil.Spurplanknoten) []*DBUtil.Signal {
 		}
 
 		for _, node := range osmData.Node {
-			if len(node.Tag) == 0 {
-				continue
-			}
+			if len(node.Tag) != 0 {
+				is_signal := false 
+				has_correct_id := false
+				if railwayTag, err := OSMUtil.GetTag(*node, "railway"); err == nil && railwayTag == "signal" {
+					is_signal = true
+				}
+				if idTag, err := OSMUtil.GetTag(*node, "ref"); err == nil && strings.ReplaceAll(idTag, " ", "") == signal.Name[0].Value {
+					has_correct_id = true
+				}
 
-			is_signal := false 
-			has_correct_id := false
-			if railwayTag, err := OSMUtil.GetTag(*node, "railway"); err == nil && railwayTag == "signal" {
-				is_signal = true
-			}
-			if idTag, err := OSMUtil.GetTag(*node, "ref"); err == nil && strings.ReplaceAll(idTag, " ", "") == signal.Name[0].Value {
-				has_correct_id = true
-			}
-
-			if is_signal && has_correct_id {
-				insertNewHauptsig(node, kilometrage, *signal, "falling", &notFound)
-			} 
+				if is_signal && has_correct_id {
+					insertNewHauptsig(node, kilometrage, *signal, "falling", &notFound)
+				} 
+			}			
 		}		
 
 		if !found {
@@ -171,22 +169,20 @@ func processHauptsigS(knoten DBUtil.Spurplanknoten) []*DBUtil.Signal {
 		}
 
 		for _, node := range osmData.Node {
-			if len(node.Tag) == 0 {
-				continue
-			}
+			if len(node.Tag) != 0 {
+				is_signal := false 
+				has_correct_id := false
 
-			is_signal := false 
-			has_correct_id := false
-			if railwayTag, err := OSMUtil.GetTag(*node, "railway"); err == nil && railwayTag == "signal" {
-				is_signal = true
-			}
-			if idTag, err := OSMUtil.GetTag(*node, "ref"); err == nil && strings.ReplaceAll(idTag, " ", "") == signal.Name[0].Value {
-				has_correct_id = true
-			}
+				railwayTag, err := OSMUtil.GetTag(*node, "railway")
+				is_signal = err == nil && railwayTag == "signal"
+				
+				idTag, err := OSMUtil.GetTag(*node, "ref")
+				has_correct_id = err == nil && strings.ReplaceAll(idTag, " ", "") == signal.Name[0].Value
 
-			if is_signal && has_correct_id {
-				found = insertNewHauptsig(node, kilometrage, *signal, "rising", &notFound)
-			} 
+				if is_signal && has_correct_id {
+					found = insertNewHauptsig(node, kilometrage, *signal, "rising", &notFound)
+				} 
+			}			
 		}		
 
 		if !found {
@@ -216,13 +212,12 @@ func searchHauptsigF(knoten DBUtil.Spurplanknoten) {
 		maxNode, err := findBestOSMNode(kilometrage)
 		if err != nil {
 			not_found = append(not_found, signal)
-			continue
-		}			
-
-		found := insertNewHauptsig(maxNode, signal.KnotenTyp.Kilometrierung[0].Value, *signal, "falling", &not_found)	
-		if !found {
-			num_found++
-		}
+		} else {
+			found := insertNewHauptsig(maxNode, signal.KnotenTyp.Kilometrierung[0].Value, *signal, "falling", &not_found)	
+			if !found {
+				num_found++
+			}
+		}	
 	}	
 }
 
@@ -245,13 +240,12 @@ func searchHauptsigS(knoten DBUtil.Spurplanknoten) {
 		maxNode, err := findBestOSMNode(kilometrage)
 		if err != nil {
 			not_found = append(not_found, signal)
-			continue
+		} else {
+			found := insertNewHauptsig(maxNode, signal.KnotenTyp.Kilometrierung[0].Value, *signal, "rising", &not_found)	
+			if !found {
+				num_found++
+			}
 		}			
-
-		found := insertNewHauptsig(maxNode, signal.KnotenTyp.Kilometrierung[0].Value, *signal, "rising", &not_found)	
-		if !found {
-			num_found++
-		}
 	}	
 }
 
@@ -260,36 +254,33 @@ func findTwoNearest(kilometrage float64) (nearest float64, second_nearest float6
 	second_nearest = -1.0
 
 	for key, _ := range anchors {
-		if strings.Contains(key, "+") {
-			continue
-		}
-		float_key, _ := strconv.ParseFloat(strings.ReplaceAll(key, ",", "."), 64)
-		if nearest == -1.0 {
-			nearest = float_key
-		}
-		if math.Abs(float_key - kilometrage) < math.Abs(nearest - kilometrage) {
-			second_nearest = nearest
-			nearest = float_key
-		}
+		if !strings.Contains(key, "+") {
+			float_key, _ := strconv.ParseFloat(strings.ReplaceAll(key, ",", "."), 64)
+			if nearest == -1.0 {
+				nearest = float_key
+			}
+			if math.Abs(float_key - kilometrage) < math.Abs(nearest - kilometrage) {
+				second_nearest = nearest
+				nearest = float_key
+			}
+		}		
 	}	
 
 	if second_nearest != -1.0  { 
 		return
 	}
 	for key, _ := range anchors {
-		if strings.Contains(key, "+") {
-			continue
-		}
-		float_key, _ := strconv.ParseFloat(strings.ReplaceAll(key, ",", "."), 64)
-		if float_key == nearest {
-			continue
-		}
-		if second_nearest == -1.0 {
-			second_nearest = float_key
-		}
-		if math.Abs(float_key - kilometrage) < math.Abs(second_nearest - kilometrage) {
-			second_nearest = float_key
-		}
+		if !strings.Contains(key, "+") {
+			float_key, _ := strconv.ParseFloat(strings.ReplaceAll(key, ",", "."), 64)
+			if float_key != nearest {
+				if second_nearest == -1.0 {
+					second_nearest = float_key
+				}
+				if math.Abs(float_key - kilometrage) < math.Abs(second_nearest - kilometrage) {
+					second_nearest = float_key
+				}
+			}			
+		}		
 	}	
 	return
 }
@@ -326,29 +317,29 @@ func findBestOSMNode(kilometrage float64) (*OSMUtil.Node, error){
 func insertNewHauptsig(node *OSMUtil.Node, kilometrage string, signal DBUtil.Signal, direction string, notFound *[]*DBUtil.Signal) bool{
 	for key, value_list := range anchors {
 		for _, value := range value_list {
-			if value != node {
-				continue
-			}
-			if key == kilometrage {
-				newNode := OSMUtil.Node{Id: strconv.Itoa(id_counter), Lat: node.Lat, Lon: node.Lon, Tag:[]*OSMUtil.Tag{
+			if value == node {
+				if key == kilometrage {
+					newNode := OSMUtil.Node{Id: strconv.Itoa(id_counter), Lat: node.Lat, Lon: node.Lon, Tag:[]*OSMUtil.Tag{
 							&OSMUtil.Tag{TagName, "type", "element"}, 
 							&OSMUtil.Tag{TagName, "subtype", "ms"}, 
 							&OSMUtil.Tag{TagName, "id", signal.Name[0].Value},
 							&OSMUtil.Tag{TagName, "direction", direction}}}
-				OSMUtil.InsertNode(&newNode, node.Id, &osmData)
-				id_counter++
-				anchors[key] = append(anchors[key], &newNode)
-				return true
-			} else {
-				for _, error_val := range value_list {
-					*notFound = append(*notFound, &DBUtil.Signal{
-						DBUtil.KnotenTyp{Kilometrierung: []*DBUtil.Wert{&DBUtil.Wert{Value: key}}}, 
-						[]*DBUtil.Wert{&DBUtil.Wert{Value: signal.Name[0].Value}}})
-					error_val.Tag = error_val.Tag[:(len(error_val.Tag)-4)]
+					OSMUtil.InsertNode(&newNode, node.Id, &osmData)
+					id_counter++
+					anchors[key] = append(anchors[key], &newNode)
+					return true
+				} else {
+					for _, error_val := range value_list {
+						*notFound = append(*notFound, &DBUtil.Signal{
+							DBUtil.KnotenTyp{Kilometrierung: []*DBUtil.Wert{&DBUtil.Wert{Value: key}}}, 
+							[]*DBUtil.Wert{&DBUtil.Wert{Value: signal.Name[0].Value}}})
+						error_val.Tag = error_val.Tag[:(len(error_val.Tag)-4)]
+					}
+					delete(anchors, key)
+					return false
 				}
-				delete(anchors, key)
-				return false
 			}
+			
 		}
 	}
 
