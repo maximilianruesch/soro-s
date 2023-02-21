@@ -199,28 +199,60 @@ func processHauptsigS(knoten DBUtil.Spurplanknoten) []*DBUtil.Signal {
 
 func searchHauptsigF(knoten DBUtil.Spurplanknoten) {
 	var not_found = []*DBUtil.Signal{} 
-	switch len(anchors) {
-	case 0:
+
+	if len(anchors) == 0 {
 		fmt.Print("Could not find anchors! \n")
-	case 1:
+		return
+	}
+	if len(anchors) == 1 {
 		fmt.Print("Could not find enough anchors! \n")
-	default:
-		for _, signal := range knoten.HauptsigF {
-			kilometrage, _ := strconv.ParseFloat(strings.ReplaceAll(signal.KnotenTyp.Kilometrierung[0].Value, ",", "."), 64)
+	// TODO: Node not found, find closest mapped Node and work from there
+		return
+	}
 
-			maxNode, err := findBestOSMNode(kilometrage)
-			if err != nil {
-				not_found = append(not_found, signal)
-				continue
-			}			
+	for _, signal := range knoten.HauptsigF {
+		kilometrage, _ := strconv.ParseFloat(strings.ReplaceAll(signal.KnotenTyp.Kilometrierung[0].Value, ",", "."), 64)
 
-			found := insertNewHauptsig(maxNode, signal.KnotenTyp.Kilometrierung[0].Value, *signal, "falling", &not_found)	
-			if !found {
-				num_found++
-			}
+		maxNode, err := findBestOSMNode(kilometrage)
+		if err != nil {
+			not_found = append(not_found, signal)
+			continue
+		}			
+
+		found := insertNewHauptsig(maxNode, signal.KnotenTyp.Kilometrierung[0].Value, *signal, "falling", &not_found)	
+		if !found {
+			num_found++
 		}
 	}	
+}
+
+func searchHauptsigS(knoten DBUtil.Spurplanknoten) {
+	var not_found = []*DBUtil.Signal{} 
+
+	if len(anchors) == 0 {
+		fmt.Print("Could not find anchors! \n")
+		return
+	}
+	if len(anchors) == 1 {
+		fmt.Print("Could not find enough anchors! \n")
 	// TODO: Node not found, find closest mapped Node and work from there
+		return
+	}
+
+	for _, signal := range knoten.HauptsigS {
+		kilometrage, _ := strconv.ParseFloat(strings.ReplaceAll(signal.KnotenTyp.Kilometrierung[0].Value, ",", "."), 64)
+
+		maxNode, err := findBestOSMNode(kilometrage)
+		if err != nil {
+			not_found = append(not_found, signal)
+			continue
+		}			
+
+		found := insertNewHauptsig(maxNode, signal.KnotenTyp.Kilometrierung[0].Value, *signal, "rising", &not_found)	
+		if !found {
+			num_found++
+		}
+	}	
 }
 
 func findTwoNearest(kilometrage float64) (nearest float64, second_nearest float64) {	
