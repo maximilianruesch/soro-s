@@ -22,7 +22,7 @@ var osmData *OSMUtil.Osm
 func nodeNotFound(id string) error {return errors.New("Could not find node: "+id)}
 func wayNotFound(id string) error {return errors.New("Could not find way: "+id)}
 
-func FindNewNode(node1 *OSMUtil.Node, node2 *OSMUtil.Node, dist1 float64, dist2 float64) (node *OSMUtil.Node, err error) {
+func FindNewNode(node1 *OSMUtil.Node, node2 *OSMUtil.Node, dist1 float64, dist2 float64) (*OSMUtil.Node, error) {
 	if dist1 == 0.0 {
 		return node1, nil
 	}
@@ -45,10 +45,10 @@ func FindNewNode(node1 *OSMUtil.Node, node2 *OSMUtil.Node, dist1 float64, dist2 
 	} else {
 		node = getClosestMatch(up1, up2, down1, down2, upDist1, upDist2, downDist1, downDist2)
 	}
-	return 
+	return node, nil
 }
 
-func getClosestMatch(up1, up2, down1, down2 string, upDist1, upDist2, downDist1, downDist2 float64) (node *OSMUtil.Node) {
+func getClosestMatch(up1, up2, down1, down2 string, upDist1, upDist2, downDist1, downDist2 float64) *OSMUtil.Node {
 	upNode1, _ := getNode(up1)
 	upNode2, _ := getNode(up2)
 	downNode1, _ := getNode(down1)
@@ -82,33 +82,33 @@ func getClosestMatch(up1, up2, down1, down2 string, upDist1, upDist2, downDist1,
 	})
 
 	if allPairs[0].remDist1 <= allPairs[0].remDist2 {
-		node = allPairs[0].node1
-	} else {
-		node = allPairs[0].node2
-	}
-	return
+		return allPairs[0].node1
+	} 
+	return allPairs[0].node2
 }
 
-func findNodes(node *OSMUtil.Node, dist float64) (upId string, upDist float64, downId string, downDist float64, err error) {
+func findNodes(node *OSMUtil.Node, dist float64) (string, float64, string, float64, error) {
+	var upId, downId string
+	var upDist, downDist float64
+
 	startWay, err := findWay(node.Id)
 	if err != nil {
 		panic(err)
 	}	
 
 	if len(startWay) > 2 {
-		err = errors.New("Too many ways!")
-		return
+		return "", 0, "", 0, errors.New("Too many ways!")
 	}
 
 	if len(startWay) == 1 {
 		runningWay := startWay[0]
-		index, err1 := getIndex(node.Id, runningWay)
+		index, err := getIndex(node.Id, runningWay)
 		if err != nil {
-			panic(err1)
+			panic(err)
 		}
 		upId, upDist = goDir(runningWay, index, dist, true) // going "up" first
 		downId, downDist = goDir(runningWay, index, dist, false) // then going "down"
-		return
+		return upId, upDist, downId, downDist, nil
 	}
 
 	if startWay[0].Nd[0].Ref == node.Id && startWay[1].Nd[len(startWay[1].Nd)-1].Ref == node.Id {
@@ -122,12 +122,10 @@ func findNodes(node *OSMUtil.Node, dist float64) (upId string, upDist float64, d
 		runningWay = startWay[1]
 		downId, downDist = goDir(runningWay, 0, dist, false)
 	} else {
-		err = errors.New("Error with ways!")
-		return
+		return "", 0, "", 0, errors.New("Error with ways!")
 	}
-	
-	err = nil
-	return 
+
+	return upId, upDist, downId, downDist, nil 
 }
 
 func goDir(runningWay OSMUtil.Way, index int, dist float64, initialWayDirUp bool) (string, float64) {
