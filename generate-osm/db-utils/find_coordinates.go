@@ -23,6 +23,7 @@ func nodeNotFound(id string) error {return errors.New("Could not find node: "+id
 func wayNotFound(id string) error {return errors.New("Could not find way: "+id)}
 
 func FindNewNode(node1 *OSMUtil.Node, node2 *OSMUtil.Node, dist1 float64, dist2 float64) (*OSMUtil.Node, error) {
+	var node *OSMUtil.Node
 	if dist1 == 0.0 {
 		return node1, nil
 	}
