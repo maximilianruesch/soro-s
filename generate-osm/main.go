@@ -152,17 +152,27 @@ func generateOsm(generateLines bool, inputFile string) error {
 		"--overwrite",
 	})
 
-	stationsOsm, jsonData := stationsHaltsDisplay.StationsHaltsDisplay(stationsFile)
+	jsonData := stationsHaltsDisplay.StationsHaltsDisplay(stationsFile)
 	// save stations as json
 	output, err := json.MarshalIndent(jsonData, "", "     ")
 	if err != nil {
 		fmt.Printf("error: %v\n", err)
 	}
 	os.WriteFile("./temp/stations.json", output, 0644)
+	for _, node := range osmData.Node {
+		for id := range jsonData["stations"] {
+			if node.Id == id {
+				node.Tag = append(node.Tag, &osmUtils.Tag{K: "type", V: "station"})
+			}
+		}
 
-	osmData.Way = append(osmData.Way, stationsOsm.Way...)
-	osmData.Node = append(osmData.Node, stationsOsm.Node...)
-	osmData.Relation = append(osmData.Relation, stationsOsm.Relation...)
+		for id := range jsonData["halts"] {
+			if node.Id == id {
+				node.Tag = append(node.Tag, &osmUtils.Tag{K: "type", V: "element"})
+				node.Tag = append(node.Tag, &osmUtils.Tag{K: "subtype", V: "hlt"})
+			}
+		}
+	}
 
 	sortedOsmData := osmUtils.SortOsm(osmData)
 	output, err = xml.MarshalIndent(sortedOsmData, "", "     ")

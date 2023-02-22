@@ -6,7 +6,7 @@ import (
 	osmUtils "transform-osm/osm-utils"
 )
 
-func StationsHaltsDisplay(stationsFile string) (osmUtils.Osm, map[string]map[string]map[string]string) {
+func StationsHaltsDisplay(stationsFile string) map[string]map[string]map[string]string {
 	data, _ := os.ReadFile(stationsFile)
 	var osmData osmUtils.Osm
 	if err := xml.Unmarshal([]byte(data), &osmData); err != nil {
@@ -29,7 +29,6 @@ func StationsHaltsDisplay(stationsFile string) (osmUtils.Osm, map[string]map[str
 						"lat":  n.Lat,
 						"lon":  n.Lon,
 					}
-					n.Tag = append(n.Tag, &osmUtils.Tag{K: "type", V: "station"})
 				}
 
 				if t.V == "halt" {
@@ -38,14 +37,12 @@ func StationsHaltsDisplay(stationsFile string) (osmUtils.Osm, map[string]map[str
 						"lat":  n.Lat,
 						"lon":  n.Lon,
 					}
-					n.Tag = append(n.Tag, &osmUtils.Tag{K: "type", V: "element"})
-					n.Tag = append(n.Tag, &osmUtils.Tag{K: "subtype", V: "hlt"})
 				}
 			}
 		}
 	}
 
-	return osmData, map[string]map[string]map[string]string{
+	return map[string]map[string]map[string]string{
 		"stations": stations,
 		"halts":    halts,
 	}
