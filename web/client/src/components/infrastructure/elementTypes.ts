@@ -19,9 +19,6 @@ export const ElementType = {
     STATION: 'station',
 };
 
-<<<<<<< HEAD
-export const elementTypes = Object.keys(elementTypeLabels);
-=======
 export const ElementTypes = Object.values(ElementType);
 
 export const ElementTypeLabels = {
@@ -44,4 +41,3 @@ export const ElementTypeLabels = {
     [ElementType.CTC]: 'CTC',
     [ElementType.STATION]: 'Station'
 };
->>>>>>> master
