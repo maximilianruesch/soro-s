@@ -62,38 +62,21 @@ func generateOsm(generateLines bool, inputFile string) error {
 	if filepath.Ext(inputFile) != ".pbf" {
 		return errors.New("Input file is not a PBF file: " + inputFile)
 	}
-
-	tracksWithOnlyRelationsFile, _ := filepath.Abs("./temp/tracksWithOnlyRelations.osm.pbf")
-	tracksFile, _ := filepath.Abs("./temp/tracks.osm.pbf")
-	refOutputFile, _ := filepath.Abs("./temp/trackRefs.xml")
-
-	osmUtils.ExecuteOsmFilterCommand([]string{
-		"-R",
-		inputFile,
-		"-o",
-		tracksWithOnlyRelationsFile,
-		"r/route=tracks",
-		"--overwrite",
-	})
-	osmUtils.ExecuteOsmFilterCommand([]string{
-		inputFile,
-		"-o",
-		tracksFile,
-		"r/route=tracks",
-		"--overwrite",
-	})
-	osmUtils.ExecuteOsmFilterCommand([]string{
-		tracksWithOnlyRelationsFile,
-		"-o",
-		refOutputFile,
-		"r/ref",
-		"--overwrite",
-	})
-
-	refs, err := getRefIds(refOutputFile)
+	tempFolderPath, _ := filepath.Abs("./temp")
+	refs, err := osmUtils.GenerateOsmTrackRefs(inputFile, tempFolderPath)
 	if err != nil {
 		return errors.New("Failed to get ref ids: " + err.Error())
 	}
+
+	tracksFilePath, _ := filepath.Abs(tempFolderPath + "/tracks.osm.pbf")
+
+	osmUtils.ExecuteOsmFilterCommand([]string{
+		inputFile,
+		"-o",
+		tracksFilePath,
+		"r/route=tracks",
+		"--overwrite",
+	})
 
 	if generateLines {
 		if err = os.RemoveAll("./temp/lines"); err != nil {
@@ -109,7 +92,7 @@ func generateOsm(generateLines bool, inputFile string) error {
 				return errors.New("Failed to get line file path: " + err.Error())
 			}
 			osmUtils.ExecuteOsmFilterCommand([]string{
-				tracksFile,
+				tracksFilePath,
 				"-o",
 				lineOsmFile,
 				"ref=" + refId,
@@ -183,24 +166,4 @@ func generateOsm(generateLines bool, inputFile string) error {
 	os.WriteFile("./temp/finalOsm.xml", output, 0644)
 
 	return nil
-}
-
-func getRefIds(trackRefFile string) (refs []string, err error) {
-	var data []byte
-	if data, err = os.ReadFile(trackRefFile); err != nil {
-		return nil, errors.New("Failed to read track ref file: " + err.Error())
-	}
-	var osmData osmUtils.Osm
-	if err := xml.Unmarshal([]byte(data), &osmData); err != nil {
-		return nil, err
-	}
-	for _, s := range osmData.Relation {
-		for _, m := range s.Tag {
-			if m.K == "ref" {
-				refs = append(refs, m.V)
-			}
-		}
-	}
-
-	return refs, nil
 }
