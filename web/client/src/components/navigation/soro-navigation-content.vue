@@ -42,6 +42,8 @@
                     />
                 </div>
 
+                <station-search class="station-search-field" />
+
                 <soro-collapsible
                     label="Settings"
                     class="settings"
@@ -54,19 +56,49 @@
                         mandatory
                         @update:model-value="setDarkLightModePreference"
                     >
-                        <v-btn value="light">
+                        <v-btn :value="DarkLightModes.OS">
+                            OS
+                        </v-btn>
+                        <v-btn :value="DarkLightModes.LIGHT">
                             Light
                         </v-btn>
-                        <v-btn value="dark">
+                        <v-btn :value="DarkLightModes.DARK">
                             Dark
                         </v-btn>
                     </v-btn-toggle>
+
+                    <v-sheet
+                        title="some"
+                        class="d-flex accent-color-picker"
+                    >
+                        <div class="flex-grow-0 accent-color-display" />
+                        <v-btn class="flex-grow-1 ms-2">
+                            Select color
+                            <v-menu
+                                activator="parent"
+                                :close-on-content-click="false"
+                            >
+                                <v-color-picker
+                                    style="overflow: unset;"
+                                    :model-value="colorSelection"
+                                    min-width="300"
+                                    hide-inputs
+                                    show-swatches
+                                    @update:model-value="onUpdateColorSelection"
+                                />
+                            </v-menu>
+                        </v-btn>
+                    </v-sheet>
                 </soro-collapsible>
 
                 <soro-collapsible
                     label="Dev Tools"
                     class="dev-tools"
                 >
+                    <soro-button
+                        label="Clear local storage"
+                        @click="clearLocalStorage"
+                    />
                     <soro-button
                         disabled
                         label="Clear Cache"
@@ -102,19 +134,20 @@
 </template>
 
 <script setup lang="ts">
-import DisruptionDetail from '../disruption-detail.vue';
-import SoroSelect from '../soro-select.vue';
-import SoroButton from '../soro-button.vue';
+import DisruptionDetail from '@/components/disruption-detail.vue';
+import SoroSelect from '@/components/soro-select.vue';
+import SoroButton from '@/components/soro-button.vue';
 import SoroCollapsible from '@/components/soro-collapsible.vue';
+import StationSearch from '@/components/station-search.vue';
 </script>
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import { mapActions, mapMutations, mapState } from 'vuex';
+import { mapActions, mapState } from 'vuex';
 import { InfrastructureNamespace } from '@/stores/infrastructure-store';
 import { TimetableNamespace } from '@/stores/timetable-store';
 import { GLComponentTitles, ComponentTechnicalName } from '@/golden-layout/golden-layout-constants';
-import { SettingsNamespace } from '@/stores/settings-store';
+import { DarkLightModes, SettingsNamespace } from '@/stores/settings-store';
 
 export default defineComponent({
     name: 'SoroNavigationContent',
@@ -123,8 +156,11 @@ export default defineComponent({
 
     data() {
         return {
+            colorSelection: null as (null | string),
+            showColorSelector: false,
             showOverlay: false,
             ComponentTechnicalNames: ComponentTechnicalName,
+            DarkLightModes,
         };
     },
 
@@ -137,7 +173,14 @@ export default defineComponent({
             'currentTimetable',
             'timetables',
         ]),
-        ...mapState(SettingsNamespace, ['darkLightModePreference']),
+        ...mapState(SettingsNamespace, [
+            'darkLightModePreference',
+            'primaryColor',
+        ]),
+    },
+
+    mounted() {
+        this.colorSelection = this.primaryColor;
     },
 
     methods: {
@@ -151,7 +194,19 @@ export default defineComponent({
             );
         },
 
-        ...mapMutations(SettingsNamespace, ['setDarkLightModePreference']),
+        onUpdateColorSelection(newColor: string) {
+            this.setPrimaryColor(newColor);
+            this.colorSelection = newColor;
+        },
+
+        clearLocalStorage() {
+            window.localStorage.clear();
+        },
+
+        ...mapActions(SettingsNamespace, [
+            'setDarkLightModePreference',
+            'setPrimaryColor',
+        ]),
         ...mapActions(InfrastructureNamespace, { loadInfrastructure: 'load' }),
         ...mapActions(TimetableNamespace, { loadTimetable: 'load' }),
     }
@@ -217,14 +272,18 @@ export default defineComponent({
     cursor: pointer;
 }
 
-.window-controls,
-.dev-tools {
+.window-controls {
     display: flex;
     flex-flow: column wrap;
     justify-content: space-around;
     padding: 3%;
     margin-top: 0.5em;
     margin-bottom: 0.5em;
+}
+
+.window-controls > .soro-button {
+    margin-top: 0.2em;
+    margin-bottom: 0.2em;
 }
 
 .data-selects {
@@ -236,7 +295,30 @@ export default defineComponent({
     margin-bottom: 0.5em;
 }
 
-.settings {
+.station-search-field {
     padding: 3%;
+}
+
+.settings,
+.dev-tools {
+    padding: 3%;
+}
+
+.dev-tools .soro-button {
+    margin-top: 0.2em;
+    margin-bottom: 0.2em;
+}
+
+.accent-color-picker {
+    margin-top: 20px;
+    max-width: 100%;
+    justify-self: center;
+}
+
+.accent-color-display {
+    height: auto;
+    width: 50px;
+    background: rgb(var(--v-theme-primary));
+    border-radius: 5px;
 }
 </style>
