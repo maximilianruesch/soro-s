@@ -1,5 +1,3 @@
-<p align="center"><img src="logo.png" width="350"></p>
-
 ## Generate OSM Setup
 
 To setup generate-osm for developing purposes please follow one of these instructions.
