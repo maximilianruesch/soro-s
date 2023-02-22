@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	combineLines "transform-osm/combine-lines"
 	osmUtils "transform-osm/osm-utils"
-	stationsHaltsDisplay "transform-osm/stations-halts-display"
 
 	"github.com/urfave/cli/v2"
 )
@@ -69,7 +68,6 @@ func generateOsm(generateLines bool, inputFile string) error {
 	}
 
 	tracksFilePath, _ := filepath.Abs(tempFolderPath + "/tracks.osm.pbf")
-
 	osmUtils.ExecuteOsmFilterCommand([]string{
 		inputFile,
 		"-o",
@@ -106,59 +104,30 @@ func generateOsm(generateLines bool, inputFile string) error {
 	// Combine all the lines into one file
 	osmData, err := combineLines.CombineAllLines()
 	if err != nil && errors.Is(err, combineLines.ErrLinesDirNotFound) {
-		return errors.New("You need to generate lines first")
+		return errors.New("you need to generate lines first")
 	} else if err != nil {
-		return errors.New("Failed to combine lines: " + err.Error())
+		return errors.New("failed to combine lines: " + err.Error())
 	}
 	osmData.Version = "0.6"
 	osmData.Generator = "osmium/1.14.0"
 
-	// Create stations file
-	stattionsUnfilteredFile, _ := filepath.Abs("./temp/stationsUnfiltered.osm.pbf")
-	stationsFile, _ := filepath.Abs("./temp/stations.xml")
-	osmUtils.ExecuteOsmFilterCommand([]string{
-		inputFile,
-		"-o",
-		stattionsUnfilteredFile,
-		"n/railway=station,halt,facility",
-		"--overwrite",
-	})
-	osmUtils.ExecuteOsmFilterCommand([]string{
-		stattionsUnfilteredFile,
-		"-o",
-		stationsFile,
-		"-i",
-		"n/subway=yes",
-		"n/monorail=yes",
-		"n/usage",
-		"n/tram=yes",
-		"--overwrite",
-	})
+	searchFile, stationHaltOsm := osmUtils.GenerateStationsAndHalts(inputFile, tempFolderPath)
+	searchFileJsonPath, _ := filepath.Abs(tempFolderPath + "/searchFile.json")
+	saveSearchFile(searchFile, searchFileJsonPath)
 
-	jsonData := stationsHaltsDisplay.StationsHaltsDisplay(stationsFile)
-	// save stations as json
-	output, err := json.MarshalIndent(jsonData, "", "     ")
-	if err != nil {
-		fmt.Printf("error: %v\n", err)
-	}
-	os.WriteFile("./temp/stations.json", output, 0644)
-	for _, node := range osmData.Node {
-		for id := range jsonData["stations"] {
-			if node.Id == id {
-				node.Tag = append(node.Tag, &osmUtils.Tag{K: "type", V: "station"})
-			}
-		}
+	for i, node := range osmData.Node {
+		found, value := osmUtils.FindTagOnNode(node, "railway")
 
-		for id := range jsonData["halts"] {
-			if node.Id == id {
-				node.Tag = append(node.Tag, &osmUtils.Tag{K: "type", V: "element"})
-				node.Tag = append(node.Tag, &osmUtils.Tag{K: "subtype", V: "hlt"})
+		if found {
+			if value == "station" || value == "facility" || value == "halt" {
+				osmData.Node = append(osmData.Node[:i], osmData.Node[i+1:]...)
 			}
 		}
 	}
+	osmData.Node = append(osmData.Node, stationHaltOsm.Node...)
 
 	sortedOsmData := osmUtils.SortOsm(osmData)
-	output, err = xml.MarshalIndent(sortedOsmData, "", "     ")
+	output, err := xml.MarshalIndent(sortedOsmData, "", "     ")
 	if err != nil {
 		fmt.Printf("error: %v\n", err)
 	}
@@ -166,4 +135,12 @@ func generateOsm(generateLines bool, inputFile string) error {
 	os.WriteFile("./temp/finalOsm.xml", output, 0644)
 
 	return nil
+}
+
+func saveSearchFile(searchFile osmUtils.SearchFile, searchFileJsonPath string) {
+	output, err := json.MarshalIndent(searchFile, "", "     ")
+	if err != nil {
+		fmt.Printf("error: %v\n", err)
+	}
+	os.WriteFile(searchFileJsonPath, output, 0644)
 }
