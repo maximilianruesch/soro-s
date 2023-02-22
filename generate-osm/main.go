@@ -26,6 +26,7 @@ func main() {
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
 				Name:        "generate-lines",
+				Aliases:     []string{"gl"},
 				Usage:       "Generate lines all lines new",
 				Destination: &generateLines,
 			},
@@ -62,7 +63,7 @@ func generateOsm(generateLines bool, inputFile string) error {
 		return errors.New("Input file is not a PBF file: " + inputFile)
 	}
 
-	tracksWithoutRelationsFile, _ := filepath.Abs("./temp/tracksWithoutRelations.osm.pbf")
+	tracksWithOnlyRelationsFile, _ := filepath.Abs("./temp/tracksWithOnlyRelations.osm.pbf")
 	tracksFile, _ := filepath.Abs("./temp/tracks.osm.pbf")
 	refOutputFile, _ := filepath.Abs("./temp/trackRefs.xml")
 
@@ -70,7 +71,7 @@ func generateOsm(generateLines bool, inputFile string) error {
 		"-R",
 		inputFile,
 		"-o",
-		tracksWithoutRelationsFile,
+		tracksWithOnlyRelationsFile,
 		"r/route=tracks",
 		"--overwrite",
 	})
@@ -82,7 +83,7 @@ func generateOsm(generateLines bool, inputFile string) error {
 		"--overwrite",
 	})
 	osmUtils.ExecuteOsmFilterCommand([]string{
-		tracksWithoutRelationsFile,
+		tracksWithOnlyRelationsFile,
 		"-o",
 		refOutputFile,
 		"r/ref",

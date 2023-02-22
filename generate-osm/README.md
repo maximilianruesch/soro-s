@@ -14,4 +14,11 @@ go build
 ./transform-osm
 ```
 
+CLI-Flags
+```bash
+--generate-lines, --gl   Generate lines all lines new (default: false)
+--input value, -i value  The input file to read as OSM PBF file (default: "./temp/base.osm.pbf")
+--help, -h               show help
+```
+
 The final osm file will be in the folder `generate-osm\temp` and named `finalOsm.xml`. The JSON station and halt file will be in the folder `generate-osm\temp` and named `stations.json`. 

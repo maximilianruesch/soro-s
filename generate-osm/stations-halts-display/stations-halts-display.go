@@ -16,29 +16,31 @@ func StationsHaltsDisplay(stationsFile string) (osmUtils.Osm, map[string]map[str
 	stations := make(map[string]map[string]string)
 	halts := make(map[string]map[string]string)
 	for _, n := range osmData.Node {
-		var name string
+		var name string = ""
 		for _, t := range n.Tag {
 			if t.K == "name" {
 				name = t.V
 			}
 
-			if t.K == "railway" && t.V == "station" {
-				stations[n.Id] = map[string]string{
-					"name": name,
-					"lat":  n.Lat,
-					"lon":  n.Lon,
+			if name != "" && t.K == "railway" {
+				if t.V == "station" || t.V == "facility" {
+					stations[n.Id] = map[string]string{
+						"name": name,
+						"lat":  n.Lat,
+						"lon":  n.Lon,
+					}
+					n.Tag = append(n.Tag, &osmUtils.Tag{K: "type", V: "station"})
 				}
-				n.Tag = append(n.Tag, &osmUtils.Tag{K: "type", V: "station"})
-			}
 
-			if t.K == "railway" && t.V == "halt" {
-				halts[n.Id] = map[string]string{
-					"name": name,
-					"lat":  n.Lat,
-					"lon":  n.Lon,
+				if t.V == "halt" {
+					halts[n.Id] = map[string]string{
+						"name": name,
+						"lat":  n.Lat,
+						"lon":  n.Lon,
+					}
+					n.Tag = append(n.Tag, &osmUtils.Tag{K: "type", V: "element"})
+					n.Tag = append(n.Tag, &osmUtils.Tag{K: "subtype", V: "hlt"})
 				}
-				n.Tag = append(n.Tag, &osmUtils.Tag{K: "type", V: "element"})
-				n.Tag = append(n.Tag, &osmUtils.Tag{K: "subtype", V: "hlt"})
 			}
 		}
 	}
