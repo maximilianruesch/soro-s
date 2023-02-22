@@ -133,7 +133,7 @@ func processHauptsigF(knoten DBUtil.Spurplanknoten) []*DBUtil.Signal {
 				}
 
 				if is_signal && has_correct_id {
-					insertNewHauptsig(node, kilometrage, *signal, "falling", &notFound)
+					found = insertNewHauptsig(node, kilometrage, *signal, "falling", &notFound)
 				} 
 			}			
 		}		
@@ -314,7 +314,7 @@ func findBestOSMNode(kilometrage float64) (*OSMUtil.Node, error){
 	return newNode, nil
 }
 
-func insertNewHauptsig(node *OSMUtil.Node, kilometrage string, signal DBUtil.Signal, direction string, notFound *[]*DBUtil.Signal) bool{
+func insertNewHauptsig(node *OSMUtil.Node, kilometrage string, signal DBUtil.Signal, direction string, notFound *[]*DBUtil.Signal) bool {
 	for key, value_list := range anchors {
 		for _, value := range value_list {
 			if value == node {
@@ -339,7 +339,6 @@ func insertNewHauptsig(node *OSMUtil.Node, kilometrage string, signal DBUtil.Sig
 					return false
 				}
 			}
-			
 		}
 	}
 
