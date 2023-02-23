@@ -39,7 +39,8 @@ import {
     ComponentItemConfig,
     ResolvedComponentItemConfig,
     LogicalZIndex,
-    VirtualLayout, ResolvedLayoutConfig,
+    VirtualLayout,
+    ResolvedLayoutConfig,
 } from 'golden-layout';
 import GoldenLayoutComponent from './golden-layout-component.vue';
 import { useStore } from 'vuex';
@@ -98,6 +99,7 @@ const addGLComponent = async (componentType: string, title: string) => {
     GLayout.addComponent(componentType, { refId: index }, title);
 };
 
+type ValidItemConfig = RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig;
 const loadGLLayout = async (layoutConfig: LayoutConfig | ResolvedLayoutConfig) => {
     GLayout.clear();
     AllComponents.value.clear();
@@ -109,23 +111,17 @@ const loadGLLayout = async (layoutConfig: LayoutConfig | ResolvedLayoutConfig) =
     const config = LayoutConfig.isResolved(layoutConfig)
         ? LayoutConfig.fromResolved(layoutConfig as ResolvedLayoutConfig)
         : layoutConfig;
-    const contents = [layoutConfig.root.content];
+    const contents = [layoutConfig.root.content] as ValidItemConfig[][];
 
     let index = 0;
     while (contents.length > 0) {
-        const content = contents.shift() as
-        | RowOrColumnItemConfig[]
-        | StackItemConfig[]
-        | ComponentItemConfig[];
+        const content = contents.shift() ?? [];
 
-        for (const itemConfig of content) {
+        content.forEach((itemConfig) => {
             if (itemConfig.type !== 'component') {
-                contents.push(itemConfig.content as
-                    | RowOrColumnItemConfig[]
-                    | StackItemConfig[]
-                    | ComponentItemConfig[]);
+                contents.push(itemConfig.content);
 
-                continue;
+                return;
             }
 
             if (!itemConfig.componentState || !(typeof itemConfig.componentState === 'object')) {
@@ -136,7 +132,7 @@ const loadGLLayout = async (layoutConfig: LayoutConfig | ResolvedLayoutConfig) =
             usedIndex = (itemConfig.componentState as Json).refId;
             index = addComponent(itemConfig.componentType as string, usedIndex as number);
             (itemConfig.componentState as Json).refId = index;
-        }
+        });
     }
 
     await nextTick(); // wait 1 tick for vue to add the dom
