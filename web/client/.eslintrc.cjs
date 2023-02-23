@@ -72,5 +72,6 @@ module.exports = {
         '@typescript-eslint/ban-ts-comment': 0,
         '@typescript-eslint/no-unused-vars': ['error'],
         'no-console': ['error', { allow: ['warn', 'error'] }],
+        'object-curly-newline': ['error', { multiline: true }],
     }
 };
