@@ -83,7 +83,6 @@ export default defineComponent({
                 return;
             }
 
-            console.log(`Will now try searching for ${this.currentQuery}`);
             this.searchPositionFromName(this.currentQuery);
         },
 

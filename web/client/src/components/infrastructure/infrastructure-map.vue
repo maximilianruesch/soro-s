@@ -160,7 +160,6 @@ export default defineComponent({
                 return;
             }
 
-            console.log('Jumping to: ' + JSON.stringify(mapPosition));
             this.libreGLMap.jumpTo({
                 center: mapPosition,
                 zoom: 14,
