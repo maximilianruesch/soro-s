@@ -96,7 +96,8 @@ export default defineComponent({
                 const sr = station.station_routes.get(key);
 
                 this.stationRoutes.push({
-                    key, sr, 
+                    key,
+                    sr, 
                 });
             }
 

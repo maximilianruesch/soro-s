@@ -72,16 +72,7 @@ module.exports = {
         '@typescript-eslint/ban-ts-comment': 0,
         '@typescript-eslint/no-unused-vars': ['error'],
         'no-console': ['error', { allow: ['warn', 'error'] }],
-        'object-curly-newline': ['error', {
-            ObjectExpression: {
-                multiline: true,
-                minProperties: 2,
-                consistent: true,
-            },
-            ImportDeclaration: {
-                multiline: true,
-                consistent: true,
-            },
-        }],
+        'object-curly-newline': ['error', { multiline: true, consistent: true }],
+        'object-property-newline': ['error'],
     }
 };
