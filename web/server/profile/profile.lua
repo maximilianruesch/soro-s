@@ -97,7 +97,7 @@ function process_way(way)
       way:set_target_layer("rail")
       way:set_approved_min(10)
       way:add_string("rail", "secondary")
-    elseif way:has_tag("tunnel","yes")then
+    elseif way:has_tag("tunnel","yes") then
       way:set_target_layer("rail")
       way:set_approved_min(5)
       way:add_string("rail", "underground")

@@ -60,7 +60,7 @@ export const createInfrastructureMapStyle = ({ currentTheme, activatedElements }
                         '#444'
                     ],
                     'line-width': 2.0,
-                    'line-opacity': 0.4
+                    'line-dasharray': [2, 4],
                 }
             },
 
