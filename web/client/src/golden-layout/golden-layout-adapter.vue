@@ -128,8 +128,7 @@ const loadGLLayout = async (layoutConfig: LayoutConfig | ResolvedLayoutConfig) =
                 itemConfig.componentState = {};
             }
 
-            let usedIndex = undefined;
-            usedIndex = (itemConfig.componentState as Json).refId;
+            const usedIndex = (itemConfig.componentState as Json).refId;
             index = addComponent(itemConfig.componentType as string, usedIndex as number);
             (itemConfig.componentState as Json).refId = index;
         });
