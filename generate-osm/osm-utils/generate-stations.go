@@ -42,6 +42,7 @@ func generateSearchFile(osm Osm) (searchFile SearchFile, stationHaltOsm Osm) {
 	stations := make(map[string]Station)
 	halts := make(map[string]Halt)
 	stationHaltsNodes := make([]*Node, 0)
+	osm.Node = append(osm.Node, getWiesbadenHbfAsNode())
 
 	for _, node := range osm.Node {
 		var name string = ""
@@ -51,7 +52,7 @@ func generateSearchFile(osm Osm) (searchFile SearchFile, stationHaltOsm Osm) {
 			}
 
 			if name != "" && t.K == "railway" {
-				if t.V == "station" || t.V == "facility" {
+				if t.V == "station" {
 					stations[node.Id] = Station{
 						Name: name,
 						Lat:  node.Lat,
@@ -79,4 +80,20 @@ func generateSearchFile(osm Osm) (searchFile SearchFile, stationHaltOsm Osm) {
 		}, Osm{
 			Node: stationHaltsNodes,
 		}
+}
+
+func getWiesbadenHbfAsNode() *Node {
+	return &Node{
+		Id:        "420133769",
+		Version:   "1",
+		Timestamp: "2021-03-01T14:00:00Z",
+		Lat:       "50.06988",
+		Lon:       "8.24404",
+		Tag: []*Tag{
+			{K: "name", V: "Wiesbaden Hauptbahnhof"},
+			{K: "railway", V: "station"},
+			{K: "railway:ref", V: "FW"},
+			{K: "public_transport", V: "station"},
+		},
+	}
 }

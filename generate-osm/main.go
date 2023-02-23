@@ -119,7 +119,7 @@ func generateOsm(generateLines bool, inputFile string) error {
 		found, value := osmUtils.FindTagOnNode(node, "railway")
 
 		if found {
-			if value == "station" || value == "facility" || value == "halt" {
+			if value == "station" || value == "halt" {
 				osmData.Node = append(osmData.Node[:i], osmData.Node[i+1:]...)
 			}
 		}
