@@ -10,9 +10,12 @@ import (
 	"path/filepath"
 	combineLines "transform-osm/combine-lines"
 	osmUtils "transform-osm/osm-utils"
+<<<<<<< HEAD
 	stationsHaltsDisplay "transform-osm/stations-halts-display"
 	DBParser "transform-osm/db-parser"
 	// Mapper "transform-osm/map-db"
+=======
+>>>>>>> task/osm-data-generation
 
 	"github.com/urfave/cli/v2"
 )
@@ -28,6 +31,7 @@ func main() {
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
 				Name:        "generate-lines",
+				Aliases:     []string{"gl"},
 				Usage:       "Generate lines all lines new",
 				Destination: &generateLines,
 			},
@@ -63,38 +67,20 @@ func generateOsm(generateLines bool, inputFile string) error {
 	if filepath.Ext(inputFile) != ".pbf" {
 		return errors.New("Input file is not a PBF file: " + inputFile)
 	}
-
-	tracksWithoutRelationsFile, _ := filepath.Abs("./temp/tracksWithoutRelations.osm.pbf")
-	tracksFile, _ := filepath.Abs("./temp/tracks.osm.pbf")
-	refOutputFile, _ := filepath.Abs("./temp/trackRefs.xml")
-
-	osmUtils.ExecuteOsmFilterCommand([]string{
-		"-R",
-		inputFile,
-		"-o",
-		tracksWithoutRelationsFile,
-		"r/route=tracks",
-		"--overwrite",
-	})
-	osmUtils.ExecuteOsmFilterCommand([]string{
-		inputFile,
-		"-o",
-		tracksFile,
-		"r/route=tracks",
-		"--overwrite",
-	})
-	osmUtils.ExecuteOsmFilterCommand([]string{
-		tracksWithoutRelationsFile,
-		"-o",
-		refOutputFile,
-		"r/ref",
-		"--overwrite",
-	})
-
-	refs, err := getRefIds(refOutputFile)
+	tempFolderPath, _ := filepath.Abs("./temp")
+	refs, err := osmUtils.GenerateOsmTrackRefs(inputFile, tempFolderPath)
 	if err != nil {
 		return errors.New("Failed to get ref ids: " + err.Error())
 	}
+
+	tracksFilePath, _ := filepath.Abs(tempFolderPath + "/tracks.osm.pbf")
+	osmUtils.ExecuteOsmFilterCommand([]string{
+		inputFile,
+		"-o",
+		tracksFilePath,
+		"r/route=tracks",
+		"--overwrite",
+	})
 
 	lineDir := "temp/lines"
 	db_lineDir := "temp/DBines"
@@ -116,7 +102,7 @@ func generateOsm(generateLines bool, inputFile string) error {
 				return errors.New("Failed to get line file path: " + err.Error())
 			}
 			osmUtils.ExecuteOsmFilterCommand([]string{
-				tracksFile,
+				tracksFilePath,
 				"-o",
 				lineOsmFile,
 				"ref=" + refId,
@@ -137,49 +123,30 @@ func generateOsm(generateLines bool, inputFile string) error {
 	// Combine all the lines into one file
 	osmData, err := combineLines.CombineAllLines(lineDir)
 	if err != nil && errors.Is(err, combineLines.ErrLinesDirNotFound) {
-		return errors.New("You need to generate lines first")
+		return errors.New("you need to generate lines first")
 	} else if err != nil {
-		return errors.New("Failed to combine lines: " + err.Error())
+		return errors.New("failed to combine lines: " + err.Error())
 	}
 	osmData.Version = "0.6"
 	osmData.Generator = "osmium/1.14.0"
 
-	// Create stations file
-	stattionsUnfilteredFile, _ := filepath.Abs("./temp/stationsUnfiltered.osm.pbf")
-	stationsFile, _ := filepath.Abs("./temp/stations.xml")
-	osmUtils.ExecuteOsmFilterCommand([]string{
-		inputFile,
-		"-o",
-		stattionsUnfilteredFile,
-		"n/railway=station,halt,facility",
-		"--overwrite",
-	})
-	osmUtils.ExecuteOsmFilterCommand([]string{
-		stattionsUnfilteredFile,
-		"-o",
-		stationsFile,
-		"-i",
-		"n/subway=yes",
-		"n/monorail=yes",
-		"n/usage",
-		"n/tram=yes",
-		"--overwrite",
-	})
+	searchFile, stationHaltOsm := osmUtils.GenerateStationsAndHalts(inputFile, tempFolderPath)
+	searchFileJsonPath, _ := filepath.Abs(tempFolderPath + "/searchFile.json")
+	saveSearchFile(searchFile, searchFileJsonPath)
 
-	stationsOsm, jsonData := stationsHaltsDisplay.StationsHaltsDisplay(stationsFile)
-	// save stations as json
-	output, err := json.MarshalIndent(jsonData, "", "     ")
-	if err != nil {
-		fmt.Printf("error: %v\n", err)
+	for i, node := range osmData.Node {
+		found, value := osmUtils.FindTagOnNode(node, "railway")
+
+		if found {
+			if value == "station" || value == "halt" {
+				osmData.Node = append(osmData.Node[:i], osmData.Node[i+1:]...)
+			}
+		}
 	}
-	os.WriteFile("./temp/stations.json", output, 0644)
-
-	osmData.Way = append(osmData.Way, stationsOsm.Way...)
-	osmData.Node = append(osmData.Node, stationsOsm.Node...)
-	osmData.Relation = append(osmData.Relation, stationsOsm.Relation...)
+	osmData.Node = append(osmData.Node, stationHaltOsm.Node...)
 
 	sortedOsmData := osmUtils.SortOsm(osmData)
-	output, err = xml.MarshalIndent(sortedOsmData, "", "     ")
+	output, err := xml.MarshalIndent(sortedOsmData, "", "     ")
 	if err != nil {
 		fmt.Printf("error: %v\n", err)
 	}
@@ -189,22 +156,10 @@ func generateOsm(generateLines bool, inputFile string) error {
 	return nil
 }
 
-func getRefIds(trackRefFile string) (refs []string, err error) {
-	var data []byte
-	if data, err = os.ReadFile(trackRefFile); err != nil {
-		return nil, errors.New("Failed to read track ref file: " + err.Error())
+func saveSearchFile(searchFile osmUtils.SearchFile, searchFileJsonPath string) {
+	output, err := json.MarshalIndent(searchFile, "", "     ")
+	if err != nil {
+		fmt.Printf("error: %v\n", err)
 	}
-	var osmData osmUtils.Osm
-	if err := xml.Unmarshal([]byte(data), &osmData); err != nil {
-		return nil, err
-	}
-	for _, s := range osmData.Relation {
-		for _, m := range s.Tag {
-			if m.K == "ref" {
-				refs = append(refs, m.V)
-			}
-		}
-	}
-
-	return refs, nil
+	os.WriteFile(searchFileJsonPath, output, 0644)
 }
