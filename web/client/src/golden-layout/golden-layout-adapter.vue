@@ -223,7 +223,9 @@ onMounted(() => {
         // @ts-ignore
         const component = instance?.refs[ref][0] as typeof GoldenLayoutComponent;
 
-        MapComponents.set(container, { refId, glc: component });
+        MapComponents.set(container, {
+            refId, glc: component, 
+        });
         // @ts-ignore
         AllComponents.value.get(refId).container = container;
 
