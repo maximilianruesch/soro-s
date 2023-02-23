@@ -1,6 +1,7 @@
 import { Module } from 'vuex';
 import { MapPosition } from '@/components/infrastructure/infrastructure-map.vue';
 import { sendPostData, sendRequest } from '@/api/api-client';
+import { ElementType } from '@/components/infrastructure/elementTypes';
 
 type InfrastructureState = {
     infrastructures: string[],
@@ -105,6 +106,13 @@ export const InfrastructureStore: Module<InfrastructureState, undefined> = {
                 data: {
                     query,
                     infrastructure: state.currentInfrastructure,
+                    options: {
+                        includedTypes: {
+                            [ElementType.HALT]: true,
+                            [ElementType.STATION]: true,
+                            [ElementType.MAIN_SIGNAL]: true,
+                        },
+                    },
                 },
             })
                 .then(response => response.json())
