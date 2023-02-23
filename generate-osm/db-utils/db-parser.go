@@ -10,10 +10,10 @@ import (
 	"golang.org/x/net/html/charset"
 )
 
-type xmlIssBookeeping struct {
-	xmlIssData         *XmlIssDaten
-	numBetriebsstellen int
-	used               bool
+type XmlIssBookeeping struct {
+	XmlIssData         *XmlIssDaten
+	NumBetriebsstellen int
+	Used               bool
 }
 
 func Parse(refs []string, tempDBLinesPath string, dbResourcesPath string) []string {
@@ -22,13 +22,13 @@ func Parse(refs []string, tempDBLinesPath string, dbResourcesPath string) []stri
 		panic(err)
 	}
 
-	lineMap := make(map[string]*xmlIssBookeeping)
+	lineMap := make(map[string]*XmlIssBookeeping)
 	// in missingMap, all lines, for which DB-data exists but no OSM-data (i.e. not appearing in refs) are listed
 	missingMap := []string{}
 
 	// all datastructures are being intialized
 	for _, line := range refs {
-		lineMap[line] = &xmlIssBookeeping{&XmlIssDaten{xml.Name{" ", "XmlIssDaten"}, []*Spurplanbetriebsstelle{}}, 0, false}
+		lineMap[line] = &XmlIssBookeeping{&XmlIssDaten{xml.Name{" ", "XmlIssDaten"}, []*Spurplanbetriebsstelle{}}, 0, false}
 	}
 
 	// main work-loop: For all "Betriebsstellen" and for all "Spurplanabschnitte" of these, we check, whether the respective line
@@ -43,22 +43,22 @@ func Parse(refs []string, tempDBLinesPath string, dbResourcesPath string) []stri
 				continue
 			}
 
-			lineData := lineInfo.xmlIssData
-			numBetriebsstellen := lineInfo.numBetriebsstellen
+			lineData := lineInfo.XmlIssData
+			numBetriebsstellen := lineInfo.NumBetriebsstellen
 
 			// if no "Abschnitt" has yet been added to this particular "Betriebsstelle", we must first create one
 			if len(lineData.Betriebsstellen) == numBetriebsstellen {
 				lineData.Betriebsstellen = append(lineData.Betriebsstellen, &Spurplanbetriebsstelle{stelle.XMLName, stelle.Name, []*Spurplanabschnitt{}})
-				lineInfo.used = true
+				lineInfo.Used = true
 			}
 			lineData.Betriebsstellen[numBetriebsstellen].Abschnitte = append(lineData.Betriebsstellen[numBetriebsstellen].Abschnitte, abschnitt)
 		}
 
 		// final increment of all "Betriebsstellen"-counters where neccessary
 		for _, lineInfo := range lineMap {
-			if lineInfo.used {
-				lineInfo.numBetriebsstellen += 1
-				lineInfo.used = false
+			if lineInfo.Used {
+				lineInfo.NumBetriebsstellen += 1
+				lineInfo.Used = false
 			}
 		}
 	}
@@ -67,11 +67,11 @@ func Parse(refs []string, tempDBLinesPath string, dbResourcesPath string) []stri
 	os.Mkdir(tempDBLinesPath, 0755)
 	//final work-loop: For all collected lines, .xml-files must be marshelled
 	for line, lineInfo := range lineMap {
-		if len(lineInfo.xmlIssData.Betriebsstellen) == 0 {
+		if len(lineInfo.XmlIssData.Betriebsstellen) == 0 {
 			continue
 		}
 
-		newIssBytes, err := xml.MarshalIndent(*lineInfo.xmlIssData, "", "	")
+		newIssBytes, err := xml.MarshalIndent(*lineInfo.XmlIssData, "", "	")
 		if err != nil {
 			panic(err)
 		}
