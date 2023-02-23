@@ -48,6 +48,22 @@ export const createInfrastructureMapStyle = ({ currentTheme, activatedElements }
                 }
             },
             {
+                'id': 'bridges',
+                'type': 'line',
+                'source': 'osm',
+                'source-layer': 'rail',
+                'filter': ['==', 'rail', 'bridges'],
+                'paint': {
+                    'line-color': [
+                        'case',
+                        ['has', 'color'], ['get', 'color'],
+                        '#444'
+                    ],
+                    'line-width': 6.0,
+                    'line-blur': 7
+                }
+            },
+            {
                 'id': 'rail',
                 'type': 'line',
                 'source': 'osm',
