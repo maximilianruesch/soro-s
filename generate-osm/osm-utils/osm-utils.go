@@ -34,16 +34,6 @@ type Node struct {
 	Lon     string   `xml:"lon,attr"`
 }
 
-func FindTagOnNode(node *Node, key string) (bool, string) {
-	for _, tag := range node.Tag {
-		if tag.K == key {
-			return true, tag.V
-		}
-	}
-
-	return false, ""
-}
-
 type Member struct {
 	XMLName xml.Name `xml:"member"`
 	Type    string   `xml:"type,attr"`
@@ -87,37 +77,4 @@ func ExecuteOsmFilterCommand(args []string) error {
 	}
 
 	return nil
-}
-
-func GetTag(node Node, key string) (string, error) {
-	for _, tag := range node.Tag {
-		if tag.K == key {
-			return tag.V, nil
-		}
-	}
-	return "", errors.New(fmt.Errorf("did not find tag %s", key).Error())
-}
-
-func InsertNode(node *Node, other_node_id string, data *Osm) {
-	data.Node = append(data.Node, node)
-	for _, way := range data.Way {
-		index := -1
-		for i, nd := range way.Nd {
-			if nd.Ref == other_node_id {
-				index = i
-				break
-			}
-		}
-		if index == -1 {
-			return
-		}
-		if index == len(way.Nd)-1 {
-			element := way.Nd[index]
-			temp := append(way.Nd[:index], &Nd{Ref: node.Id})
-			way.Nd = append(temp, element)
-			return
-		}
-		temp := append(way.Nd[:index+1], &Nd{Ref: node.Id})
-		way.Nd = append(temp, way.Nd[index+1:]...)
-	}
 }

@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	combineLines "transform-osm/combine-lines"
 	dbUtils "transform-osm/db-utils"
-	Mapper "transform-osm/map-db"
 	osmUtils "transform-osm/osm-utils"
 
 	"github.com/urfave/cli/v2"
@@ -107,7 +106,7 @@ func generateOsm(generateLines bool, inputFile string) error {
 		}
 
 		relevant_refs := dbUtils.Parse(refs, tempDBLinesDir, tempDBResoucesDir)
-		Mapper.MapDB(relevant_refs, tempLinesDir, tempDBLinesDir)
+		dbUtils.MapDB(relevant_refs, tempLinesDir, tempDBLinesDir)
 
 		print(relevant_refs)
 		print("\n")
@@ -133,9 +132,9 @@ func generateOsm(generateLines bool, inputFile string) error {
 	saveSearchFile(searchFile, searchFileJsonPath)
 
 	for i, node := range osmData.Node {
-		found, value := osmUtils.FindTagOnNode(node, "railway")
+		value, err := osmUtils.FindTagOnNode(node, "railway")
 
-		if found {
+		if err != nil {
 			if value == "station" || value == "halt" {
 				osmData.Node = append(osmData.Node[:i], osmData.Node[i+1:]...)
 			}
