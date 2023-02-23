@@ -119,6 +119,7 @@ func generateOsm(generateLines bool, inputFile string) error {
 
 	// Combine all the lines into one file
 	osmData, err := combineLines.CombineAllLines(tempLinesDir)
+
 	if err != nil && errors.Is(err, combineLines.ErrLinesDirNotFound) {
 		return errors.New("you need to generate lines first")
 	} else if err != nil {
