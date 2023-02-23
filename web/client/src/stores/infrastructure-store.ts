@@ -10,6 +10,7 @@ type InfrastructureState = {
         name: string,
         position: MapPosition,
     }[],
+    currentSearchTerm?: string,
     currentSearchError?: string,
     highlightedSignalStationRouteID?: string,
     highlightedStationRouteID?: string,
@@ -28,6 +29,7 @@ export const InfrastructureStore: Module<InfrastructureState, undefined> = {
             currentInfrastructure: undefined,
             currentSearchedMapPosition: undefined,
             currentSearchedMapPositions: [],
+            currentSearchTerm: undefined,
             currentSearchError: undefined,
             highlightedSignalStationRouteID: undefined,
             highlightedStationRouteID: undefined,
@@ -49,6 +51,10 @@ export const InfrastructureStore: Module<InfrastructureState, undefined> = {
 
         setCurrentSearchedMapPositions(state, currentSearchedMapPositions) {
             state.currentSearchedMapPositions = currentSearchedMapPositions;
+        },
+
+        setCurrentSearchTerm(state, currentSearchTerm) {
+            state.currentSearchTerm = currentSearchTerm;
         },
 
         setCurrentSearchError(state, currentSearchError) {
@@ -74,7 +80,6 @@ export const InfrastructureStore: Module<InfrastructureState, undefined> = {
         },
 
         load({ commit }, infrastructureFilename) {
-            console.log('Switching to infrastructure to', infrastructureFilename);
             commit('setCurrentInfrastructure', infrastructureFilename);
         },
 
@@ -105,6 +110,7 @@ export const InfrastructureStore: Module<InfrastructureState, undefined> = {
                 .then(response => response.json())
                 .then(positions => {
                     commit('setCurrentSearchedMapPositions', positions);
+                    commit('setCurrentSearchTerm', query);
 
                     if (positions.length === 0) {
                         commit('setCurrentSearchError', 'Not found!');
@@ -120,6 +126,6 @@ export const InfrastructureStore: Module<InfrastructureState, undefined> = {
 
                     return;
                 });
-        }
+        },
     },
 };
