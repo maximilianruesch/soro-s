@@ -1,7 +1,6 @@
 # Ignore the file produced by osm data generation
 temp/*
 output/*
+
 *.exe
 
-#as well as all DB-data files
-db-parser/resources/*

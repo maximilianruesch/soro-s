@@ -1,5 +1,3 @@
-<p align="center"><img src="logo.png" width="350"></p>
-
 ## Generate OSM Setup
 
 To setup generate-osm for developing purposes please follow one of these instructions.
@@ -12,6 +10,13 @@ You need to add the osm file from [Geofabrik](https://download.geofabrik.de/euro
 ```bash 
 go build
 ./transform-osm
+```
+
+CLI-Flags
+```bash
+--generate-lines, --gl   Generate lines all lines new (default: false)
+--input value, -i value  The input file to read as OSM PBF file (default: "./temp/base.osm.pbf")
+--help, -h               show help
 ```
 
 The final osm file will be in the folder `generate-osm\temp` and named `finalOsm.xml`. The JSON station and halt file will be in the folder `generate-osm\temp` and named `stations.json`. 

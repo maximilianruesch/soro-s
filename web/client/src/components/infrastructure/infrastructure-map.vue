@@ -7,6 +7,7 @@
         <v-sheet
             ref="mapLegend"
             class="map-overlay infrastructure-map-legend"
+            :elevation="5"
         >
             <template
                 v-for="(elementType, index) in legendControlTypes"
@@ -57,21 +58,27 @@ import {
     highlightStationRoute
 } from './infrastructureMap';
 import { FilterSpecification, Map } from 'maplibre-gl';
-import { infrastructureMapStyle } from './mapStyle';
+import { createInfrastructureMapStyle } from './mapStyle';
 import { addIcons, iconExtension, iconUrl } from './addIcons';
-import { elementTypes, elementTypeLabels } from './elementTypes';
+import { ElementTypes, ElementType, ElementTypeLabels } from './elementTypes';
 import { defineComponent } from 'vue';
 import { transformUrl } from '@/api/api-client';
+import { ThemeInstance, useTheme } from 'vuetify';
 
 const specialLayoutControls = ['Rising', 'Falling'];
-const initiallyCheckedControls = ['station', 'ms', 'as', 'eotd', ...specialLayoutControls];
+const initiallyCheckedControls = [
+    ElementType.STATION,
+    ElementType.MAIN_SIGNAL,
+    ElementType.APPROACH_SIGNAL,
+    ElementType.END_OF_TRAIN_DETECTOR,
+    ...specialLayoutControls,
+];
 const legendControlTypes = [
-    ...elementTypes,
+    ...ElementTypes,
     ...specialLayoutControls
 ];
 
 const mapDefaults = {
-    style: infrastructureMapStyle,
     attributionControl: false,
     zoom: 18,
     hash: 'location',
@@ -80,8 +87,17 @@ const mapDefaults = {
     bearing: 0,
 };
 
+export type MapPosition = {
+    lat: number,
+    lon: number,
+};
+
 export default defineComponent({
     name: 'InfrastructureMap',
+
+    setup() {
+        return { currentTheme: useTheme().global };
+    },
 
     data() {
         return {
@@ -90,13 +106,14 @@ export default defineComponent({
             checkedControls: Array.from(initiallyCheckedControls),
             iconUrl,
             iconExtension,
-            elementTypeLabels: elementTypeLabels as { [elementType: string]: string },
+            elementTypeLabels: ElementTypeLabels as { [elementType: string]: string },
         };
     },
 
     computed: {
         ...mapState(InfrastructureNamespace, [
             'currentInfrastructure',
+            'currentSearchedMapPosition',
             'highlightedSignalStationRouteID',
             'highlightedStationRouteID',
         ]),
@@ -104,7 +121,6 @@ export default defineComponent({
 
     watch: {
         currentInfrastructure(newInfrastructure: string | null) {
-            this.libreGLMap?.remove();
             // Re-instantiating the map on infrastructure change currently leads to duplicated icon fetching on change.
             // @ts-ignore type instantiation for some reason is too deep
             this.libreGLMap = newInfrastructure ? this.createMap(newInfrastructure) : null;
@@ -137,6 +153,32 @@ export default defineComponent({
 
                 this.setElementTypeVisibility(control, true);
             });
+        },
+
+        currentSearchedMapPosition(mapPosition: MapPosition) {
+            if (!this.libreGLMap) {
+                return;
+            }
+
+            console.log('Jumping to: ' + JSON.stringify(mapPosition));
+            this.libreGLMap.jumpTo({
+                center: mapPosition,
+                zoom: 14,
+            });
+        },
+
+        currentTheme: {
+            handler(newTheme: ThemeInstance) {
+                if (!this.libreGLMap) {
+                    return;
+                }
+
+                this.libreGLMap.setStyle(createInfrastructureMapStyle({
+                    currentTheme: newTheme.current.value,
+                    activatedElements: this.checkedControls,
+                }));
+            },
+            deep: true,
         },
 
         highlightedSignalStationRouteID(newID, oldID) {
@@ -210,8 +252,8 @@ export default defineComponent({
                 filter = ['boolean', false];
             }
 
-            elementTypes.forEach((elementType) => {
-                if (elementType === 'station') {
+            ElementTypes.forEach((elementType) => {
+                if (elementType === ElementType.STATION) {
                     return;
                 }
 
@@ -231,12 +273,16 @@ export default defineComponent({
                     if (relative_url.startsWith('/')) {
                         return { url: transformUrl(`/${infrastructure}${relative_url}`) };
                     }
-                }
+                },
+                style: createInfrastructureMapStyle({
+                    currentTheme: this.$vuetify.theme.current,
+                    activatedElements: this.checkedControls,
+                }),
             });
 
             map.on('load', async () => {
                 await addIcons(map);
-                elementTypes.forEach((type) => this.setElementTypeVisibility(type, this.checkedControls.includes(type)));
+                ElementTypes.forEach((type) => this.setElementTypeVisibility(type, this.checkedControls.includes(type)));
             });
 
             map.dragPan.enable({
