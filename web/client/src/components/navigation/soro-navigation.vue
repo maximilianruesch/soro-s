@@ -34,7 +34,7 @@
                     <i class="material-icons">train</i>
                 </v-btn>
             </div>
-            <soro-navigation-content @add-golden-layout-tab="addTab" />
+            <soro-navigation-content />
         </v-navigation-drawer>
     </div>
 </template>
@@ -48,20 +48,12 @@ import { defineComponent } from 'vue';
 
 export default defineComponent({
     name: 'SoroNavigation',
-
-    emits: ['add-golden-layout-tab'],
     
     data() {
         return {
             overlay: false,
         };
     },
-    
-    methods: {
-        addTab(tab: any) {
-            this.$emit('add-golden-layout-tab', tab); 
-        }
-    }
 });
 </script>
 
@@ -91,7 +83,7 @@ nav:not(.v-navigation-drawer--active) .overlay-tabs { /* stylelint-disable-line 
     height: 40px;
     margin-top: 10px;
     background: var(--dialog-color);
-    color: var(--secondary-text-color);
+    color: rgb(var(--v-theme-on-surface));
     cursor: pointer;
     display: flex;
     align-items: center;
