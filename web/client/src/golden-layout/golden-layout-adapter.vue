@@ -168,7 +168,7 @@ onMounted(() => {
     const handleContainerVirtualRectingRequiredEvent = (
         container: ComponentContainer,
         width: number,
-        height: number
+        height: number,
     ): void => {
         const component = MapComponents.get(container);
         if (!component || !component?.glc) {
@@ -185,7 +185,7 @@ onMounted(() => {
 
     const handleContainerVirtualVisibilityChangeRequiredEvent = (
         container: ComponentContainer,
-        visible: boolean
+        visible: boolean,
     ): void => {
         const component = MapComponents.get(container);
         if (!component || !component?.glc) {
@@ -198,7 +198,7 @@ onMounted(() => {
     const handleContainerVirtualZIndexChangeRequiredEvent = (
         container: ComponentContainer,
         logicalZIndex: LogicalZIndex,
-        defaultZIndex: string
+        defaultZIndex: string,
     ): void => {
         const component = MapComponents.get(container);
         if (!component || !component?.glc) {
@@ -210,7 +210,7 @@ onMounted(() => {
 
     const bindComponentEventListener = (
         container: ComponentContainer,
-        itemConfig: ResolvedComponentItemConfig
+        itemConfig: ResolvedComponentItemConfig,
     ): ComponentContainer.BindableComponent => {
         let refId = -1;
         if (itemConfig && itemConfig.componentState) {
@@ -251,7 +251,7 @@ onMounted(() => {
     GLayout = new VirtualLayout(
       GLRoot.value as HTMLElement,
       bindComponentEventListener,
-      unbindComponentEventListener
+      unbindComponentEventListener,
     );
 
     GLayout.beforeVirtualRectingEvent = handleBeforeVirtualRectingEvent;

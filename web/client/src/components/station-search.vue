@@ -55,7 +55,7 @@ export default defineComponent({
 
     data(): { currentQuery: string | null } {
         return {
-            currentQuery: null
+            currentQuery: null,
         };
     },
 

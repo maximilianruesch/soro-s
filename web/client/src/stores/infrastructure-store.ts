@@ -127,6 +127,6 @@ export const InfrastructureStore: Module<InfrastructureState, undefined> = {
 
                     return;
                 });
-        }
+        },
     },
 };

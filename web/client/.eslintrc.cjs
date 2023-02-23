@@ -53,7 +53,7 @@ module.exports = {
         ],
         'comma-dangle': [
             'error',
-            'only-multiline',
+            'always-multiline',
         ],
         'object-curly-spacing': [
             'error',

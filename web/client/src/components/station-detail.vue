@@ -111,7 +111,7 @@ export default defineComponent({
             'setHighlightedStationRouteID',
             'setHighlightedSignalStationRouteID',
         ]),
-    }
+    },
 });
 </script>
 

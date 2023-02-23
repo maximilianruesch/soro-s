@@ -55,7 +55,7 @@ import {
     deHighlightSignalStationRoute,
     deHighlightStationRoute,
     highlightSignalStationRoute,
-    highlightStationRoute
+    highlightStationRoute,
 } from './infrastructureMap';
 import { FilterSpecification, Map } from 'maplibre-gl';
 import { createInfrastructureMapStyle } from './mapStyle';
@@ -75,7 +75,7 @@ const initiallyCheckedControls = [
 ];
 const legendControlTypes = [
     ...ElementTypes,
-    ...specialLayoutControls
+    ...specialLayoutControls,
 ];
 
 const mapDefaults = {
@@ -289,12 +289,12 @@ export default defineComponent({
                 linearity: 0.01,
                 easing: t => t,
                 maxSpeed: 1400,
-                deceleration: 2500
+                deceleration: 2500,
             });
 
             return map;
         },
-    }
+    },
 });
 </script>
 
