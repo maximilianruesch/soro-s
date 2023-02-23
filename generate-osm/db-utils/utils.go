@@ -1,36 +1,36 @@
-package DBUtils
+package dbUtils
 
 import (
 	"encoding/xml"
 )
 
 type Wert struct {
-	XMLName xml.Name 
-	Value string `xml:",chardata"`
+	XMLName xml.Name
+	Value   string `xml:",chardata"`
 }
 
 type Stamm struct {
 	XMLName xml.Name `xml:"Stamm"`
-	ID string `xml:"ID,attr"`
+	ID      string   `xml:"ID,attr"`
 }
 type Abzweig struct {
 	XMLName xml.Name `xml:"Abzweig"`
-	ID string `xml:"ID,attr"`
+	ID      string   `xml:"ID,attr"`
 }
 type Partner struct {
-	XMLName xml.Name 
-	ID string `xml:",attr"`
+	XMLName xml.Name
+	ID      string `xml:",attr"`
 }
 
 type KnotenTyp struct {
-	XMLName xml.Name 
-	ID []*Wert `xml:"ID"`
+	XMLName        xml.Name
+	ID             []*Wert `xml:"ID"`
 	Kilometrierung []*Wert `xml:"Kilometrierung"`
 }
 
 type Weichenanfang struct {
 	KnotenTyp
-	Stamm []*Stamm `xml:"Stamm"`
+	Stamm   []*Stamm   `xml:"Stamm"`
 	Abzweig []*Abzweig `xml:"Abzweig"`
 }
 type Weichenknoten struct {
@@ -40,31 +40,31 @@ type Weichenknoten struct {
 
 type Kreuzungsknoten struct {
 	XMLName xml.Name
-	ID string `xml:"ID,atrr"`
+	ID      string `xml:"ID,attr"`
 }
 
 type KreuzungsweicheAnfangLinks struct {
 	KnotenTyp
-	Name []*Wert `xml:"NameAnfang"`
+	Name             []*Wert            `xml:"NameAnfang"`
 	NachbarGeradeaus []*Kreuzungsknoten `xml:"NachbarGeradeaus"`
-	NachbarAbzweig []*Kreuzungsknoten `xml:"NachbarAbzweig"`
+	NachbarAbzweig   []*Kreuzungsknoten `xml:"NachbarAbzweig"`
 }
 type KreuzungsweicheAnfangRechts struct {
 	KnotenTyp
-	NachbarGeradeaus []*Kreuzungsknoten `xml:"NachbarGeradeaus"`
+	NachbarGeradeaus  []*Kreuzungsknoten `xml:"NachbarGeradeaus"`
 	HauptknotenAnfang []*Kreuzungsknoten `xml:"HauptknotenAnfang"`
-	HauptknotenEnde []*Kreuzungsknoten `xml:"HauptknotenEnde"`
+	HauptknotenEnde   []*Kreuzungsknoten `xml:"HauptknotenEnde"`
 }
 type KreuzungsweicheEndeLinks struct {
 	KnotenTyp
 	NachbarGeradeaus []*Kreuzungsknoten `xml:"NachbarGeradeaus"`
-	NachbarAbzweig []*Kreuzungsknoten `xml:"NachbarAbzweig"`
+	NachbarAbzweig   []*Kreuzungsknoten `xml:"NachbarAbzweig"`
 }
 type KreuzungsweicheEndeRechts struct {
 	KnotenTyp
-	NachbarGeradeaus []*Kreuzungsknoten `xml:"NachbarGeradeaus"`
+	NachbarGeradeaus  []*Kreuzungsknoten `xml:"NachbarGeradeaus"`
 	HauptknotenAnfang []*Kreuzungsknoten `xml:"HauptknotenAnfang"`
-	HauptknotenEnde []*Kreuzungsknoten `xml:"HauptknotenEnde"`
+	HauptknotenEnde   []*Kreuzungsknoten `xml:"HauptknotenEnde"`
 }
 
 type KmSprungAnfang struct {
@@ -118,7 +118,7 @@ type Zugschlussstelle struct {
 
 type Neigung struct {
 	KnotenTyp
-	Rising []*Wert `xml:"Steigend"`
+	Rising  []*Wert `xml:"Steigend"`
 	Falling []*Wert `xml:"Fallend"`
 }
 type Tunnel struct {
@@ -128,25 +128,25 @@ type Tunnel struct {
 
 type Spurplanknoten struct {
 	XMLName xml.Name `xml:"Spurplanknoten"`
-	
+
 	BetriebsStGr []*Betriebsstellengrenze `xml:"Betriebsstellengrenze"`
-	Prellbock []*Prellbock `xml:"Prellbock"`
-	Gleisende []*Gleisende `xml:"Gleisende"`
+	Prellbock    []*Prellbock             `xml:"Prellbock"`
+	Gleisende    []*Gleisende             `xml:"Gleisende"`
 
-	WeichenAbzwLinks []*Weichenknoten `xml:"WeichenabzweigLinks"`
+	WeichenAbzwLinks  []*Weichenknoten `xml:"WeichenabzweigLinks"`
 	WeichenAbzwRechts []*Weichenknoten `xml:"WeichenabzweigRechts"`
-	WeichenStamm []*Weichenknoten `xml:"WeichenStamm"`
-	WeichenAnf []*Weichenanfang `xml:"Weichenanfang"`
-	
-	KreuzungsweicheAnfangLinks []*KreuzungsweicheAnfangLinks `xml:"KreuzungsweicheAnfangLinks"`
-	KreuzungsweicheAnfangRechts []*KreuzungsweicheAnfangRechts `xml:"KreuzungsweicheAnfangRechts"`
-	KreuzungsweicheEndeLinks []*KreuzungsweicheEndeLinks `xml:"KreuzungsweicheEndeLinks"`
-	KreuzungsweicheEndeRechts []*KreuzungsweicheEndeRechts `xml:"KreuzungsweicheEndeRechts"`
+	WeichenStamm      []*Weichenknoten `xml:"WeichenStamm"`
+	WeichenAnf        []*Weichenanfang `xml:"Weichenanfang"`
 
-	HauptsigF []*Signal `xml:"HauptsignalF"`
-	HauptsigS []*Signal `xml:"HauptsignalS"`
-	VorsigF []*Signal `xml:"VorsignalF"`
-	VorsigS []*Signal `xml:"VorsignalS"`
+	KreuzungsweicheAnfangLinks  []*KreuzungsweicheAnfangLinks  `xml:"KreuzungsweicheAnfangLinks"`
+	KreuzungsweicheAnfangRechts []*KreuzungsweicheAnfangRechts `xml:"KreuzungsweicheAnfangRechts"`
+	KreuzungsweicheEndeLinks    []*KreuzungsweicheEndeLinks    `xml:"KreuzungsweicheEndeLinks"`
+	KreuzungsweicheEndeRechts   []*KreuzungsweicheEndeRechts   `xml:"KreuzungsweicheEndeRechts"`
+
+	HauptsigF  []*Signal `xml:"HauptsignalF"`
+	HauptsigS  []*Signal `xml:"HauptsignalS"`
+	VorsigF    []*Signal `xml:"VorsignalF"`
+	VorsigS    []*Signal `xml:"VorsignalS"`
 	SchutzsigF []*Signal `xml:"SchutzsignalF"`
 	SchutzsigS []*Signal `xml:"SchutzsignalS"`
 
@@ -155,19 +155,19 @@ type Spurplanknoten struct {
 	HalteplRzF []*Halteplatz `xml:"HalteplatzRzF"`
 	HalteplRzS []*Halteplatz `xml:"HalteplatzRzS"`
 
-	KmSprungAnf []*KmSprungAnfang `xml:"KmSprungAnfang"`
-	KmSprungEnde []*KmSprungEnde `xml:"KmSprungEnde"`
+	KmSprungAnf  []*KmSprungAnfang `xml:"KmSprungAnfang"`
+	KmSprungEnde []*KmSprungEnde   `xml:"KmSprungEnde"`
 
 	MaxSpeedF []*MaxGeschwindigkeit `xml:"GeschwZulaessigF"`
 	MaxSpeedS []*MaxGeschwindigkeit `xml:"GeschwZulaessigS"`
 
-	Neigung []*Neigung `xml:"Neigung"`	
-	Tunnel []*Tunnel `xml:"Tunnel"`
+	Neigung []*Neigung `xml:"Neigung"`
+	Tunnel  []*Tunnel  `xml:"Tunnel"`
 
 	SignalZugschlussstelleF []*Zugschlussstelle `xml:"SignalZugschlussstelleF"`
 	SignalZugschlussstelleS []*Zugschlussstelle `xml:"SignalZugschlussstelleS"`
-	FstrZugschlussstelleF []*Zugschlussstelle `xml:"FstrZugschlussstelleF"`
-	FstrZugschlussstelleS []*Zugschlussstelle `xml:"FstrZugschlussstelleS"`
+	FstrZugschlussstelleF   []*Zugschlussstelle `xml:"FstrZugschlussstelleF"`
+	FstrZugschlussstelleS   []*Zugschlussstelle `xml:"FstrZugschlussstelleS"`
 
 	Streckenwechsel0 []*Streckenwechsel0 `xml:"Streckenwechsel0"`
 	Streckenwechsel1 []*Streckenwechsel1 `xml:"Streckenwechsel1"`
@@ -175,27 +175,27 @@ type Spurplanknoten struct {
 
 type Strecke struct {
 	XMLName xml.Name `xml:"Strecke"`
-	Nummer string `xml:",chardata"`
+	Nummer  string   `xml:",chardata"`
 }
 
 type Betriebsstelle struct {
 	XMLName xml.Name `xml:"Betriebsstelle"`
-	Name string `xml:",chardata"`
+	Name    string   `xml:",chardata"`
 }
 
 type Spurplanabschnitt struct {
-	XMLName xml.Name `xml:"Spurplanabschnitt"`
-	Strecken_Nr []*Strecke `xml:"Strecke"`
-	Knoten []*Spurplanknoten `xml:"Spurplanknoten"`
+	XMLName    xml.Name          `xml:"Spurplanabschnitt"`
+	StreckenNr []*Strecke        `xml:"Strecke"`
+	Knoten     []*Spurplanknoten `xml:"Spurplanknoten"`
 }
 
 type Spurplanbetriebsstelle struct {
-	XMLName xml.Name `xml:"Spurplanbetriebsstelle"`
-	Name []*Betriebsstelle `xml:"Betriebsstelle"`
+	XMLName    xml.Name             `xml:"Spurplanbetriebsstelle"`
+	Name       []*Betriebsstelle    `xml:"Betriebsstelle"`
 	Abschnitte []*Spurplanabschnitt `xml:"Spurplanabschnitte>Spurplanabschnitt"`
 }
 
 type XmlIssDaten struct {
-	XMLName xml.Name `xml:"XmlIssDaten"`
+	XMLName         xml.Name                  `xml:"XmlIssDaten"`
 	Betriebsstellen []*Spurplanbetriebsstelle `xml:"Spurplanbetriebsstellen>Spurplanbetriebsstelle"`
 }

@@ -9,13 +9,10 @@ import (
 	"os"
 	"path/filepath"
 	combineLines "transform-osm/combine-lines"
+	dbUtils "transform-osm/db-utils"
 	osmUtils "transform-osm/osm-utils"
-<<<<<<< HEAD
-	stationsHaltsDisplay "transform-osm/stations-halts-display"
-	DBParser "transform-osm/db-parser"
+
 	// Mapper "transform-osm/map-db"
-=======
->>>>>>> task/osm-data-generation
 
 	"github.com/urfave/cli/v2"
 )
@@ -82,22 +79,22 @@ func generateOsm(generateLines bool, inputFile string) error {
 		"--overwrite",
 	})
 
-	lineDir := "temp/lines"
-	db_lineDir := "temp/DBines"
-
+	tempLinesDir, _ := filepath.Abs(tempFolderPath + "/lines")
+	tempDBLinesDir, _ := filepath.Abs(tempFolderPath + "/DBLines")
+	tempDBResoucesDir, _ := filepath.Abs(tempFolderPath + "/DBResources")
 	if generateLines {
-		if err = os.RemoveAll(lineDir); err != nil {
+		if err = os.RemoveAll(tempLinesDir); err != nil {
 			return errors.New("Failed to remove lines folder: " + err.Error())
 		}
-		if err = os.RemoveAll(db_lineDir); err != nil {
+		if err = os.RemoveAll(tempDBLinesDir); err != nil {
 			return errors.New("Failed to remove DBLines folder: " + err.Error())
 		}
-		if err = os.Mkdir(lineDir, 0755); err != nil {
+		if err = os.Mkdir(tempLinesDir, 0755); err != nil {
 			return errors.New("Failed to create lines folder: " + err.Error())
 		}
 
 		for _, refId := range refs {
-			lineOsmFile, err := filepath.Abs(lineDir+"/"+ refId + ".xml")
+			lineOsmFile, err := filepath.Abs(tempLinesDir + "/" + refId + ".xml")
 			if err != nil {
 				return errors.New("Failed to get line file path: " + err.Error())
 			}
@@ -110,7 +107,7 @@ func generateOsm(generateLines bool, inputFile string) error {
 			})
 		}
 
-		relevant_refs := DBParser.Parse(refs)
+		relevant_refs := dbUtils.Parse(refs, tempDBLinesDir, tempDBResoucesDir)
 
 		print(relevant_refs)
 		print("\n")
@@ -121,7 +118,7 @@ func generateOsm(generateLines bool, inputFile string) error {
 	}
 
 	// Combine all the lines into one file
-	osmData, err := combineLines.CombineAllLines(lineDir)
+	osmData, err := combineLines.CombineAllLines(tempLinesDir)
 	if err != nil && errors.Is(err, combineLines.ErrLinesDirNotFound) {
 		return errors.New("you need to generate lines first")
 	} else if err != nil {
