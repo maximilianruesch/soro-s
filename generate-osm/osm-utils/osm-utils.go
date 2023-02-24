@@ -79,7 +79,7 @@ func ExecuteOsmFilterCommand(args []string) error {
 	return nil
 }
 
-func FindTag(node Node, key string) (string, error) {
+func FindTagOnNode(node Node, key string) (string, error) {
 	for _, tag := range node.Tag {
 		if tag.K == key {
 			return tag.V, nil
