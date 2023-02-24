@@ -65,7 +65,7 @@ func Parse(refs []string, tempDBLinesPath string, dbResourcesPath string) []stri
 
 	relevantRefs := []string{}
 	os.Mkdir(tempDBLinesPath, 0755)
-	//final work-loop: For all collected lines, .xml-files must be marshalled
+	//final work-loop: For all collected lines, .xml-files must be marshelled
 	for line, lineInfo := range lineMap {
 		if len(lineInfo.XmlIssData.Betriebsstellen) == 0 {
 			continue
@@ -89,6 +89,7 @@ func Parse(refs []string, tempDBLinesPath string, dbResourcesPath string) []stri
 }
 
 func readDBFiles(dbResourcesPath string) (XmlIssDaten, error) {
+
 	// read all files and unmarshal them into one XmlIssDaten-struct
 	files, err := os.ReadDir(dbResourcesPath)
 	if err != nil {

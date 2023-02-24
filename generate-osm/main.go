@@ -91,7 +91,7 @@ func generateOsm(generateLines bool, inputFile string) error {
 			return errors.New("Failed to create lines folder: " + err.Error())
 		}
 
-		for _, refId := range []string{"3601"} {
+		for _, refId := range refs {
 			lineOsmFile, err := filepath.Abs(tempLinesDir + "/" + refId + ".xml")
 			if err != nil {
 				return errors.New("Failed to get line file path: " + err.Error())
@@ -106,9 +106,12 @@ func generateOsm(generateLines bool, inputFile string) error {
 		}
 
 		relevant_refs := dbUtils.Parse(refs, tempDBLinesDir, tempDBResoucesDir)
-		dbUtils.MapDB([]string{"3601"}, tempLinesDir, tempDBLinesDir)
+		dbUtils.MapDB(relevant_refs, tempLinesDir, tempDBLinesDir)
 
-		_ = relevant_refs
+		print(relevant_refs)
+		print("\n")
+
+		// Mapper.MapDB(relevant_refs, lineDir, db_lineDir)
 
 		fmt.Println("Generated all lines")
 	}
