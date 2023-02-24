@@ -24,11 +24,11 @@ func Parse(refs []string, tempDBLinesPath string, dbResourcesPath string) []stri
 
 	lineMap := make(map[string]*XmlIssBookeeping)
 	// in missingMap, all lines, for which DB-data exists but no OSM-data (i.e. not appearing in refs) are listed
-	// missingMap := []string{}
+	missingMap := []string{}
 
 	// all datastructures are being intialized
 	for _, line := range refs {
-		lineMap[line] = &XmlIssBookeeping{&XmlIssDaten{xml.Name{Space: " ", Local: "XmlIssDaten"}, []*Spurplanbetriebsstelle{}}, 0, false}
+		lineMap[line] = &XmlIssBookeeping{&XmlIssDaten{xml.Name{" ", "XmlIssDaten"}, []*Spurplanbetriebsstelle{}}, 0, false}
 	}
 
 	// main work-loop: For all "Betriebsstellen" and for all "Spurplanabschnitte" of these, we check, whether the respective line
@@ -39,7 +39,7 @@ func Parse(refs []string, tempDBLinesPath string, dbResourcesPath string) []stri
 			lineInfo, lineExists := lineMap[streckenNummer]
 
 			if !lineExists {
-				// missingMap = append(missingMap, streckenNummer)
+				missingMap = append(missingMap, streckenNummer)
 				continue
 			}
 

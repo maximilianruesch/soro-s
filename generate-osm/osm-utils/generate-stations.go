@@ -84,9 +84,11 @@ func generateSearchFile(osm Osm) (searchFile SearchFile, stationHaltOsm Osm) {
 
 func getWiesbadenHbfAsNode() *Node {
 	return &Node{
-		Id:  "420133769",
-		Lat: "50.06988",
-		Lon: "8.24404",
+		Id:        "420133769",
+		Version:   "1",
+		Timestamp: "2021-03-01T14:00:00Z",
+		Lat:       "50.06988",
+		Lon:       "8.24404",
 		Tag: []*Tag{
 			{K: "name", V: "Wiesbaden Hauptbahnhof"},
 			{K: "railway", V: "station"},

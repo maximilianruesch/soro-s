@@ -2,77 +2,38 @@ package dbUtils
 
 import (
 	"encoding/xml"
-	"fmt"
+	"log"
 	"os"
 	OSMUtil "transform-osm/osm-utils"
 )
 
 func MapDB(refs []string, osmDir string, dbDir string) {
-	var optionalNewId int = 1
 	for _, line := range refs {
-		var anchors map[string]([]*OSMUtil.Node) = map[string]([]*OSMUtil.Node){}
+		// mappedItems := make(map[string]OSMUtil.Node)
 
-		var osm OSMUtil.Osm
-		var dbIss XmlIssDaten
+		var osmData OSMUtil.Osm
+		var dbData XmlIssDaten
+
 		osmFile, err := os.ReadFile(osmDir + "/" + line + ".xml")
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
-		dbFile, err := os.ReadFile(dbDir + "/" + line + "_DB.xml")
+		dbFile, err := os.ReadFile(osmDir + "/" + line + "_DB.xml")
 		if err != nil {
-			panic(err)
-		}
-		err = xml.Unmarshal([]byte(osmFile), &osm)
-		if err != nil {
-			panic(err)
-		}
-		err = xml.Unmarshal([]byte(dbFile), &dbIss)
-		if err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
 
-		var notFoundedSignalsFalling []*Signal = []*Signal{}
-		var notFoundedSignalsRising []*Signal = []*Signal{}
-
-		MapSignalsWithAnchorSearch(
-			dbIss,
-			&osm,
-			anchors,
-			&notFoundedSignalsFalling,
-			&notFoundedSignalsRising,
-			&optionalNewId,
-		)
-		var issWithMappedSignals = XmlIssDaten{
-			Betriebsstellen: []*Spurplanbetriebsstelle{{
-				Abschnitte: []*Spurplanabschnitt{{
-					Knoten: []*Spurplanknoten{{
-						HauptsigF: notFoundedSignalsFalling,
-						HauptsigS: notFoundedSignalsRising,
-					}},
-				}},
-			}},
+		if err := xml.Unmarshal([]byte(osmFile), &osmData); err != nil {
+			panic(err)
 		}
-		numberFoundSignals := MapSignalsExistingAnchors(
-			issWithMappedSignals,
-			&osm,
-			anchors,
-			&notFoundedSignalsFalling,
-			&notFoundedSignalsRising,
-			&optionalNewId,
-		)
+		if err := xml.Unmarshal([]byte(dbFile), &dbData); err != nil {
+			panic(err)
+		}
 
 		/*
+			mapSignals(&osmData, dbData, &mappedItems)
 			mapPoints(&osmData, dbData, &mappedItems)
 			mapRest(&osmData, dbData, &mappedItems)
 		*/
-		if updatedOsm, err := xml.MarshalIndent(osm, "", "	"); err != nil {
-			panic(err)
-		} else {
-			if err := os.WriteFile(osmDir+"/"+line+".xml", []byte(xml.Header+string(updatedOsm)), 0644); err != nil {
-				panic(err)
-			}
-		}
-		fmt.Printf("Could not find: %d \n", numberFoundSignals)
 	}
-
 }
