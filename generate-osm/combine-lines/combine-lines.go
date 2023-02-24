@@ -4,8 +4,10 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"math"
 	"math/rand"
 	"os"
+	"strconv"
 	osmUtils "transform-osm/osm-utils"
 )
 
@@ -22,8 +24,8 @@ func CombineAllLines(tempLineDir string) (osmUtils.Osm, error) {
 
 	for _, file := range files {
 		fmt.Printf("Processing %s... ", file.Name())
-		data, _ := os.ReadFile(tempLineDir+"/" + file.Name())
-    
+		data, _ := os.ReadFile(tempLineDir + "/" + file.Name())
+
 		var fileOsmData osmUtils.Osm
 		if err := xml.Unmarshal([]byte(data), &fileOsmData); err != nil {
 			panic(err)
@@ -48,10 +50,30 @@ func CombineAllLines(tempLineDir string) (osmUtils.Osm, error) {
 }
 
 func getRandomColor() string {
-	letters := "0123456789ABCDEF"
+
+	//This fixed the problem, but not in the best way possible
+	//HSV may be the way to go
+
+	var r, g, b int64
+
+	//Only allow colors within a certain range
+	//this prevents white and black
+	r = (int64)(rand.Intn((100)) + 50)
+	g = (int64)(rand.Intn((100)) + 50)
+	b = (int64)(rand.Intn((100)) + 50)
+
 	color := "#"
-	for i := 0; i < 6; i++ {
-		color += string(letters[rand.Intn(len(letters))])
+
+	//Grey colors are generated if the RGB values are too close to each other
+	//If a Grey color is detected, a new random color is generated
+	for (math.Abs((float64)(r-g)) < 20) || (math.Abs((float64)(r-b)) < 20) || (math.Abs((float64)(b-r)) < 20) || (math.Abs((float64)(b-g)) < 20) || (math.Abs((float64)(g-b)) < 20) || (math.Abs((float64)(g-r)) < 20) {
+		r = (int64)(rand.Intn(100) + 50)
+		g = (int64)(rand.Intn(100) + 50)
+		b = (int64)(rand.Intn(100) + 50)
 	}
+
+	//translate to hex code
+	color += strconv.FormatInt((r), 16) + strconv.FormatInt((g), 16) + strconv.FormatInt((b), 16)
+
 	return color
 }
