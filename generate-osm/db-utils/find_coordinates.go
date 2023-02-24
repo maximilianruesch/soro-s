@@ -16,7 +16,7 @@ type nodePair struct {
 	remDist2 float64
 }
 
-const r = 6371.0
+const EARTH_RADIUS_CONST = 6371.0
 
 func nodeNotFound(id string) error { return errors.New("Could not find node: " + id) }
 func wayNotFound(id string) error  { return errors.New("Could not find way: " + id) }
@@ -300,7 +300,7 @@ func findWaysForNode(osmData *OSMUtil.Osm, id string) ([]OSMUtil.Way, error) {
 
 func distance(phi1 float64, phi2 float64, lambda1 float64, lambda2 float64) float64 {
 	phi1, phi2, lambda1, lambda2 = phi1*(math.Pi/180.0), phi2*(math.Pi/180.0), lambda1*(math.Pi/180.0), lambda2*(math.Pi/180.0)
-	return 2.0 * r * math.Asin(
+	return 2.0 * EARTH_RADIUS_CONST * math.Asin(
 		math.Sqrt(
 			math.Pow(math.Sin((phi2-phi1)/2), 2)+
 				math.Cos(phi1)*math.Cos(phi2)*math.Pow(math.Sin((lambda2-lambda1)/2), 2)))

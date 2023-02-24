@@ -13,14 +13,12 @@ import (
 	OSMUtil "transform-osm/osm-utils"
 )
 
-var TagName = xml.Name{" ", "tag"}
-var id_counter = 1
-var anchors map[string]([]*OSMUtil.Node)
+var XML_TAG_NAME_CONST = xml.Name{Space: " ", Local: "tag"}
 var num_found = 0
 
-func MapDB(refs []string, osmDir string, DBDir string) {
+func MapDB(nodeIdCounter *int, refs []string, osmDir string, DBDir string) {
 	for _, line := range refs {
-		anchors = make(map[string]([]*OSMUtil.Node))
+		var anchors = make(map[string]([]*OSMUtil.Node))
 
 		var dbData XmlIssDaten
 		var osmData OSMUtil.Osm
@@ -46,7 +44,7 @@ func MapDB(refs []string, osmDir string, DBDir string) {
 		print(line)
 		print("\n")
 
-		mainF, mainS := findAndMapAnchorMainSignals(&osmData, dbData)
+		mainF, mainS := findAndMapAnchorMainSignals(&osmData, &anchors, nodeIdCounter, dbData)
 		// mapPoints(&osmData, dbData)
 
 		var restData = XmlIssDaten{
@@ -60,7 +58,7 @@ func MapDB(refs []string, osmDir string, DBDir string) {
 			}},
 		}
 
-		mapUnanchoredMainSignals(&osmData, restData)
+		mapUnanchoredMainSignals(&osmData, &anchors, nodeIdCounter, restData)
 		// mapPoints(restData)
 		// mapRest(dbData)
 
@@ -75,32 +73,32 @@ func MapDB(refs []string, osmDir string, DBDir string) {
 	fmt.Printf("Could not find: %d \n", num_found)
 }
 
-func findAndMapAnchorMainSignals(osmData *OSMUtil.Osm, dbData XmlIssDaten) ([]*Signal, []*Signal) {
+func findAndMapAnchorMainSignals(osmData *OSMUtil.Osm, anchors *map[string]([]*OSMUtil.Node), nodeIdCounter *int, dbData XmlIssDaten) ([]*Signal, []*Signal) {
 	var main_sigF []*Signal = []*Signal{}
 	var main_sigS []*Signal = []*Signal{}
 	for _, stelle := range dbData.Betriebsstellen {
 		for _, abschnitt := range stelle.Abschnitte {
 			for _, knoten := range abschnitt.Knoten {
-				main_sigF = append(main_sigF, anchorMainSignal(osmData, *knoten, true)...)
-				main_sigS = append(main_sigS, anchorMainSignal(osmData, *knoten, false)...)
+				main_sigF = append(main_sigF, anchorMainSignal(osmData, anchors, nodeIdCounter, *knoten, true)...)
+				main_sigS = append(main_sigS, anchorMainSignal(osmData, anchors, nodeIdCounter, *knoten, false)...)
 			}
 		}
 	}
 	return main_sigF, main_sigS
 }
 
-func mapUnanchoredMainSignals(osmData *OSMUtil.Osm, dbData XmlIssDaten) {
+func mapUnanchoredMainSignals(osmData *OSMUtil.Osm, anchors *map[string]([]*OSMUtil.Node), nodeIdCounter *int, dbData XmlIssDaten) {
 	for _, stelle := range dbData.Betriebsstellen {
 		for _, abschnitt := range stelle.Abschnitte {
 			for _, knoten := range abschnitt.Knoten {
-				searchUnanchoredMainSignal(osmData, *knoten, true)
-				searchUnanchoredMainSignal(osmData, *knoten, false)
+				searchUnanchoredMainSignal(osmData, anchors, nodeIdCounter, *knoten, true)
+				searchUnanchoredMainSignal(osmData, anchors, nodeIdCounter, *knoten, false)
 			}
 		}
 	}
 }
 
-func anchorMainSignal(osmData *OSMUtil.Osm, knoten Spurplanknoten, isFalling bool) []*Signal {
+func anchorMainSignal(osmData *OSMUtil.Osm, anchors *map[string]([]*OSMUtil.Node), nodeIdCounter *int, knoten Spurplanknoten, isFalling bool) []*Signal {
 	var notFoundSignals = []*Signal{}
 
 	directionString := "falling"
@@ -126,7 +124,7 @@ func anchorMainSignal(osmData *OSMUtil.Osm, knoten Spurplanknoten, isFalling boo
 				has_correct_id = strings.ReplaceAll(idTag, " ", "") == signal.Name[0].Value
 
 				if is_signal && has_correct_id {
-					found = insertNewHauptsig(osmData, node, kilometrage, *signal, directionString, &notFoundSignals)
+					found = insertNewHauptsig(osmData, anchors, nodeIdCounter, node, kilometrage, *signal, directionString, &notFoundSignals)
 				}
 			}
 		}
@@ -139,12 +137,12 @@ func anchorMainSignal(osmData *OSMUtil.Osm, knoten Spurplanknoten, isFalling boo
 	return notFoundSignals
 }
 
-func searchUnanchoredMainSignal(osmData *OSMUtil.Osm, knoten Spurplanknoten, isFalling bool) {
-	if len(anchors) == 0 {
+func searchUnanchoredMainSignal(osmData *OSMUtil.Osm, anchors *map[string]([]*OSMUtil.Node), nodeIdCounter *int, knoten Spurplanknoten, isFalling bool) {
+	if len(*anchors) == 0 {
 		fmt.Print("Could not find anchors! \n")
 		return
 	}
-	if len(anchors) == 1 {
+	if len(*anchors) == 1 {
 		fmt.Print("Could not find enough anchors! \n")
 		// TODO: Node not found, find closest mapped Node and work from there
 		return
@@ -160,23 +158,42 @@ func searchUnanchoredMainSignal(osmData *OSMUtil.Osm, knoten Spurplanknoten, isF
 	for _, signal := range signals {
 		kilometrage, _ := strconv.ParseFloat(strings.ReplaceAll(signal.KnotenTyp.Kilometrierung[0].Value, ",", "."), 64)
 
-		maxNode, err := findBestOSMNode(osmData, kilometrage)
+		maxNode, err := findBestOSMNode(osmData, anchors, kilometrage)
 		if err != nil {
-			panic(err)
-		} else {
-			found := insertNewHauptsig(osmData, maxNode, signal.KnotenTyp.Kilometrierung[0].Value, *signal, directionString, &[]*Signal{})
-			if !found {
-				num_found++
-			}
+			num_found++
+			return
+		}
+
+		found := insertNewHauptsig(osmData, anchors, nodeIdCounter, maxNode, signal.KnotenTyp.Kilometrierung[0].Value, *signal, directionString, &[]*Signal{})
+		if !found {
+			num_found++
 		}
 	}
 }
 
-func findTwoNearest(kilometrage float64) (nearest float64, second_nearest float64) {
+func findBestOSMNode(osmData *OSMUtil.Osm, anchors *map[string]([]*OSMUtil.Node), kilometrage float64) (*OSMUtil.Node, error) {
+	nearest, second_nearest := findTwoNearest(anchors, kilometrage)
+
+	if nearest == -1.0 || second_nearest == -1.0 {
+		return nil, errors.New("Could not find anchors.")
+	}
+
+	nearest_string := formatKilometrage(anchors, nearest)
+	second_nearest_string := formatKilometrage(anchors, second_nearest)
+
+	newNode, err := FindNewNode(osmData, ((*anchors)[nearest_string])[0], ((*anchors)[second_nearest_string])[0], math.Abs(nearest-kilometrage), math.Abs(second_nearest-kilometrage))
+	if err != nil {
+		return nil, errors.New("Could not find node.")
+	}
+
+	return newNode, nil
+}
+
+func findTwoNearest(anchors *map[string]([]*OSMUtil.Node), kilometrage float64) (nearest float64, second_nearest float64) {
 	nearest = -1.0
 	second_nearest = -1.0
 
-	for key := range anchors {
+	for key := range *anchors {
 		if !strings.Contains(key, "+") {
 			float_key, _ := strconv.ParseFloat(strings.ReplaceAll(key, ",", "."), 64)
 			if nearest == -1.0 {
@@ -192,7 +209,7 @@ func findTwoNearest(kilometrage float64) (nearest float64, second_nearest float6
 	if second_nearest != -1.0 {
 		return
 	}
-	for key := range anchors {
+	for key := range *anchors {
 		if !strings.Contains(key, "+") {
 			float_key, _ := strconv.ParseFloat(strings.ReplaceAll(key, ",", "."), 64)
 			if float_key != nearest {
@@ -208,10 +225,10 @@ func findTwoNearest(kilometrage float64) (nearest float64, second_nearest float6
 	return
 }
 
-func formatKilometrage(in float64) (out string) {
+func formatKilometrage(anchors *map[string]([]*OSMUtil.Node), in float64) (out string) {
 	out = strings.ReplaceAll(strconv.FormatFloat(in, 'f', -1, 64), ".", ",")
 
-	for ; len(anchors[out]) == 0; out += "0" {
+	for ; len((*anchors)[out]) == 0; out += "0" {
 		if !strings.Contains(out, ",") {
 			out += ","
 		}
@@ -219,37 +236,19 @@ func formatKilometrage(in float64) (out string) {
 	return
 }
 
-func findBestOSMNode(osmData *OSMUtil.Osm, kilometrage float64) (*OSMUtil.Node, error) {
-	nearest, second_nearest := findTwoNearest(kilometrage)
-
-	if nearest == -1.0 || second_nearest == -1.0 {
-		return nil, errors.New("Could not find node.")
-	}
-
-	nearest_string := formatKilometrage(nearest)
-	second_nearest_string := formatKilometrage(second_nearest)
-
-	newNode, err := FindNewNode(osmData, (anchors[nearest_string])[0], (anchors[second_nearest_string])[0], math.Abs(nearest-kilometrage), math.Abs(second_nearest-kilometrage))
-	if err != nil {
-		return nil, errors.New("Could not find node.")
-	}
-
-	return newNode, nil
-}
-
-func insertNewHauptsig(osmData *OSMUtil.Osm, node *OSMUtil.Node, kilometrage string, signal Signal, direction string, notFound *[]*Signal) bool {
-	for key, value_list := range anchors {
+func insertNewHauptsig(osmData *OSMUtil.Osm, anchors *map[string]([]*OSMUtil.Node), nodeIdCounter *int, node *OSMUtil.Node, kilometrage string, signal Signal, direction string, notFound *[]*Signal) bool {
+	for key, value_list := range *anchors {
 		for _, value := range value_list {
 			if value == node {
 				if key == kilometrage {
-					newNode := OSMUtil.Node{Id: strconv.Itoa(id_counter), Lat: node.Lat, Lon: node.Lon, Tag: []*OSMUtil.Tag{
-						{XMLName: TagName, K: "type", V: "element"},
-						{XMLName: TagName, K: "subtype", V: "ms"},
-						{XMLName: TagName, K: "id", V: signal.Name[0].Value},
-						{XMLName: TagName, K: "direction", V: direction}}}
+					newNode := OSMUtil.Node{Id: strconv.Itoa(*nodeIdCounter), Lat: node.Lat, Lon: node.Lon, Tag: []*OSMUtil.Tag{
+						{XMLName: XML_TAG_NAME_CONST, K: "type", V: "element"},
+						{XMLName: XML_TAG_NAME_CONST, K: "subtype", V: "ms"},
+						{XMLName: XML_TAG_NAME_CONST, K: "id", V: signal.Name[0].Value},
+						{XMLName: XML_TAG_NAME_CONST, K: "direction", V: direction}}}
 					OSMUtil.InsertNode(&newNode, node.Id, osmData)
-					id_counter++
-					anchors[key] = append(anchors[key], &newNode)
+					*nodeIdCounter++
+					(*anchors)[key] = append((*anchors)[key], &newNode)
 					return true
 				} else {
 					for _, error_val := range value_list {
@@ -258,7 +257,7 @@ func insertNewHauptsig(osmData *OSMUtil.Osm, node *OSMUtil.Node, kilometrage str
 							[]*Wert{{Value: signal.Name[0].Value}}})
 						error_val.Tag = error_val.Tag[:(len(error_val.Tag) - 4)]
 					}
-					delete(anchors, key)
+					delete(*anchors, key)
 					return false
 				}
 			}
@@ -266,14 +265,14 @@ func insertNewHauptsig(osmData *OSMUtil.Osm, node *OSMUtil.Node, kilometrage str
 	}
 
 	node.Tag = append(node.Tag, []*OSMUtil.Tag{
-		{XMLName: TagName, K: "type", V: "element"},
-		{XMLName: TagName, K: "subtype", V: "ms"},
-		{XMLName: TagName, K: "id", V: signal.Name[0].Value},
-		{XMLName: TagName, K: "direction", V: direction}}...)
-	if len(anchors[kilometrage]) == 0 {
-		anchors[kilometrage] = []*OSMUtil.Node{node}
+		{XMLName: XML_TAG_NAME_CONST, K: "type", V: "element"},
+		{XMLName: XML_TAG_NAME_CONST, K: "subtype", V: "ms"},
+		{XMLName: XML_TAG_NAME_CONST, K: "id", V: signal.Name[0].Value},
+		{XMLName: XML_TAG_NAME_CONST, K: "direction", V: direction}}...)
+	if len((*anchors)[kilometrage]) == 0 {
+		(*anchors)[kilometrage] = []*OSMUtil.Node{node}
 	} else {
-		anchors[kilometrage] = append(anchors[kilometrage], node)
+		(*anchors)[kilometrage] = append((*anchors)[kilometrage], node)
 	}
 	return true
 }
