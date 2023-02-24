@@ -4,15 +4,16 @@ import (
 	"encoding/xml"
 	"fmt"
 	"os"
-	OSMUtil "transform-osm/osm-utils"
+	osmUtils "transform-osm/osm-utils"
 )
 
 func MapDB(refs []string, osmDir string, dbDir string) {
 	var optionalNewId int = 1
 	for _, line := range refs {
-		var anchors map[string]([]*OSMUtil.Node) = map[string]([]*OSMUtil.Node){}
+		fmt.Printf("Mapping into %s \n", line)
+		var anchors map[string]([]*osmUtils.Node) = map[string]([]*osmUtils.Node){}
 
-		var osm OSMUtil.Osm
+		var osm osmUtils.Osm
 		var dbIss XmlIssDaten
 		osmFile, err := os.ReadFile(osmDir + "/" + line + ".xml")
 		if err != nil {
@@ -31,48 +32,59 @@ func MapDB(refs []string, osmDir string, dbDir string) {
 			panic(err)
 		}
 
-		var notFoundedSignalsFalling []*Signal = []*Signal{}
-		var notFoundedSignalsRising []*Signal = []*Signal{}
+		var notFoundSignalsFalling []*Signal = []*Signal{}
+		var notFoundSignalsRising []*Signal = []*Signal{}
 
-		MapSignalsWithAnchorSearch(
-			dbIss,
+		numberNotFoundSignals := 0
+
+		MapMainSignalsWithAnchorSearch(
 			&osm,
-			anchors,
-			&notFoundedSignalsFalling,
-			&notFoundedSignalsRising,
+			dbIss,
+			&anchors,
+			&notFoundSignalsFalling,
+			&notFoundSignalsRising,
 			&optionalNewId,
+			&numberNotFoundSignals,
 		)
-		var issWithMappedSignals = XmlIssDaten{
+		fmt.Printf("Inserted %d anchors \n", len(anchors))
+		var issUnmappedMainSignals = XmlIssDaten{
 			Betriebsstellen: []*Spurplanbetriebsstelle{{
 				Abschnitte: []*Spurplanabschnitt{{
 					Knoten: []*Spurplanknoten{{
-						HauptsigF: notFoundedSignalsFalling,
-						HauptsigS: notFoundedSignalsRising,
+						HauptsigF: notFoundSignalsFalling,
+						HauptsigS: notFoundSignalsRising,
 					}},
 				}},
 			}},
 		}
-		numberFoundSignals := MapSignalsExistingAnchors(
-			issWithMappedSignals,
+		fmt.Printf("Got %d conflicts \n", numberNotFoundSignals)
+		numberNotFoundSignals = 0
+		notFoundSignalsFalling = []*Signal{}
+		notFoundSignalsRising = []*Signal{}
+		MapMainSignalsExistingAnchors(
 			&osm,
-			anchors,
-			&notFoundedSignalsFalling,
-			&notFoundedSignalsRising,
+			issUnmappedMainSignals,
+			&anchors,
+			&notFoundSignalsFalling,
+			&notFoundSignalsRising,
 			&optionalNewId,
+			&numberNotFoundSignals,
 		)
+		fmt.Printf("Could not find: %d \n", numberNotFoundSignals)
 
 		/*
 			mapPoints(&osmData, dbData, &mappedItems)
 			mapRest(&osmData, dbData, &mappedItems)
 		*/
-		if updatedOsm, err := xml.MarshalIndent(osm, "", "	"); err != nil {
+
+		updatedOsm, err := xml.MarshalIndent(osm, "", "	")
+		if err != nil {
 			panic(err)
-		} else {
-			if err := os.WriteFile(osmDir+"/"+line+".xml", []byte(xml.Header+string(updatedOsm)), 0644); err != nil {
-				panic(err)
-			}
 		}
-		fmt.Printf("Could not find: %d \n", numberFoundSignals)
+		err = os.WriteFile(osmDir+"/"+line+".xml", []byte(xml.Header+string(updatedOsm)), 0644)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 }
