@@ -81,8 +81,8 @@ func findAndMapAnchorMainSignals(osmData *OSMUtil.Osm, dbData XmlIssDaten) ([]*S
 	for _, stelle := range dbData.Betriebsstellen {
 		for _, abschnitt := range stelle.Abschnitte {
 			for _, knoten := range abschnitt.Knoten {
-				main_sigF = append(main_sigF, processHauptsigF(osmData, *knoten)...)
-				main_sigS = append(main_sigS, processHauptsigS(osmData, *knoten)...)
+				main_sigF = append(main_sigF, anchorMainSignal(osmData, *knoten, true)...)
+				main_sigS = append(main_sigS, anchorMainSignal(osmData, *knoten, false)...)
 			}
 		}
 	}
@@ -100,27 +100,17 @@ func mapUnanchoredMainSignals(osmData *OSMUtil.Osm, dbData XmlIssDaten) {
 	}
 }
 
-func processHauptsigF(osmData *OSMUtil.Osm, knoten Spurplanknoten) []*Signal {
-	var notFound = []*Signal{}
-	for _, signal := range knoten.HauptsigF {
+func anchorMainSignal(osmData *OSMUtil.Osm, knoten Spurplanknoten, isFalling bool) []*Signal {
+	var notFoundSignals = []*Signal{}
+
+	signals := knoten.HauptsigF
+	if !isFalling {
+		signals = knoten.HauptsigS
+	}
+
+	for _, signal := range signals {
 		found := false
 		kilometrage := signal.KnotenTyp.Kilometrierung[0].Value
-		if node_list := anchors[kilometrage]; node_list != nil {
-			for _, node := range node_list {
-				typ, err1 := OSMUtil.FindTagOnNode(*node, "type")
-				subtyp, err2 := OSMUtil.FindTagOnNode(*node, "subtype")
-				id, err3 := OSMUtil.FindTagOnNode(*node, "id")
-				direction, err4 := OSMUtil.FindTagOnNode(*node, "direction")
-				if err1 == nil && typ == "element" && err2 == nil && subtyp == "ms" && err3 == nil && id == signal.Name[0].Value && err4 == nil && direction == "falling" {
-					found = true
-					break
-				}
-			}
-		}
-
-		if found {
-			continue
-		}
 
 		for _, node := range osmData.Node {
 			if len(node.Tag) != 0 {
@@ -134,64 +124,17 @@ func processHauptsigF(osmData *OSMUtil.Osm, knoten Spurplanknoten) []*Signal {
 				}
 
 				if is_signal && has_correct_id {
-					found = insertNewHauptsig(osmData, node, kilometrage, *signal, "falling", &notFound)
+					found = insertNewHauptsig(osmData, node, kilometrage, *signal, "falling", &notFoundSignals)
 				}
 			}
 		}
 
 		if !found {
-			notFound = append(notFound, signal)
+			notFoundSignals = append(notFoundSignals, signal)
 		}
 	}
 
-	return notFound
-}
-
-func processHauptsigS(osmData *OSMUtil.Osm, knoten Spurplanknoten) []*Signal {
-	var notFound = []*Signal{}
-	for _, signal := range knoten.HauptsigS {
-		found := false
-		kilometrage := signal.KnotenTyp.Kilometrierung[0].Value
-		if node_list := anchors[kilometrage]; node_list != nil {
-			for _, node := range node_list {
-				typ, err1 := OSMUtil.FindTagOnNode(*node, "type")
-				subtyp, err2 := OSMUtil.FindTagOnNode(*node, "subtype")
-				id, err3 := OSMUtil.FindTagOnNode(*node, "id")
-				direction, err4 := OSMUtil.FindTagOnNode(*node, "direction")
-				if err1 == nil && typ == "element" && err2 == nil && subtyp == "ms" && err3 == nil && id == signal.Name[0].Value && err4 == nil && direction == "rising" {
-					found = true
-					break
-				}
-			}
-		}
-
-		if found {
-			continue
-		}
-
-		for _, node := range osmData.Node {
-			if len(node.Tag) != 0 {
-				is_signal := false
-				has_correct_id := false
-
-				railwayTag, err := OSMUtil.FindTagOnNode(*node, "railway")
-				is_signal = err == nil && railwayTag == "signal"
-
-				idTag, err := OSMUtil.FindTagOnNode(*node, "ref")
-				has_correct_id = err == nil && strings.ReplaceAll(idTag, " ", "") == signal.Name[0].Value
-
-				if is_signal && has_correct_id {
-					found = insertNewHauptsig(osmData, node, kilometrage, *signal, "rising", &notFound)
-				}
-			}
-		}
-
-		if !found {
-			notFound = append(notFound, signal)
-		}
-	}
-
-	return notFound
+	return notFoundSignals
 }
 
 func searchHauptsigF(osmData *OSMUtil.Osm, knoten Spurplanknoten) {
