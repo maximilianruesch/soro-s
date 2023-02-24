@@ -22,7 +22,6 @@ func MapDB(refs []string, osmDir string, DBDir string) {
 	for _, line := range refs {
 		anchors = make(map[string]([]*OSMUtil.Node))
 
-		var findAnchors = true
 		var dbData XmlIssDaten
 		var osmData OSMUtil.Osm
 		osmData = OSMUtil.Osm{}
@@ -47,7 +46,7 @@ func MapDB(refs []string, osmDir string, DBDir string) {
 		print(line)
 		print("\n")
 
-		mainF, mainS := mapSignals(&osmData, dbData, findAnchors)
+		mainF, mainS := findAndMapAnchorMainSignals(&osmData, dbData)
 		// mapPoints(&osmData, dbData)
 
 		var restData = XmlIssDaten{
@@ -61,9 +60,7 @@ func MapDB(refs []string, osmDir string, DBDir string) {
 			}},
 		}
 
-		findAnchors = false
-
-		mainF, mainS = mapSignals(&osmData, restData, findAnchors)
+		mapUnanchoredMainSignals(&osmData, restData)
 		// mapPoints(restData)
 		// mapRest(dbData)
 
@@ -78,25 +75,29 @@ func MapDB(refs []string, osmDir string, DBDir string) {
 	fmt.Printf("Could not find: %d \n", num_found)
 }
 
-func mapSignals(osmData *OSMUtil.Osm, DBData XmlIssDaten, firstPass bool) ([]*Signal, []*Signal) {
+func findAndMapAnchorMainSignals(osmData *OSMUtil.Osm, dbData XmlIssDaten) ([]*Signal, []*Signal) {
 	var main_sigF []*Signal = []*Signal{}
 	var main_sigS []*Signal = []*Signal{}
-	for _, stelle := range DBData.Betriebsstellen {
+	for _, stelle := range dbData.Betriebsstellen {
 		for _, abschnitt := range stelle.Abschnitte {
 			for _, knoten := range abschnitt.Knoten {
-				if firstPass {
-					main_sigF = append(main_sigF, processHauptsigF(osmData, *knoten)...)
-					main_sigS = append(main_sigS, processHauptsigS(osmData, *knoten)...)
-				} else {
-					searchHauptsigF(osmData, *knoten)
-					searchHauptsigS(osmData, *knoten)
-				}
-
+				main_sigF = append(main_sigF, processHauptsigF(osmData, *knoten)...)
+				main_sigS = append(main_sigS, processHauptsigS(osmData, *knoten)...)
 			}
 		}
 	}
-
 	return main_sigF, main_sigS
+}
+
+func mapUnanchoredMainSignals(osmData *OSMUtil.Osm, dbData XmlIssDaten) {
+	for _, stelle := range dbData.Betriebsstellen {
+		for _, abschnitt := range stelle.Abschnitte {
+			for _, knoten := range abschnitt.Knoten {
+				searchHauptsigF(osmData, *knoten)
+				searchHauptsigS(osmData, *knoten)
+			}
+		}
+	}
 }
 
 func processHauptsigF(osmData *OSMUtil.Osm, knoten Spurplanknoten) []*Signal {
