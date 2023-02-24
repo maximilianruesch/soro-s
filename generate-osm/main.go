@@ -128,7 +128,7 @@ func generateOsm(generateLines bool, inputFile string) error {
 	saveSearchFile(searchFile, searchFileJsonPath)
 
 	for i, node := range osmData.Node {
-		value, found := osmUtils.FindTagOnNode(node, "railway")
+		value, found := osmUtils.FindTag(*node, "railway")
 
 		if found == nil {
 			if value == "station" || value == "halt" {

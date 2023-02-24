@@ -34,16 +34,6 @@ type Node struct {
 	Lon     string   `xml:"lon,attr"`
 }
 
-func FindTagOnNode(node *Node, key string) (bool, string) {
-	for _, tag := range node.Tag {
-		if tag.K == key {
-			return true, tag.V
-		}
-	}
-
-	return false, ""
-}
-
 type Member struct {
 	XMLName xml.Name `xml:"member"`
 	Type    string   `xml:"type,attr"`
@@ -89,7 +79,7 @@ func ExecuteOsmFilterCommand(args []string) error {
 	return nil
 }
 
-func GetTag(node Node, key string) (string, error) {
+func FindTag(node Node, key string) (string, error) {
 	for _, tag := range node.Tag {
 		if tag.K == key {
 			return tag.V, nil
