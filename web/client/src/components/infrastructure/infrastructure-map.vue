@@ -53,6 +53,8 @@ const initiallyCheckedControls = [
     ...SpecialLegendControls,
 ];
 
+const localStorageCheckedLegendControlKey = 'infrastructure.checkedLegendControls';
+
 const mapDefaults = {
     attributionControl: false,
     zoom: 18,
@@ -147,6 +149,13 @@ export default defineComponent({
         },
     },
 
+    created() {
+        const checkedControlsString = window.localStorage.getItem(localStorageCheckedLegendControlKey);
+        if (checkedControlsString) {
+            this.checkedControls = JSON.parse(checkedControlsString);
+        }
+    },
+
     methods: {
         resize() {
             if (!this.libreGLMap) {
@@ -157,14 +166,16 @@ export default defineComponent({
         },
 
         onLegendControlChanged(legendControl: string, checked: boolean) {
-            if (!this.libreGLMap) {
-                return;
-            }
-
             if (checked) {
                 this.checkedControls.push(legendControl);
             } else {
                 this.checkedControls = this.checkedControls.filter((control) => control !== legendControl);
+            }
+
+            window.localStorage.setItem(localStorageCheckedLegendControlKey, JSON.stringify(this.checkedControls));
+
+            if (!this.libreGLMap) {
+                return;
             }
 
             if (SpecialLegendControls.includes(legendControl)) {
