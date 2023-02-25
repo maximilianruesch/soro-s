@@ -53,8 +53,6 @@ const initiallyCheckedControls = [
     ...SpecialLegendControls,
 ];
 
-const localStorageCheckedLegendControlKey = 'infrastructure.checkedLegendControls';
-
 const mapDefaults = {
     attributionControl: false,
     zoom: 18,
@@ -71,6 +69,11 @@ export type MapPosition = {
 
 export default defineComponent({
     name: 'InfrastructureMap',
+    inject: {
+        goldenLayoutKeyInjection: {
+            default: '',
+        },
+    },
 
     setup() {
         return { currentTheme: useTheme().global };
@@ -84,6 +87,10 @@ export default defineComponent({
     },
 
     computed: {
+        checkedLegendControlLocalStorageKey() {
+            return `infrastructure[${this.goldenLayoutKeyInjection}].checkedControls`;
+        },
+
         ...mapState(InfrastructureNamespace, [
             'currentInfrastructure',
             'currentSearchedMapPosition',
@@ -150,7 +157,7 @@ export default defineComponent({
     },
 
     created() {
-        const checkedControlsString = window.localStorage.getItem(localStorageCheckedLegendControlKey);
+        const checkedControlsString = window.localStorage.getItem(this.checkedLegendControlLocalStorageKey);
         if (checkedControlsString) {
             this.checkedControls = JSON.parse(checkedControlsString);
         }
@@ -172,7 +179,7 @@ export default defineComponent({
                 this.checkedControls = this.checkedControls.filter((control) => control !== legendControl);
             }
 
-            window.localStorage.setItem(localStorageCheckedLegendControlKey, JSON.stringify(this.checkedControls));
+            window.localStorage.setItem(this.checkedLegendControlLocalStorageKey, JSON.stringify(this.checkedControls));
 
             if (!this.libreGLMap) {
                 return;
