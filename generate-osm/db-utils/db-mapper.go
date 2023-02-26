@@ -12,8 +12,8 @@ import (
 )
 
 var XML_TAG_NAME_CONST = xml.Name{Space: " ", Local: "tag"}
-var numNotFound int
-var anchorsFound int
+var numItemsNotFound int
+var numItemsFound int
 
 func MapDB(
 	nodeIdCounter *int,
@@ -22,8 +22,8 @@ func MapDB(
 	for _, line := range refs {
 		var anchors = make(map[string]([]*OSMUtil.Node))
 
-		anchorsFound = 0
-		numNotFound = 0
+		numItemsFound = 0
+		numItemsNotFound = 0
 
 		var dbData XmlIssDaten
 		var osmData OSMUtil.Osm
@@ -51,7 +51,7 @@ func MapDB(
 			nodeIdCounter, dbData)
 
 		// anchorPoints(&osmData, dbData)
-		fmt.Printf("Found %d anchors and could not find %d \n", anchorsFound, numNotFound)
+		fmt.Printf("Found %d anchors and could not find %d \n", numItemsFound, numItemsNotFound)
 
 		var restData = XmlIssDaten{
 			Betriebsstellen: []*Spurplanbetriebsstelle{{
@@ -138,16 +138,16 @@ func anchorMainSignal(
 				nodesFound[0], kilometrage, *signal, directionString, conflictFreeSignal, &notFoundSignals)
 			if !conflictFreeSignal {
 				notFoundSignals = append(notFoundSignals, signal)
-				numNotFound++
+				numItemsNotFound++
 				break
 			}
 		} else {
 			notFoundSignals = append(notFoundSignals, signal)
-			numNotFound++
+			numItemsNotFound++
 		}
 
 		if conflictFreeSignal {
-			anchorsFound++
+			numItemsFound++
 		}
 	}
 
@@ -196,10 +196,9 @@ func insertNewHauptsig(
 						KnotenTyp{Kilometrierung: []*Wert{{Value: anchorKilometrage}}},
 						[]*Wert{{Value: errorSignalName}}})
 					errorSignal.Tag = errorSignal.Tag[:(len(errorSignal.Tag) - 4)]
-					numNotFound++
-					anchorsFound--
+					numItemsNotFound++
+					numItemsFound--
 				}
-				print("Found conflict!\n")
 				delete(*anchors, anchorKilometrage)
 				return false
 			}
