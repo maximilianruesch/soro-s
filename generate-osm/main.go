@@ -75,7 +75,7 @@ func generateOsm(generateLines bool, inputFile string) error {
 		inputFile,
 		"-o",
 		tracksFilePath,
-		"r/route=tracks",
+		"r/route=tracks,railway",
 		"--overwrite",
 	})
 
