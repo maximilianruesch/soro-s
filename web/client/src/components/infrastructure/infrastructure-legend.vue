@@ -27,7 +27,7 @@
                         :src="iconUrl + elementType + iconExtension"
                         alt=""
                     >
-                    {{ elementTypeLabels[elementType] ?? elementType }}
+                    {{ getElementLabel(elementType) }}
                 </template>
             </v-checkbox>
         </template>
@@ -69,13 +69,16 @@ export default defineComponent({
             legendControlTypes,
             iconUrl,
             iconExtension,
-            elementTypeLabels: ElementTypeLabels as { [elementType: string]: string },
         };
     },
 
     methods: {
         hasImage(elementType: string) {
             return !SpecialLegendControls.includes(elementType);
+        },
+
+        getElementLabel(elementType: string) {
+            return ElementTypeLabels[elementType] ?? elementType;
         },
 
         emitChange(event: Event) {
