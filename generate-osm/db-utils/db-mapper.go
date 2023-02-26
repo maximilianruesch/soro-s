@@ -12,7 +12,8 @@ import (
 )
 
 var XML_TAG_NAME_CONST = xml.Name{Space: " ", Local: "tag"}
-var numNotFound = 0
+var numNotFound int
+var anchorsFound int
 
 func MapDB(
 	nodeIdCounter *int,
@@ -20,6 +21,9 @@ func MapDB(
 ) {
 	for _, line := range refs {
 		var anchors = make(map[string]([]*OSMUtil.Node))
+
+		anchorsFound = 0
+		numNotFound = 0
 
 		var dbData XmlIssDaten
 		var osmData OSMUtil.Osm
@@ -45,7 +49,9 @@ func MapDB(
 
 		mainF, mainS := findAndMapAnchorMainSignals(&osmData, &anchors,
 			nodeIdCounter, dbData)
-		// acnhorPoints(&osmData, dbData)
+
+		// anchorPoints(&osmData, dbData)
+		fmt.Printf("Found %d anchors and could not find %d \n", anchorsFound, numNotFound)
 
 		var restData = XmlIssDaten{
 			Betriebsstellen: []*Spurplanbetriebsstelle{{
@@ -68,7 +74,6 @@ func MapDB(
 			}
 		}
 	}
-	fmt.Printf("Could not find: %d \n", numNotFound)
 }
 
 func findAndMapAnchorMainSignals(
@@ -106,8 +111,9 @@ func anchorMainSignal(
 	}
 
 	for _, signal := range signals {
-		found := false
+		conflictFreeSignal := false
 		kilometrage := signal.KnotenTyp.Kilometrierung[0].Value
+		nodesFound := []*OSMUtil.Node{}
 
 		for _, node := range osmData.Node {
 			if len(node.Tag) != 0 {
@@ -121,14 +127,27 @@ func anchorMainSignal(
 				has_correct_id = strings.ReplaceAll(idTag, " ", "") == signal.Name[0].Value
 
 				if is_signal && has_correct_id {
-					found = insertNewHauptsig(osmData, anchors, nodeIdCounter,
-						node, kilometrage, *signal, directionString, &notFoundSignals)
+					nodesFound = append(nodesFound, node)
+
 				}
 			}
 		}
 
-		if !found {
+		if len(nodesFound) == 1 {
+			conflictFreeSignal = insertNewHauptsig(osmData, anchors, nodeIdCounter,
+				nodesFound[0], kilometrage, *signal, directionString, conflictFreeSignal, &notFoundSignals)
+			if !conflictFreeSignal {
+				notFoundSignals = append(notFoundSignals, signal)
+				numNotFound++
+				break
+			}
+		} else {
 			notFoundSignals = append(notFoundSignals, signal)
+			numNotFound++
+		}
+
+		if conflictFreeSignal {
+			anchorsFound++
 		}
 	}
 
@@ -150,7 +169,7 @@ func formatKilometrage(anchors *map[string]([]*OSMUtil.Node),
 
 func insertNewHauptsig(
 	osmData *OSMUtil.Osm, anchors *map[string]([]*OSMUtil.Node), nodeIdCounter *int,
-	node *OSMUtil.Node, kilometrage string, signal Signal, direction string, notFound *[]*Signal,
+	node *OSMUtil.Node, kilometrage string, signal Signal, direction string, alreadyFound bool, notFound *[]*Signal,
 ) bool {
 	for anchorKilometrage, anchorList := range *anchors {
 		for _, anchor := range anchorList {
@@ -178,6 +197,7 @@ func insertNewHauptsig(
 						[]*Wert{{Value: errorSignalName}}})
 					errorSignal.Tag = errorSignal.Tag[:(len(errorSignal.Tag) - 4)]
 					numNotFound++
+					anchorsFound--
 				}
 				print("Found conflict!\n")
 				delete(*anchors, anchorKilometrage)
