@@ -18,43 +18,50 @@ type nodePair struct {
 
 const EARTH_RADIUS_CONST = 6371.0
 
-func nodeNotFound(id string) error { return errors.New("Could not find node: " + id) }
-func wayNotFound(id string) error  { return errors.New("Could not find way: " + id) }
+func nodeNotFound(id string) error { return errors.New("could not find node: " + id) }
+func wayNotFound(id string) error  { return errors.New("could not find way: " + id) }
 
-var endReached = errors.New("Reached end of track.")
+var endReached = errors.New("reached end of track.")
 
-func FindNewNode(osmData *OSMUtil.Osm, node1 *OSMUtil.Node, node2 *OSMUtil.Node, dist1 float64, dist2 float64) (*OSMUtil.Node, error) {
-	var node *OSMUtil.Node
+func findNewNode(
+	osmData *OSMUtil.Osm,
+	node1 *OSMUtil.Node, node2 *OSMUtil.Node, dist1 float64, dist2 float64,
+) (*OSMUtil.Node, error) {
 	if dist1 == 0.0 {
 		return node1, nil
 	}
+
+	var node *OSMUtil.Node
 
 	up1, upDist1, down1, downDist1, err1 := findNodes(osmData, node1, dist1)
 	up2, upDist2, down2, downDist2, err2 := findNodes(osmData, node2, dist2)
 
 	if err1 != nil || err2 != nil {
-		return nil, errors.New("Insufficient anchor!")
+		return nil, errors.New("insufficient anchor!")
 	}
 
 	if up1 == up2 {
-		node, _ = getNodeById(osmData, up1)
+		node, _ = OSMUtil.GetNodeById(osmData, up1)
 	} else if up1 == down2 {
-		node, _ = getNodeById(osmData, up1)
+		node, _ = OSMUtil.GetNodeById(osmData, up1)
 	} else if down1 == up2 {
-		node, _ = getNodeById(osmData, down1)
+		node, _ = OSMUtil.GetNodeById(osmData, down1)
 	} else if down1 == down2 {
-		node, _ = getNodeById(osmData, down1)
+		node, _ = OSMUtil.GetNodeById(osmData, down1)
 	} else {
 		node = getClosestMatch(osmData, up1, up2, down1, down2, upDist1, upDist2, downDist1, downDist2)
 	}
 	return node, nil
 }
 
-func getClosestMatch(osmData *OSMUtil.Osm, up1, up2, down1, down2 string, upDist1, upDist2, downDist1, downDist2 float64) *OSMUtil.Node {
-	upNode1, _ := getNodeById(osmData, up1)
-	upNode2, _ := getNodeById(osmData, up2)
-	downNode1, _ := getNodeById(osmData, down1)
-	downNode2, _ := getNodeById(osmData, down2)
+func getClosestMatch(
+	osmData *OSMUtil.Osm,
+	up1, up2, down1, down2 string, upDist1, upDist2, downDist1, downDist2 float64,
+) *OSMUtil.Node {
+	upNode1, _ := OSMUtil.GetNodeById(osmData, up1)
+	upNode2, _ := OSMUtil.GetNodeById(osmData, up2)
+	downNode1, _ := OSMUtil.GetNodeById(osmData, down1)
+	downNode2, _ := OSMUtil.GetNodeById(osmData, down2)
 
 	upNode1Lat, _ := strconv.ParseFloat(upNode1.Lat, 64)
 	upNode1Lon, _ := strconv.ParseFloat(upNode1.Lon, 64)
@@ -89,22 +96,25 @@ func getClosestMatch(osmData *OSMUtil.Osm, up1, up2, down1, down2 string, upDist
 	return allPairs[0].node2
 }
 
-func findNodes(osmData *OSMUtil.Osm, node *OSMUtil.Node, dist float64) (string, float64, string, float64, error) {
+func findNodes(
+	osmData *OSMUtil.Osm,
+	node *OSMUtil.Node, dist float64,
+) (string, float64, string, float64, error) {
 	var upId, downId string
 	var upDist, downDist float64
 
-	startWay, err := findWaysForNode(osmData, node.Id)
+	startWay, err := OSMUtil.FindWaysByNodeId(osmData, node.Id)
 	if err != nil {
 		panic(err)
 	}
 
 	if len(startWay) > 2 {
-		return "", 0, "", 0, errors.New("Too many ways!")
+		return "", 0, "", 0, errors.New("too many ways!")
 	}
 
 	if len(startWay) == 1 {
 		runningWay := startWay[0]
-		index, err := getNodeIndexInWay(node.Id, runningWay)
+		index, err := OSMUtil.GetNodeIndexInWay(&runningWay, node.Id)
 		if err != nil {
 			panic(err)
 		}
@@ -124,14 +134,17 @@ func findNodes(osmData *OSMUtil.Osm, node *OSMUtil.Node, dist float64) (string, 
 		runningWay = startWay[1]
 		downId, downDist = goDir(osmData, runningWay, 0, dist, false)
 	} else {
-		return "", 0, "", 0, errors.New("Error with ways!")
+		return "", 0, "", 0, errors.New("error with ways!")
 	}
 
 	return upId, upDist, downId, downDist, nil
 }
 
-func goDir(osmData *OSMUtil.Osm, runningWay OSMUtil.Way, index int, dist float64, initialWayDirUp bool) (string, float64) {
-	runningNode, _ := getNodeById(osmData, runningWay.Nd[index].Ref)
+func goDir(
+	osmData *OSMUtil.Osm,
+	runningWay OSMUtil.Way, index int, dist float64, initialWayDirUp bool,
+) (string, float64) {
+	runningNode, _ := OSMUtil.GetNodeById(osmData, runningWay.Nd[index].Ref)
 	var oldNode *OSMUtil.Node
 	var nextNode *OSMUtil.Node
 	totalDist := 0.0
@@ -175,26 +188,32 @@ func goDir(osmData *OSMUtil.Osm, runningWay OSMUtil.Way, index int, dist float64
 	return runningNode.Id, totalDist
 }
 
-func getNextNode(osmData *OSMUtil.Osm, wayDirUp bool, index int, runningWay OSMUtil.Way) *OSMUtil.Node {
+func getNextNode(
+	osmData *OSMUtil.Osm,
+	wayDirUp bool, index int, runningWay OSMUtil.Way,
+) *OSMUtil.Node {
 	if wayDirUp {
-		nextNode, err := getNodeById(osmData, runningWay.Nd[index-1].Ref)
+		nextNode, err := OSMUtil.GetNodeById(osmData, runningWay.Nd[index-1].Ref)
 		if err != nil {
 			panic(err)
 		}
 		return nextNode
 	}
 
-	nextNode, err := getNodeById(osmData, runningWay.Nd[index+1].Ref)
+	nextNode, err := OSMUtil.GetNodeById(osmData, runningWay.Nd[index+1].Ref)
 	if err != nil {
 		panic(err)
 	}
 	return nextNode
 }
 
-func findNextWay(osmData *OSMUtil.Osm, wayDirUp bool, index int, runningNode *OSMUtil.Node, oldNode *OSMUtil.Node, runningWay OSMUtil.Way) (OSMUtil.Way, int, bool, error) {
-	nextWays, err := findWaysForNode(osmData, runningNode.Id)
+func findNextWay(
+	osmData *OSMUtil.Osm,
+	wayDirUp bool, index int, runningNode *OSMUtil.Node, oldNode *OSMUtil.Node, runningWay OSMUtil.Way,
+) (OSMUtil.Way, int, bool, error) {
+	nextWays, err := OSMUtil.FindWaysByNodeId(osmData, runningNode.Id)
 	if err != nil || len(nextWays) == 0 {
-		panic(errors.New("No ways!"))
+		panic(errors.New("no ways!"))
 	}
 	if len(nextWays) == 1 {
 		return OSMUtil.Way{}, 0, false, endReached
@@ -232,7 +251,7 @@ func findNextWay(osmData *OSMUtil.Osm, wayDirUp bool, index int, runningNode *OS
 			index = 0
 			wayDirUp = false
 		} else {
-			return OSMUtil.Way{}, 0, false, errors.New("Could not find way up!")
+			return OSMUtil.Way{}, 0, false, errors.New("could not find way up!")
 		}
 	} else if !wayDirUp && index == len(runningWay.Nd)-1 {
 		// In the downward direction, ways can also be linked via the ends:
@@ -257,45 +276,11 @@ func findNextWay(osmData *OSMUtil.Osm, wayDirUp bool, index int, runningNode *OS
 			index = len(nextWays[0].Nd) - 1
 			wayDirUp = true
 		} else {
-			return OSMUtil.Way{}, 0, false, errors.New("Could not find way down!")
+			return OSMUtil.Way{}, 0, false, errors.New("could not find way down!")
 		}
 	}
 
 	return runningWay, index, wayDirUp, nil
-}
-
-func getNodeById(osmData *OSMUtil.Osm, id string) (*OSMUtil.Node, error) {
-	for _, node := range osmData.Node {
-		if node.Id == id {
-			return node, nil
-		}
-	}
-	return nil, nodeNotFound(id)
-}
-
-func getNodeIndexInWay(id string, way OSMUtil.Way) (int, error) {
-	for i, nd := range way.Nd {
-		if nd.Ref == id {
-			return i, nil
-		}
-	}
-	return -1, nodeNotFound(id)
-}
-
-func findWaysForNode(osmData *OSMUtil.Osm, id string) ([]OSMUtil.Way, error) {
-	ways := []OSMUtil.Way{}
-	for _, way := range osmData.Way {
-		for _, node := range way.Nd {
-			if node.Ref == id {
-				ways = append(ways, *way)
-				break
-			}
-		}
-	}
-	if len(ways) == 0 {
-		return []OSMUtil.Way{}, wayNotFound(id)
-	}
-	return ways, nil
 }
 
 func distance(phi1 float64, phi2 float64, lambda1 float64, lambda2 float64) float64 {
