@@ -84,7 +84,7 @@ func getClosestMatch(
 		{downNode1, upNode2, distDown1Up2, downDist1, upDist2},
 		{downNode1, downNode2, distDown1Down2, downDist1, downDist2}}
 
-	sort.Slice(allPairs, func(i, j int) bool {
+	sort.SliceStable(allPairs, func(i, j int) bool {
 		dist1 := allPairs[i].dist
 		dist2 := allPairs[j].dist
 		return dist1 < dist2

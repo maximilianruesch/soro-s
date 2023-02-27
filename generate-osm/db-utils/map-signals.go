@@ -79,7 +79,6 @@ func processHauptsignal(
 				matchingSignalNodes[0],
 				signal,
 				isFalling,
-				true,
 				notFoundSignals,
 				anchors,
 				osm,
@@ -98,7 +97,6 @@ func insertNewHauptsignal(
 	signalNode *OSMUtil.Node,
 	signal *Signal,
 	isFalling bool,
-	setAnchors bool,
 	notFound *[]*Signal,
 	anchors map[string][]*OSMUtil.Node,
 	osm *OSMUtil.Osm,
@@ -134,12 +132,10 @@ func insertNewHauptsignal(
 		isFalling,
 	)
 	OSMUtil.InsertNewNodeWithReferenceNode(osm, &newSignalNode, signalNode)
-	if setAnchors {
-		if len(anchors[signalKilometrage]) == 0 {
-			anchors[signalKilometrage] = []*OSMUtil.Node{&newSignalNode}
-		} else {
-			anchors[signalKilometrage] = append(anchors[signalKilometrage], &newSignalNode)
-		}
+	if len(anchors[signalKilometrage]) == 0 {
+		anchors[signalKilometrage] = []*OSMUtil.Node{&newSignalNode}
+	} else {
+		anchors[signalKilometrage] = append(anchors[signalKilometrage], &newSignalNode)
 	}
 	return true
 }
@@ -199,8 +195,10 @@ func searchUnanchoredMainSignal(
 		return
 	}
 
+	directionString := "falling"
 	signals := knoten.HauptsigF
 	if !isFalling {
+		directionString = "rising"
 		signals = knoten.HauptsigS
 	}
 
@@ -214,7 +212,19 @@ func searchUnanchoredMainSignal(
 			return
 		}
 
-		insertNewHauptsignal(nodeIdCounter, maxNode, signal, isFalling, false, &[]*Signal{}, *anchors, osmData)
+		newSignalNode := OSMUtil.Node{
+			Id:  strconv.Itoa(*nodeIdCounter),
+			Lat: maxNode.Lat,
+			Lon: maxNode.Lon,
+			Tag: []*OSMUtil.Tag{
+				{XMLName: XML_TAG_NAME_CONSTR, K: "type", V: "element"},
+				{XMLName: XML_TAG_NAME_CONSTR, K: "subtype", V: "ms"},
+				{XMLName: XML_TAG_NAME_CONSTR, K: "id", V: signal.Name[0].Value},
+				{XMLName: XML_TAG_NAME_CONSTR, K: "direction", V: directionString},
+			},
+		}
+
+		OSMUtil.InsertNewNodeWithReferenceNode(osmData, &newSignalNode, maxNode)
 	}
 }
 
