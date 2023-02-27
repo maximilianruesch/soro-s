@@ -51,28 +51,3 @@ func FindWaysByNodeId(osm *Osm, id string) ([]Way, error) {
 	}
 	return ways, nil
 }
-
-func InsertSignalWithWayRef(osm *Osm, signalNode *Node, nodeBeforeId string) {
-	osm.Node = append(osm.Node, signalNode)
-
-	for _, way := range osm.Way {
-		index := -1
-		for i, nd := range way.Nd {
-			if nd.Ref == nodeBeforeId {
-				index = i
-				break
-			}
-		}
-		if index == -1 {
-			return
-		}
-		if index == len(way.Nd)-1 {
-			element := way.Nd[index]
-			temp := append(way.Nd[:index], &Nd{Ref: signalNode.Id})
-			way.Nd = append(temp, element)
-			return
-		}
-		temp := append(way.Nd[:index+1], &Nd{Ref: signalNode.Id})
-		way.Nd = append(temp, way.Nd[index+1:]...)
-	}
-}
