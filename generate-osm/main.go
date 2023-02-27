@@ -111,9 +111,8 @@ func generateOsm(generateLines bool, inputFile string) error {
 			})
 		}
 
-		newNodeIdCounter := 1
 		relevant_refs := dbUtils.Parse(refs, tempDBLinesDir, tempDBResoucesDir)
-		dbUtils.MapDB(&newNodeIdCounter, relevant_refs, tempLinesDir, tempDBLinesDir)
+		dbUtils.MapDB(relevant_refs, tempLinesDir, tempDBLinesDir)
 
 		_ = relevant_refs
 

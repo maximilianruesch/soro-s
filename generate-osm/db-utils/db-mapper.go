@@ -10,11 +10,12 @@ import (
 )
 
 func MapDB(
-	nodeIdCounter *int,
 	refs []string,
 	osmDir string,
 	DBDir string,
 ) {
+	newNodeIdCounter := 0
+
 	for _, line := range refs {
 		var anchors map[string]([]*OSMUtil.Node) = map[string]([]*OSMUtil.Node){}
 		var osm OSMUtil.Osm
@@ -45,9 +46,9 @@ func MapDB(
 			anchors,
 			&notFoundSignalsFalling,
 			&notFoundSignalsRising,
-			nodeIdCounter,
+			&newNodeIdCounter,
 		)
-		fmt.Printf("Found %d anchors and could not find %d \n", *nodeIdCounter-1, len(notFoundSignalsFalling)+len(notFoundSignalsRising))
+		fmt.Printf("Found %d anchors and could not find %d \n", newNodeIdCounter-1, len(notFoundSignalsFalling)+len(notFoundSignalsRising))
 		var issWithMappedSignals = XmlIssDaten{
 			Betriebsstellen: []*Spurplanbetriebsstelle{{
 				Abschnitte: []*Spurplanabschnitt{{

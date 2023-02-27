@@ -80,7 +80,6 @@ func processHauptsignal(
 				anchors,
 				osm,
 			)
-			*optionalNewId++
 			if !conflictFreeSignal {
 				*notFoundSignals = append(*notFoundSignals, signal)
 			}
@@ -105,7 +104,7 @@ func insertNewHauptsignal(
 			if possibleAnchor.Id == signalNode.Id {
 				if anchorKilometrage == signalKilometrage {
 					newSignalNode := createNewHauptsignal(
-						*newId,
+						newId,
 						signalNode,
 						signal,
 						isFalling,
@@ -137,7 +136,7 @@ func insertNewHauptsignal(
 		}
 	}
 	newSignalNode := createNewHauptsignal(
-		*newId,
+		newId,
 		signalNode,
 		signal,
 		isFalling,
@@ -151,7 +150,7 @@ func insertNewHauptsignal(
 }
 
 func createNewHauptsignal(
-	id int,
+	id *int,
 	node *OSMUtil.Node,
 	signal *Signal,
 	isFalling bool,
@@ -160,9 +159,10 @@ func createNewHauptsignal(
 	if !isFalling {
 		directionString = "rising"
 	}
+	*id++
 
 	return OSMUtil.Node{
-		Id:  strconv.Itoa(id),
+		Id:  strconv.Itoa(*id),
 		Lat: node.Lat,
 		Lon: node.Lon,
 		Tag: []*OSMUtil.Tag{
