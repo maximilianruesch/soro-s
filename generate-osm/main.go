@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"encoding/xml"
-	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -13,6 +12,7 @@ import (
 	dbUtils "transform-osm/db-utils"
 	osmUtils "transform-osm/osm-utils"
 
+	"github.com/pkg/errors"
 	"github.com/urfave/cli/v2"
 )
 
@@ -100,8 +100,9 @@ func generateOsm(generateLines bool, inputFile string) error {
 		for _, refId := range refs {
 			lineOsmFile, err := filepath.Abs(tempLinesDir + "/" + refId + ".xml")
 			if err != nil {
-				return errors.New("Failed to get line file path: " + err.Error())
+				return errors.Wrap(err, "failed to get line xml file path for ref: "+refId)
 			}
+
 			osmUtils.ExecuteOsmFilterCommand([]string{
 				tracksFilePath,
 				"-o",
@@ -109,6 +110,7 @@ func generateOsm(generateLines bool, inputFile string) error {
 				"ref=" + refId,
 				"--overwrite",
 			})
+
 		}
 
 		relevant_refs := dbUtils.Parse(refs, tempDBLinesDir, tempDBResoucesDir)

@@ -39,16 +39,27 @@ func MapDB(
 		fmt.Printf("Processing line %s \n", line)
 		var notFoundSignalsFalling []*Signal = []*Signal{}
 		var notFoundSignalsRising []*Signal = []*Signal{}
+		var foundAchnorCount = 0
+		for _, stelle := range dbIss.Betriebsstellen {
+			for _, abschnitt := range stelle.Abschnitte {
+				findAndMapAnchorMainSignals(
+					abschnitt,
+					&osm,
+					anchors,
+					&notFoundSignalsFalling,
+					&notFoundSignalsRising,
+					&newNodeIdCounter,
+				)
 
-		findAndMapAnchorMainSignals(
-			dbIss,
-			&osm,
-			anchors,
-			&notFoundSignalsFalling,
-			&notFoundSignalsRising,
-			&newNodeIdCounter,
-		)
-		fmt.Printf("Found %d anchors and could not find %d \n", newNodeIdCounter-1, len(notFoundSignalsFalling)+len(notFoundSignalsRising))
+				findAndMapAnchorSwitches(
+					abschnitt,
+					&osm,
+					anchors,
+					&foundAchnorCount,
+				)
+			}
+		}
+		fmt.Printf("Found %d anchors \n", foundAchnorCount)
 		var issWithMappedSignals = XmlIssDaten{
 			Betriebsstellen: []*Spurplanbetriebsstelle{{
 				Abschnitte: []*Spurplanabschnitt{{
