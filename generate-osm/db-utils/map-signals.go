@@ -57,10 +57,6 @@ func processHauptsignal(
 	for _, signal := range signals {
 		conflictFreeSignal := false
 		matchingSignalNodes := []*OSMUtil.Node{}
-		found := searchAnchorForSignal(signal, isFalling, anchors)
-		if found {
-			continue
-		}
 
 		for _, node := range osm.Node {
 			if len(node.Tag) != 0 {
@@ -92,36 +88,6 @@ func processHauptsignal(
 			*notFoundSignals = append(*notFoundSignals, signal)
 		}
 	}
-}
-
-func searchAnchorForSignal(
-	signal *Signal,
-	isFalling bool,
-	anchors map[string][]*OSMUtil.Node,
-) bool {
-	kilometrage := signal.KnotenTyp.Kilometrierung[0].Value
-	possibleAnchors := anchors[kilometrage]
-	if possibleAnchors == nil {
-		return false
-	}
-
-	found := false
-	for _, anchorNode := range possibleAnchors {
-		typ, _ := OSMUtil.FindTagOnNode(anchorNode, "type")
-		subtyp, _ := OSMUtil.FindTagOnNode(anchorNode, "subtype")
-		id, _ := OSMUtil.FindTagOnNode(anchorNode, "id")
-		direction, _ := OSMUtil.FindTagOnNode(anchorNode, "direction")
-
-		if typ == "element" &&
-			subtyp == "ms" &&
-			id == signal.Name[0].Value &&
-			direction == "falling" {
-			found = true
-			break
-		}
-	}
-
-	return found
 }
 
 func insertNewHauptsignal(
