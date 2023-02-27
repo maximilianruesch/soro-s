@@ -97,7 +97,7 @@ func generateOsm(generateLines bool, inputFile string) error {
 			}
 		}
 
-		for _, refId := range []string{"3601"} {
+		for _, refId := range refs {
 			lineOsmFile, err := filepath.Abs(tempLinesDir + "/" + refId + ".xml")
 			if err != nil {
 				return errors.New("Failed to get line file path: " + err.Error())
@@ -111,7 +111,6 @@ func generateOsm(generateLines bool, inputFile string) error {
 			})
 		}
 
-		newNodeIdCounter := 1
 		relevant_refs := dbUtils.Parse(refs, tempDBLinesDir, tempDBResoucesDir)
 		dbUtils.MapDB(relevant_refs, tempLinesDir, tempDBLinesDir)
 
