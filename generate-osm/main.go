@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"encoding/xml"
-	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -13,6 +12,7 @@ import (
 	dbUtils "transform-osm/db-utils"
 	osmUtils "transform-osm/osm-utils"
 
+	"github.com/pkg/errors"
 	"github.com/urfave/cli/v2"
 )
 
@@ -106,11 +106,6 @@ func generateOsm(generateLines bool, mapDB bool, inputFile string, outputFile st
 		if err = os.Mkdir(tempLinesDir, 0755); err != nil {
 			return errors.New("Failed to create lines folder: " + err.Error())
 		}
-		if _, err := os.Stat(tempDBResoucesDir); os.IsNotExist(err) {
-			if err = os.Mkdir(tempDBResoucesDir, 0755); err != nil {
-				return errors.New("Failed to create DBResources folder: " + err.Error())
-			}
-		}
 
 		for _, refId := range refs {
 			lineOsmFile, err := filepath.Abs(tempLinesDir + "/" + refId + ".xml")
@@ -127,6 +122,9 @@ func generateOsm(generateLines bool, mapDB bool, inputFile string, outputFile st
 		}
 
 		if mapDB {
+			if _, err := os.Stat("./temp/DBResources"); errors.Is(err, os.ErrNotExist) {
+				return errors.Wrap(err, "DBResource-director does not exists, please first create temp/DBResources")
+			}
 			relevant_refs := dbUtils.Parse(refs, tempDBLinesDir, tempDBResoucesDir)
 			dbUtils.MapDB(relevant_refs, tempLinesDir, tempDBLinesDir)
 
