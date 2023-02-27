@@ -13,6 +13,7 @@
             >
                 <component
                     :is="pair[1].glc"
+                    :golden-layout-key="GlcKeyPrefix + pair[0]"
                     :container="pair[1].container"
                 />
             </golden-layout-component>
@@ -128,8 +129,7 @@ const loadGLLayout = async (layoutConfig: LayoutConfig | ResolvedLayoutConfig) =
                 itemConfig.componentState = {};
             }
 
-            let usedIndex = undefined;
-            usedIndex = (itemConfig.componentState as Json).refId;
+            const usedIndex = (itemConfig.componentState as Json).refId;
             index = addComponent(itemConfig.componentType as string, usedIndex as number);
             (itemConfig.componentState as Json).refId = index;
         });
@@ -168,7 +168,7 @@ onMounted(() => {
     const handleContainerVirtualRectingRequiredEvent = (
         container: ComponentContainer,
         width: number,
-        height: number
+        height: number,
     ): void => {
         const component = MapComponents.get(container);
         if (!component || !component?.glc) {
@@ -185,7 +185,7 @@ onMounted(() => {
 
     const handleContainerVirtualVisibilityChangeRequiredEvent = (
         container: ComponentContainer,
-        visible: boolean
+        visible: boolean,
     ): void => {
         const component = MapComponents.get(container);
         if (!component || !component?.glc) {
@@ -198,7 +198,7 @@ onMounted(() => {
     const handleContainerVirtualZIndexChangeRequiredEvent = (
         container: ComponentContainer,
         logicalZIndex: LogicalZIndex,
-        defaultZIndex: string
+        defaultZIndex: string,
     ): void => {
         const component = MapComponents.get(container);
         if (!component || !component?.glc) {
@@ -210,7 +210,7 @@ onMounted(() => {
 
     const bindComponentEventListener = (
         container: ComponentContainer,
-        itemConfig: ResolvedComponentItemConfig
+        itemConfig: ResolvedComponentItemConfig,
     ): ComponentContainer.BindableComponent => {
         let refId = -1;
         if (itemConfig && itemConfig.componentState) {
@@ -223,7 +223,10 @@ onMounted(() => {
         // @ts-ignore
         const component = instance?.refs[ref][0] as typeof GoldenLayoutComponent;
 
-        MapComponents.set(container, { refId, glc: component });
+        MapComponents.set(container, {
+            refId,
+            glc: component, 
+        });
         // @ts-ignore
         AllComponents.value.get(refId).container = container;
 
@@ -251,7 +254,7 @@ onMounted(() => {
     GLayout = new VirtualLayout(
       GLRoot.value as HTMLElement,
       bindComponentEventListener,
-      unbindComponentEventListener
+      unbindComponentEventListener,
     );
 
     GLayout.beforeVirtualRectingEvent = handleBeforeVirtualRectingEvent;

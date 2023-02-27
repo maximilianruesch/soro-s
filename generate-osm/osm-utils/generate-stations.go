@@ -7,8 +7,8 @@ import (
 )
 
 func GenerateStationsAndHalts(inputFilePath string, tempFolderPath string) (searchFile SearchFile, stationHaltOsm Osm) {
-	stationsUnfilteredFilePath, _ := filepath.Abs(tempFolderPath + "./stationsUnfiltered.osm.pbf")
-	stationsFile, _ := filepath.Abs(tempFolderPath + "./stations.xml")
+	stationsUnfilteredFilePath, _ := filepath.Abs(tempFolderPath + "/stationsUnfiltered.osm.pbf")
+	stationsFile, _ := filepath.Abs(tempFolderPath + "/stations.xml")
 
 	ExecuteOsmFilterCommand([]string{
 		inputFilePath,
@@ -42,7 +42,6 @@ func generateSearchFile(osm Osm) (searchFile SearchFile, stationHaltOsm Osm) {
 	stations := make(map[string]Station)
 	halts := make(map[string]Halt)
 	stationHaltsNodes := make([]*Node, 0)
-	osm.Node = append(osm.Node, getWiesbadenHbfAsNode())
 
 	for _, node := range osm.Node {
 		var name string = ""
@@ -80,18 +79,4 @@ func generateSearchFile(osm Osm) (searchFile SearchFile, stationHaltOsm Osm) {
 		}, Osm{
 			Node: stationHaltsNodes,
 		}
-}
-
-func getWiesbadenHbfAsNode() *Node {
-	return &Node{
-		Id:  "420133769",
-		Lat: "50.06988",
-		Lon: "8.24404",
-		Tag: []*Tag{
-			{K: "name", V: "Wiesbaden Hauptbahnhof"},
-			{K: "railway", V: "station"},
-			{K: "railway:ref", V: "FW"},
-			{K: "public_transport", V: "station"},
-		},
-	}
 }
