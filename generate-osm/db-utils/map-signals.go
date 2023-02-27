@@ -1,136 +1,209 @@
 package dbUtils
 
 import (
+	"encoding/xml"
 	"strconv"
 	"strings"
 	OSMUtil "transform-osm/osm-utils"
 )
 
+var XML_TAG_NAME_CONSTR = xml.Name{Space: " ", Local: "tag"}
+
 func findAndMapAnchorMainSignals(
-	osmData *OSMUtil.Osm, anchors *map[string]([]*OSMUtil.Node), nodeIdCounter *int,
-	dbData XmlIssDaten,
-) ([]*Signal, []*Signal) {
-	var main_sigF []*Signal = []*Signal{}
-	var main_sigS []*Signal = []*Signal{}
-	for _, stelle := range dbData.Betriebsstellen {
+	dbIss XmlIssDaten,
+	osm *OSMUtil.Osm,
+	anchors map[string][]*OSMUtil.Node,
+	notFoundSignalsFalling *[]*Signal,
+	notFoundSignalsRising *[]*Signal,
+	optionalNewId *int,
+) {
+	for _, stelle := range dbIss.Betriebsstellen {
 		for _, abschnitt := range stelle.Abschnitte {
 			for _, knoten := range abschnitt.Knoten {
-				main_sigF = append(main_sigF,
-					anchorMainSignal(osmData, anchors, nodeIdCounter,
-						*knoten, true)...)
-				main_sigS = append(main_sigS,
-					anchorMainSignal(osmData, anchors, nodeIdCounter,
-						*knoten, false)...)
+				processHauptsignal(
+					*knoten,
+					notFoundSignalsFalling,
+					anchors,
+					osm,
+					true,
+					optionalNewId,
+				)
+				processHauptsignal(
+					*knoten,
+					notFoundSignalsRising,
+					anchors,
+					osm,
+					false,
+					optionalNewId,
+				)
 			}
 		}
 	}
-	return main_sigF, main_sigS
 }
 
-func anchorMainSignal(
-	osmData *OSMUtil.Osm, anchors *map[string]([]*OSMUtil.Node), nodeIdCounter *int,
-	knoten Spurplanknoten, isFalling bool,
-) []*Signal {
-	var notFoundSignals = []*Signal{}
-
-	directionString := "falling"
+func processHauptsignal(
+	knoten Spurplanknoten,
+	notFoundSignals *[]*Signal,
+	anchors map[string][]*OSMUtil.Node,
+	osm *OSMUtil.Osm,
+	isFalling bool,
+	optionalNewId *int,
+) {
 	signals := knoten.HauptsigF
 	if !isFalling {
-		directionString = "rising"
 		signals = knoten.HauptsigS
 	}
 
 	for _, signal := range signals {
 		conflictFreeSignal := false
-		kilometrage := signal.KnotenTyp.Kilometrierung[0].Value
-		nodesFound := []*OSMUtil.Node{}
+		matchingSignalNodes := []*OSMUtil.Node{}
+		found := searchAnchorForSignal(signal, isFalling, anchors)
+		if found {
+			continue
+		}
 
-		for _, node := range osmData.Node {
+		for _, node := range osm.Node {
 			if len(node.Tag) != 0 {
-				is_signal := false
-				has_correct_id := false
+				railwayTag, _ := OSMUtil.FindTagOnNode(node, "railway")
+				refTag, _ := OSMUtil.FindTagOnNode(node, "ref")
 
-				railwayTag, _ := OSMUtil.FindTagOnNode(*node, "railway")
-				is_signal = railwayTag == "signal"
-
-				idTag, _ := OSMUtil.FindTagOnNode(*node, "ref")
-				has_correct_id = strings.ReplaceAll(idTag, " ", "") == signal.Name[0].Value
-
-				if is_signal && has_correct_id {
-					nodesFound = append(nodesFound, node)
-
+				if railwayTag == "signal" &&
+					strings.ReplaceAll(refTag, " ", "") == signal.Name[0].Value {
+					matchingSignalNodes = append(matchingSignalNodes, node)
 				}
 			}
 		}
 
-		if len(nodesFound) == 1 {
-			conflictFreeSignal = insertNewHauptsig(osmData, anchors, nodeIdCounter,
-				nodesFound[0], kilometrage, *signal, directionString, conflictFreeSignal, &notFoundSignals)
+		if len(matchingSignalNodes) == 1 {
+			conflictFreeSignal = insertNewHauptsignal(
+				optionalNewId,
+				matchingSignalNodes[0],
+				signal,
+				isFalling,
+				notFoundSignals,
+				anchors,
+				osm,
+			)
+			*optionalNewId++
 			if !conflictFreeSignal {
-				notFoundSignals = append(notFoundSignals, signal)
-				numItemsNotFound++
-				break
+				*notFoundSignals = append(*notFoundSignals, signal)
 			}
 		} else {
-			notFoundSignals = append(notFoundSignals, signal)
-			numItemsNotFound++
+			*notFoundSignals = append(*notFoundSignals, signal)
 		}
+	}
+}
 
-		if conflictFreeSignal {
-			numItemsFound++
+func searchAnchorForSignal(
+	signal *Signal,
+	isFalling bool,
+	anchors map[string][]*OSMUtil.Node,
+) bool {
+	kilometrage := signal.KnotenTyp.Kilometrierung[0].Value
+	possibleAnchors := anchors[kilometrage]
+	if possibleAnchors == nil {
+		return false
+	}
+
+	found := false
+	for _, anchorNode := range possibleAnchors {
+		typ, _ := OSMUtil.FindTagOnNode(anchorNode, "type")
+		subtyp, _ := OSMUtil.FindTagOnNode(anchorNode, "subtype")
+		id, _ := OSMUtil.FindTagOnNode(anchorNode, "id")
+		direction, _ := OSMUtil.FindTagOnNode(anchorNode, "direction")
+
+		if typ == "element" &&
+			subtyp == "ms" &&
+			id == signal.Name[0].Value &&
+			direction == "falling" {
+			found = true
+			break
 		}
 	}
 
-	return notFoundSignals
+	return found
 }
 
-func insertNewHauptsig(
-	osmData *OSMUtil.Osm, anchors *map[string]([]*OSMUtil.Node), nodeIdCounter *int,
-	node *OSMUtil.Node, kilometrage string, signal Signal, direction string, alreadyFound bool, notFound *[]*Signal,
+func insertNewHauptsignal(
+	newId *int,
+	signalNode *OSMUtil.Node,
+	signal *Signal,
+	isFalling bool,
+	notFound *[]*Signal,
+	anchors map[string][]*OSMUtil.Node,
+	osm *OSMUtil.Osm,
 ) bool {
-	for anchorKilometrage, anchorList := range *anchors {
-		for _, anchor := range anchorList {
-			if anchor == node {
-				if anchorKilometrage == kilometrage {
-					newNode := OSMUtil.Node{
-						Id:  strconv.Itoa(*nodeIdCounter),
-						Lat: node.Lat,
-						Lon: node.Lon,
-						Tag: []*OSMUtil.Tag{
-							{XMLName: XML_TAG_NAME_CONST, K: "type", V: "element"},
-							{XMLName: XML_TAG_NAME_CONST, K: "subtype", V: "ms"},
-							{XMLName: XML_TAG_NAME_CONST, K: "id", V: signal.Name[0].Value},
-							{XMLName: XML_TAG_NAME_CONST, K: "direction", V: direction}}}
-					OSMUtil.InsertNode(&newNode, node.Id, osmData)
-					*nodeIdCounter++
-					(*anchors)[kilometrage] = append((*anchors)[kilometrage], &newNode)
+	signalKilometrage := signal.KnotenTyp.Kilometrierung[0].Value
+	for anchorKilometrage, possibleAnchors := range anchors {
+		for _, possibleAnchor := range possibleAnchors {
+			if possibleAnchor.Id == signalNode.Id {
+				if anchorKilometrage == signalKilometrage {
+					newSignalNode := createNewHauptsignal(
+						*newId,
+						signalNode,
+						signal,
+						isFalling,
+					)
+					OSMUtil.InsertSignalWithWayRef(osm, &newSignalNode, signalNode.Id)
+					anchors[anchorKilometrage] = append(anchors[anchorKilometrage], &newSignalNode)
+
 					return true
 				}
 
-				for _, errorSignal := range anchorList {
-					errorSignalName, _ := OSMUtil.FindTagOnNode(*errorSignal, "id")
-					*notFound = append(*notFound, &Signal{
-						KnotenTyp{Kilometrierung: []*Wert{{Value: anchorKilometrage}}},
-						[]*Wert{{Value: errorSignalName}}})
-					errorSignal.Tag = errorSignal.Tag[:(len(errorSignal.Tag) - 4)]
-					numItemsNotFound++
-					numItemsFound--
+				for _, errorAnchor := range possibleAnchors {
+					errorSignal := Signal{}
+					errorSignal.KnotenTyp = KnotenTyp{
+						Kilometrierung: []*Wert{{
+							Value: anchorKilometrage,
+						}},
+					}
+					errorSignal.Name = []*Wert{{
+						Value: signal.Name[0].Value,
+					}}
+					*notFound = append(*notFound, &errorSignal)
+
+					errorAnchor.Tag = errorAnchor.Tag[:(len(errorAnchor.Tag) - 4)]
 				}
-				delete(*anchors, anchorKilometrage)
+				delete(anchors, anchorKilometrage)
+
 				return false
 			}
 		}
 	}
-
-	node.Tag = append(node.Tag, []*OSMUtil.Tag{
-		{XMLName: XML_TAG_NAME_CONST, K: "type", V: "element"},
-		{XMLName: XML_TAG_NAME_CONST, K: "subtype", V: "ms"},
-		{XMLName: XML_TAG_NAME_CONST, K: "id", V: signal.Name[0].Value},
-		{XMLName: XML_TAG_NAME_CONST, K: "direction", V: direction}}...)
-	if len((*anchors)[kilometrage]) == 0 {
-		(*anchors)[kilometrage] = []*OSMUtil.Node{node}
+	newSignalNode := createNewHauptsignal(
+		*newId,
+		signalNode,
+		signal,
+		isFalling,
+	)
+	if len(anchors[signalKilometrage]) == 0 {
+		anchors[signalKilometrage] = []*OSMUtil.Node{&newSignalNode}
 	} else {
-		(*anchors)[kilometrage] = append((*anchors)[kilometrage], node)
+		anchors[signalKilometrage] = append(anchors[signalKilometrage], &newSignalNode)
 	}
 	return true
+}
+
+func createNewHauptsignal(
+	id int,
+	node *OSMUtil.Node,
+	signal *Signal,
+	isFalling bool,
+) OSMUtil.Node {
+	directionString := "falling"
+	if !isFalling {
+		directionString = "rising"
+	}
+
+	return OSMUtil.Node{
+		Id:  strconv.Itoa(id),
+		Lat: node.Lat,
+		Lon: node.Lon,
+		Tag: []*OSMUtil.Tag{
+			{XMLName: XML_TAG_NAME_CONSTR, K: "type", V: "element"},
+			{XMLName: XML_TAG_NAME_CONSTR, K: "subtype", V: "ms"},
+			{XMLName: XML_TAG_NAME_CONSTR, K: "id", V: signal.Name[0].Value},
+			{XMLName: XML_TAG_NAME_CONSTR, K: "direction", V: directionString},
+		},
+	}
 }

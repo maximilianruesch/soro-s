@@ -2,8 +2,6 @@
 
 #include <chrono>
 
-#include <regex>
-
 #include "utl/logging.h"
 #include "utl/parser/mmap_reader.h"
 
@@ -136,19 +134,8 @@ void serve_file(std::string const& decoded_url,
 
 bool serve_tile(server::serve_context& sc, std::string const& decoded_url,
                 auto const& req, auto& res) {
-
-
-    std::cmatch regmatch;
-    
-    tiles::regex_matcher::match_result_t match;
-
-    if (std::regex_match(decoded_url.c_str(), regmatch, std::regex(R"(\/(\d+)\/(\d+)\/(\d+).mvt)"))) {
-
-        match = utl::to_vec(regmatch, [](auto const& m) {
-            return std::string_view{ m.first, static_cast<size_t>(m.length()) };
-            });
-    }
-
+  static tiles::regex_matcher const matcher{R"(\/(\d+)\/(\d+)\/(\d+).mvt)"};
+  auto const match = matcher.match(decoded_url);
   if (!match) {
     return false;
   }

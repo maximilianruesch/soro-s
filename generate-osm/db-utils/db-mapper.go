@@ -5,67 +5,65 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strconv"
-	"strings"
 
 	OSMUtil "transform-osm/osm-utils"
 )
 
-var XML_TAG_NAME_CONST = xml.Name{Space: " ", Local: "tag"}
-var numItemsNotFound int
-var numItemsFound int
-
 func MapDB(
 	nodeIdCounter *int,
-	refs []string, osmDir string, DBDir string,
+	refs []string,
+	osmDir string,
+	DBDir string,
 ) {
 	for _, line := range refs {
-		var anchors = make(map[string]([]*OSMUtil.Node))
-
-		numItemsFound = 0
-		numItemsNotFound = 0
-
-		var dbData XmlIssDaten
-		var osmData OSMUtil.Osm
-		osmData = OSMUtil.Osm{}
-
-		osm_file, err := os.ReadFile(osmDir + "/" + line + ".xml")
+		if line != "3601" {
+			continue
+		}
+		var anchors map[string]([]*OSMUtil.Node) = map[string]([]*OSMUtil.Node){}
+		var osm OSMUtil.Osm
+		var dbIss XmlIssDaten
+		osmFile, err := os.ReadFile(osmDir + "/" + line + ".xml")
 		if err != nil {
 			log.Fatal(err)
 		}
-		db_file, err := os.ReadFile(DBDir + "/" + line + "_DB.xml")
+		dbFile, err := os.ReadFile(DBDir + "/" + line + "_DB.xml")
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		if err := xml.Unmarshal([]byte(osm_file), &osmData); err != nil {
+		if err := xml.Unmarshal([]byte(osmFile), &osm); err != nil {
 			panic(err)
 		}
-		if err := xml.Unmarshal([]byte(db_file), &dbData); err != nil {
+		if err := xml.Unmarshal([]byte(dbFile), &dbIss); err != nil {
 			panic(err)
 		}
 
 		fmt.Printf("Processing line %s \n", line)
+		var notFoundSignalsFalling []*Signal = []*Signal{}
+		var notFoundSignalsRising []*Signal = []*Signal{}
 
-		mainF, mainS := findAndMapAnchorMainSignals(&osmData, &anchors,
-			nodeIdCounter, dbData)
-
-		// anchorPoints(&osmData, dbData)
-		fmt.Printf("Found %d anchors and could not find %d \n", numItemsFound, numItemsNotFound)
-
-		var restData = XmlIssDaten{
+		findAndMapAnchorMainSignals(
+			dbIss,
+			&osm,
+			anchors,
+			&notFoundSignalsFalling,
+			&notFoundSignalsRising,
+			nodeIdCounter,
+		)
+		fmt.Printf("Found %d anchors and could not find %d \n", *nodeIdCounter-1, len(notFoundSignalsFalling)+len(notFoundSignalsRising))
+		var issWithMappedSignals = XmlIssDaten{
 			Betriebsstellen: []*Spurplanbetriebsstelle{{
 				Abschnitte: []*Spurplanabschnitt{{
 					Knoten: []*Spurplanknoten{{
-						HauptsigF: mainF,
-						HauptsigS: mainS,
+						HauptsigF: notFoundSignalsFalling,
+						HauptsigS: notFoundSignalsRising,
 					}},
 				}},
 			}},
 		}
-		_ = restData
+		_ = issWithMappedSignals
 
-		if new_Data, err := xml.MarshalIndent(osmData, "", "	"); err != nil {
+		if new_Data, err := xml.MarshalIndent(osm, "", "	"); err != nil {
 			panic(err)
 		} else {
 			if err := os.WriteFile(osmDir+"/"+line+".xml",
@@ -74,17 +72,4 @@ func MapDB(
 			}
 		}
 	}
-}
-
-func formatKilometrage(anchors *map[string]([]*OSMUtil.Node),
-	in float64,
-) (out string) {
-	out = strings.ReplaceAll(strconv.FormatFloat(in, 'f', -1, 64), ".", ",")
-
-	for ; len((*anchors)[out]) == 0; out += "0" {
-		if !strings.Contains(out, ",") {
-			out += ","
-		}
-	}
-	return
 }
