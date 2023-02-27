@@ -141,6 +141,7 @@ func insertNewHauptsignal(
 		signal,
 		isFalling,
 	)
+	OSMUtil.InsertSignalWithWayRef(osm, &newSignalNode, signalNode.Id)
 	if len(anchors[signalKilometrage]) == 0 {
 		anchors[signalKilometrage] = []*OSMUtil.Node{&newSignalNode}
 	} else {
