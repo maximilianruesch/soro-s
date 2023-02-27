@@ -24,6 +24,8 @@ func GenerateStationsAndHalts(inputFilePath string, tempFolderPath string) (sear
 		"-i",
 		"n/subway=yes",
 		"n/monorail=yes",
+		"n/usage",
+		"n/tram=yes",
 		"--overwrite",
 	})
 

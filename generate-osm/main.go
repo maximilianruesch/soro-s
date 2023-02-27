@@ -98,9 +98,6 @@ func generateOsm(generateLines bool, inputFile string) error {
 		}
 
 		for _, refId := range refs {
-			if refId != "3601" {
-				continue
-			}
 			lineOsmFile, err := filepath.Abs(tempLinesDir + "/" + refId + ".xml")
 			if err != nil {
 				return errors.New("Failed to get line file path: " + err.Error())
