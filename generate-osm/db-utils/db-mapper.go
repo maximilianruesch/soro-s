@@ -2,59 +2,58 @@ package dbUtils
 
 import (
 	"encoding/xml"
-	"errors"
-	"fmt"
-	"log"
-	"math"
-	"os"
-	"strconv"
-	"strings"
 
 	OSMUtil "transform-osm/osm-utils"
 )
 
-var XML_TAG_NAME_CONST = xml.Name{Space: " ", Local: "tag"}
-var numNotFound = 0
-
 func MapDB(
-	nodeIdCounter *int,
-	refs []string, osmDir string, DBDir string,
+	refs []string,
+	osmDir string,
+	DBDir string,
 ) {
+	newNodeIdCounter := 0
+
 	for _, line := range refs {
-		var anchors = make(map[string]([]*OSMUtil.Node))
-
-		var dbData XmlIssDaten
-		var osmData OSMUtil.Osm
-		osmData = OSMUtil.Osm{}
-
-		osm_file, err := os.ReadFile(osmDir + "/" + line + ".xml")
+		var anchors map[string]([]*OSMUtil.Node) = map[string]([]*OSMUtil.Node){}
+		var osm OSMUtil.Osm
+		var dbIss XmlIssDaten
+		osmFile, err := os.ReadFile(osmDir + "/" + line + ".xml")
 		if err != nil {
 			log.Fatal(err)
 		}
-		db_file, err := os.ReadFile(DBDir + "/" + line + "_DB.xml")
+		dbFile, err := os.ReadFile(DBDir + "/" + line + "_DB.xml")
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		if err := xml.Unmarshal([]byte(osm_file), &osmData); err != nil {
+
+		if err := xml.Unmarshal([]byte(osmFile), &osm); err != nil {
 			panic(err)
 		}
-		if err := xml.Unmarshal([]byte(db_file), &dbData); err != nil {
+		if err := xml.Unmarshal([]byte(dbFile), &dbIss); err != nil {
 			panic(err)
 		}
 
 		fmt.Printf("Processing line %s \n", line)
 
-		mainF, mainS := findAndMapAnchorMainSignals(&osmData, &anchors,
-			nodeIdCounter, dbData)
-		// acnhorPoints(&osmData, dbData)
+		var notFoundSignalsFalling []*Signal = []*Signal{}
+		var notFoundSignalsRising []*Signal = []*Signal{}
 
-		var restData = XmlIssDaten{
+		findAndMapAnchorMainSignals(
+			dbIss,
+			&osm,
+			anchors,
+			&notFoundSignalsFalling,
+			&notFoundSignalsRising,
+			&newNodeIdCounter,
+		)
+		fmt.Printf("Found %d anchors and could not find %d \n", newNodeIdCounter-1, len(notFoundSignalsFalling)+len(notFoundSignalsRising))
+		var issWithMappedSignals = XmlIssDaten{
 			Betriebsstellen: []*Spurplanbetriebsstelle{{
 				Abschnitte: []*Spurplanabschnitt{{
 					Knoten: []*Spurplanknoten{{
-						HauptsigF: mainF,
-						HauptsigS: mainS,
+						HauptsigF: notFoundSignalsFalling,
+						HauptsigS: notFoundSignalsRising,
 					}},
 				}},
 			}},
@@ -66,7 +65,7 @@ func MapDB(
 		// mapPoints(restData)
 		// mapRest(dbData)
 
-		if new_Data, err := xml.MarshalIndent(osmData, "", "	"); err != nil {
+		if new_Data, err := xml.MarshalIndent(osm, "", "	"); err != nil {
 			panic(err)
 		} else {
 			if err := os.WriteFile(osmDir+"/"+line+".xml",

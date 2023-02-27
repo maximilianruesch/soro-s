@@ -91,6 +91,11 @@ func generateOsm(generateLines bool, inputFile string) error {
 		if err = os.Mkdir(tempLinesDir, 0755); err != nil {
 			return errors.New("Failed to create lines folder: " + err.Error())
 		}
+		if _, err := os.Stat(tempDBResoucesDir); os.IsNotExist(err) {
+			if err = os.Mkdir(tempDBResoucesDir, 0755); err != nil {
+				return errors.New("Failed to create DBResources folder: " + err.Error())
+			}
+		}
 
 		for _, refId := range []string{"3601"} {
 			lineOsmFile, err := filepath.Abs(tempLinesDir + "/" + refId + ".xml")
@@ -108,7 +113,7 @@ func generateOsm(generateLines bool, inputFile string) error {
 
 		newNodeIdCounter := 1
 		relevant_refs := dbUtils.Parse(refs, tempDBLinesDir, tempDBResoucesDir)
-		dbUtils.MapDB(&newNodeIdCounter, []string{"3601"}, tempLinesDir, tempDBLinesDir)
+		dbUtils.MapDB(relevant_refs, tempLinesDir, tempDBLinesDir)
 
 		_ = relevant_refs
 
@@ -131,7 +136,7 @@ func generateOsm(generateLines bool, inputFile string) error {
 	saveSearchFile(searchFile, searchFileJsonPath)
 
 	for i, node := range osmData.Node {
-		value, found := osmUtils.FindTagOnNode(*node, "railway")
+		value, found := osmUtils.FindTagOnNode(node, "railway")
 
 		if found == nil {
 			if value == "station" || value == "halt" {
