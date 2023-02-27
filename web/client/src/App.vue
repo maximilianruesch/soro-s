@@ -1,27 +1,35 @@
 <template>
     <div class="full-height">
-        <soro-overlay @add-golden-layout-tab="addGoldenLayoutTab" />
-        <golden-layout-adapter
-            ref="GLayoutRoot"
-            class="golden-layout-root"
-        />
+        <v-theme-provider :theme="theme">
+            <v-layout>
+                <soro-navigation />
+            </v-layout>
+            <golden-layout-adapter
+                ref="GLayoutRoot"
+                class="golden-layout-root"
+                :class="$vuetify.theme.themeClasses"
+            />
+        </v-theme-provider>
     </div>
 </template>
 
 <script setup lang="ts">
 import GoldenLayoutAdapter from '@/golden-layout/golden-layout-adapter.vue';
-import SoroOverlay from '@/components/soro-overlay.vue';
+import SoroNavigation from '@/components/navigation/soro-navigation.vue';
 </script>
 
 <script lang="ts">
-import { mapActions, mapState } from 'vuex';
+import { mapActions, mapMutations, mapState } from 'vuex';
 import { InfrastructureNamespace } from '@/stores/infrastructure-store';
 import { TimetableNamespace } from '@/stores/timetable-store';
 import { defineComponent, ref } from 'vue';
 import { LayoutConfig } from 'golden-layout';
 import { ComponentTechnicalName, GLComponentNames, GLComponentTitles } from '@/golden-layout/golden-layout-constants';
+import { SettingsNamespace } from '@/stores/settings-store';
+import { GoldenLayoutNamespace } from '@/stores/golden-layout-store';
 
 const initLayout: LayoutConfig = {
+    dimensions: { headerHeight: 36 },
     root: {
         type: 'row',
         content: [
@@ -33,21 +41,15 @@ const initLayout: LayoutConfig = {
                         type: 'component',
                         componentType: GLComponentNames[ComponentTechnicalName.INFRASTRUCTURE],
                     },
-                ]
-            }
-        ]
-    }
+                ],
+            },
+        ],
+    },
 };
 
 const GLayoutRoot = ref();
 
 export default defineComponent({
-    data() {
-        return {
-            overlay: false,
-        };
-    },
-
     computed: {
         ...mapState(InfrastructureNamespace, [
             'currentInfrastructure',
@@ -57,19 +59,18 @@ export default defineComponent({
             'currentTimetable',
             'timetables',
         ]),
+        ...mapState(SettingsNamespace, ['theme']),
     },
 
     mounted() {
+        this.loadSettings();
         this.loadInfrastructures();
         this.loadTimetables();
-        GLayoutRoot.value.loadGLLayout(initLayout);
+        this.setGoldenLayoutRootComponent(GLayoutRoot.value);
+        this.initGoldenLayout(initLayout);
     },
 
     methods: {
-        addGoldenLayoutTab({ componentTechnicalName, title }: { componentTechnicalName: ComponentTechnicalName, title: string}) {
-            GLayoutRoot.value.addGLComponent(GLComponentNames[componentTechnicalName], title);
-        },
-
         ...mapActions(InfrastructureNamespace, {
             loadInfrastructures: 'initialLoad',
             loadInfrastructure: 'load',
@@ -79,6 +80,11 @@ export default defineComponent({
             loadTimetables: 'initialLoad',
             loadTimetable: 'load',
         }),
+
+        ...mapActions(SettingsNamespace, ['loadSettings']),
+
+        ...mapMutations(GoldenLayoutNamespace, { setGoldenLayoutRootComponent: 'setRootComponent' }),
+        ...mapActions(GoldenLayoutNamespace, ['initGoldenLayout']),
     },
 });
 </script>

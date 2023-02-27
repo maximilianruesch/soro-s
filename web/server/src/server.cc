@@ -9,6 +9,7 @@
 #include "soro/server/import/import.h"
 #include "soro/server/osm_export/osm_export.h"
 #include "soro/server/soro_server.h"
+#include "soro/server/osm_util.h"
 
 namespace fs = std::filesystem;
 
@@ -52,6 +53,59 @@ void exists_or_create_dir(fs::path const& dir_path) {
 
 int failed_startup() { return 1; }
 
+
+// Filtering osm station and stops
+
+// Filter for station and stop nodes
+std::vector<pugi::xml_node> filter_halt(const pugi::xml_document& xml_doc) {
+  std::vector<pugi::xml_node> filtered;
+  auto osm_node = xml_doc.child("osm");
+
+  auto children = osm_node.children();
+  for (auto child:children) {
+    if (std::string("node") == child.name()) {
+      auto tags = child.children();
+
+
+      for (auto tag:tags) {
+        if (std::string("railway") != tag.attribute("k").as_string()) continue;
+
+        if (std::string("station") == tag.attribute("v").as_string() ||
+            std::string("halt") == tag.attribute("v").as_string()) {
+          filtered.push_back(child);
+        }
+      }
+    }
+  }
+
+  return filtered;
+}
+
+
+
+// Extract the information from the station and stop nodes
+std::vector<soro::server::osm_halt> extract_halt_info(
+    const std::vector<pugi::xml_node>& nodes) {
+  std::vector<soro::server::osm_halt> result;
+
+  for (const auto& node : nodes) {
+    const double lon = node.attribute("lon").as_double();
+    const double lat = node.attribute("lat").as_double();
+    std::string name = "default";
+
+    auto tags = node.children();
+
+    for (auto tag:tags) {
+      if (std::string("name") == tag.attribute("k").as_string())
+        name = tag.attribute("v").as_string();
+    }
+
+    result.emplace_back(name, true, lon, lat);
+  }
+
+  return result;
+}
+
 int main(int argc, char const** argv) {
   server_settings s;
   std::cout << "\n\t\t[SORO Server]\n\n";
@@ -66,14 +120,12 @@ int main(int argc, char const** argv) {
   auto const coord_file = s.server_resource_dir_ / "misc" / "btrs_geo.csv";
 
   fs::path const tt_dir = s.server_resource_dir_ / "timetable";
-  //this is where the tiles will be stored
   fs::path const infra_dir = s.server_resource_dir_ / "infrastructure";
 
   exists_or_create_dir(s.server_resource_dir_);
   exists_or_create_dir(tt_dir);
   exists_or_create_dir(infra_dir);
 
-  //collects all infrastructure Files
   std::vector<fs::path> infra_todo;
   for (auto const& dir_entry :
        fs::directory_iterator{s.resource_dir_ / "infrastructure"}) {
@@ -103,7 +155,7 @@ int main(int argc, char const** argv) {
   // Create paths for infraFiles files
   std::vector<fs::path> all_osm_paths;
 
-  //OSM data is generated from the Infrastructure XML files in server_resources\resources\infrastructure and stored in server_resources\infrastructure\"Name Of Infrastructure"\"Name Of Infrastructure".osm
+  //OSM data is generated from the XML files in Infrastructure and stored in /Serverresources
   for (auto const& infra_file : infra_todo) {
     auto const infra_res_dir = infra_dir / infra_file.filename();
     exists_or_create_dir(infra_res_dir);
@@ -119,7 +171,7 @@ int main(int argc, char const** argv) {
 
       auto const osm_file =
           infra_res_dir / infra_file.filename().replace_extension(".osm");
-      //This generates a new OSMFile from the infraData
+      //This generates a new OSMFile from the infrasData
       soro::server::osm_export::export_and_write(*infra, osm_file);
 
       all_osm_paths.push_back(osm_file);
@@ -129,40 +181,40 @@ int main(int argc, char const** argv) {
   // Create paths for osm files
   std::vector<fs::path> osm_paths;
 
-  //All real osm files are collected from folder server_resources\resources\osm
+  //All real osm files are collected from folder /resources/osm
   auto osm_path = s.resource_dir_ / "osm";
   if (fs::exists(osm_path)) { // if folder "osm" folder exists, generate paths to osm files
-      for (auto&& dir_entry : fs::directory_iterator{ osm_path }) { //if the files already exist in server_resources\infrastructure\"Name Of OSM"\\"Name Of OSM".osm  they are not marked to be copied
-          if (!std::filesystem::exists(infra_dir / dir_entry.path().filename().replace_extension("") / dir_entry.path().filename()) || s.regenerate_) {
-              osm_paths.emplace_back(dir_entry);
-          }
+      for (auto&& dir_entry : fs::directory_iterator{ osm_path }) {
+          osm_paths.emplace_back(dir_entry);
       }
   }
 
-
   // Copy every osm file to server
+  std::unordered_map<std::string, std::vector<soro::server::osm_halt>> halts;
   for (const auto& osm_file : osm_paths) {
       auto const infra_res_dir = infra_dir / osm_file.filename().replace_extension("");
       exists_or_create_dir(infra_res_dir);
 
       auto const osm_server_file = infra_res_dir / osm_file.filename();
 
-      std::filesystem::copy_options options_for_copy = std::filesystem::copy_options::skip_existing;
+      // load, filter and save to a new location
+      pugi::xml_document osm_data;
+      auto const load_result = osm_data.load_file(osm_file.c_str());
 
-      if (s.regenerate_) {
-          options_for_copy = std::filesystem::copy_options::overwrite_existing;
-      }
+      const auto filtered = filter_halt(osm_data);
+      const auto fileName = osm_file.filename().replace_extension("").string();
+      halts[fileName] = extract_halt_info(filtered);
 
-      //copy to new location
-      try {
-          std::filesystem::copy(osm_file.c_str(), osm_server_file.c_str(), options_for_copy);
-          all_osm_paths.push_back(osm_server_file);
-      }
-      catch (const std::filesystem::filesystem_error& e) {
-          uLOG(utl::err) << e.what() << osm_server_file.filename();
+      if (!load_result) {
+          uLOG(utl::err)
+              << "Failed to read real OSM Data. Will resume without it. Error: "
+              << load_result.description()
+              << "\n";
           continue;
       }
 
+      osm_data.save_file(osm_server_file.c_str());
+      all_osm_paths.push_back(osm_server_file);
   }
 
 
@@ -188,5 +240,5 @@ int main(int argc, char const** argv) {
   }
 
   soro::server::server const server(s.address_.val(), s.port_.val(),
-                                    s.server_resource_dir_.val(), s.test_);
+                                    s.server_resource_dir_.val(), s.test_, halts);
 }

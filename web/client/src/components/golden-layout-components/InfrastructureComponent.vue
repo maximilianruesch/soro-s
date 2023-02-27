@@ -10,31 +10,21 @@ import InfrastructureMap from '@/components/infrastructure/infrastructure-map.vu
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import { ComponentContainer } from 'golden-layout';
 
 export default defineComponent({
     name: 'InfrastructureComponent',
 
+    provide() {
+        return {
+            goldenLayoutKeyInjection: this.goldenLayoutKey,
+        };
+    },
+
     props: {
-        container: {
-            type: ComponentContainer,
-            required: false,
-            default: undefined,
+        goldenLayoutKey: {
+            type: String,
+            required: true,
         },
     },
-
-    created() {
-        this.configureContainer(); 
-    },
-
-    methods: {
-        configureContainer() {
-            if (!this.container) {
-                return;
-            }
-
-            this.container.on('resize', () => (this.$refs.infrastructureMap as { resize: () => void }).resize());
-        }
-    }
 });
 </script>
