@@ -51,29 +51,63 @@ func CombineAllLines(tempLineDir string) (osmUtils.Osm, error) {
 
 func getRandomColor() string {
 
-	//This fixed the problem, but not in the best way possible
-	//HSV may be the way to go
-
 	var r, g, b int64
 
-	//Only allow colors within a certain range
-	//this prevents white and black
-	r = (int64)(rand.Intn((100)) + 50)
-	g = (int64)(rand.Intn((100)) + 50)
-	b = (int64)(rand.Intn((100)) + 50)
+	var h, s, v float64
+
+	//s=1 and v=1 leads to bright and saturated colors
+	h = (float64)(rand.Intn((360)))
+	s = 1
+	v = 1
+
+	//convert HSV to RGB
+	h_i := math.Floor(h / 60)
+
+	f := (h / 60) - h_i
+
+	p := v * (1 - s)
+	q := v * (1 - s*f)
+	t := v * (1 - s*(1-f))
+
+	switch {
+	case h_i == 0 || h_i == 6:
+		r = int64(math.Floor(v * 255))
+		g = int64(math.Floor(t * 255))
+		b = int64(math.Floor(p * 255))
+	case h_i == 1:
+		r = int64(math.Floor(q * 255))
+		g = int64(math.Floor(v * 255))
+		b = int64(math.Floor(p * 255))
+	case h_i == 2:
+		r = int64(math.Floor(p * 255))
+		g = int64(math.Floor(v * 255))
+		b = int64(math.Floor(t * 255))
+	case h_i == 3:
+		r = int64(math.Floor(p * 255))
+		g = int64(math.Floor(q * 255))
+		b = int64(math.Floor(v * 255))
+	case h_i == 4:
+		r = int64(math.Floor(t * 255))
+		g = int64(math.Floor(p * 255))
+		b = int64(math.Floor(v * 255))
+	case h_i == 5:
+		r = int64(math.Floor(v * 255))
+		g = int64(math.Floor(p * 255))
+		b = int64(math.Floor(q * 255))
+
+	}
 
 	color := "#"
 
-	//Grey colors are generated if the RGB values are too close to each other
-	//If a Grey color is detected, a new random color is generated
-	for (math.Abs((float64)(r-g)) < 20) || (math.Abs((float64)(r-b)) < 20) || (math.Abs((float64)(b-r)) < 20) || (math.Abs((float64)(b-g)) < 20) || (math.Abs((float64)(g-b)) < 20) || (math.Abs((float64)(g-r)) < 20) {
-		r = (int64)(rand.Intn(100) + 50)
-		g = (int64)(rand.Intn(100) + 50)
-		b = (int64)(rand.Intn(100) + 50)
-	}
-
-	//translate to hex code
-	color += strconv.FormatInt((r), 16) + strconv.FormatInt((g), 16) + strconv.FormatInt((b), 16)
+	//translate rgb values to hex
+	color += leftPad(strconv.FormatInt((r), 16), 2, "0") + leftPad(strconv.FormatInt((g), 16), 2, "0") + leftPad(strconv.FormatInt((b), 16), 2, "0")
 
 	return color
+}
+
+func leftPad(stringToPad string, length int, padding string) string {
+	for len(stringToPad) < length {
+		stringToPad = padding + stringToPad
+	}
+	return stringToPad
 }
