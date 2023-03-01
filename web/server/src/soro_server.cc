@@ -201,6 +201,15 @@ std::vector<soro::server::osm_object> get_object_info(
         }
     }
 
+   std::sort(matches.begin(), matches.end(),
+        [](const soro::server::osm_halt& a, const soro::server::osm_halt& b) {
+            // Primary ordering by length
+            if (a.name_.length() < b.name_.length()) return true;
+            if (a.name_.length() > b.name_.length()) return false;
+            // Secondary ordering by lexicographical order
+            return a.name_ < b.name_;
+        });
+
     return matches;
 }
 
