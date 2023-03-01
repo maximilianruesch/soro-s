@@ -215,7 +215,7 @@ a:active {
 }
 
 .station-search-result-list.v-list {
-    overflow-y: scroll;
+    overflow-y: auto;
     max-height: 500px;
 }
 
