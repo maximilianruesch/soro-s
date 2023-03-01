@@ -133,7 +133,7 @@ import DisruptionDetail from '@/components/disruption-detail.vue';
 import SoroSelect from '@/components/soro-select.vue';
 import SoroButton from '@/components/soro-button.vue';
 import SoroCollapsible from '@/components/soro-collapsible.vue';
-import StationSearch from '@/components/station-search.vue';
+import StationSearch from '@/components/navigation/station-search/station-search.vue';
 </script>
 
 <script lang="ts">

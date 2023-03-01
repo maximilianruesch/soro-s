@@ -3,7 +3,7 @@
         <div class="station-search">
             <v-text-field
                 :disabled="!currentInfrastructure"
-                label="Search for station or halt by name:"
+                label="Search for item by name:"
                 :error-messages="currentSearchError"
                 hide-details="auto"
                 @change="updateQuery"
