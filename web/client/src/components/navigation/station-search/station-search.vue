@@ -64,14 +64,8 @@
 
 <script setup lang="ts">
 import SoroButton from '@/components/soro-button.vue';
-import { ElementTypeLabels, ElementType } from '@/components/infrastructure/elementTypes';
+import { ElementTypeLabels } from '@/components/infrastructure/elementTypes';
 import { iconUrl, iconExtension } from '@/components/infrastructure/addIcons';
-
-const validSearchTypes = [
-    ElementType.STATION,
-    ElementType.HALT,
-    ElementType.MAIN_SIGNAL,
-];
 </script>
 
 <script lang="ts">
@@ -79,6 +73,12 @@ import { defineComponent } from 'vue';
 import { InfrastructureNamespace } from '@/stores/infrastructure-store';
 import { mapActions, mapMutations, mapState } from 'vuex';
 import { ElementType } from '@/components/infrastructure/elementTypes';
+
+const validSearchTypes = [
+    ElementType.STATION,
+    ElementType.HALT,
+    ElementType.MAIN_SIGNAL,
+];
 
 export default defineComponent({
     name: 'StationSearch',
@@ -97,10 +97,12 @@ export default defineComponent({
     },
 
     data(): {
+        validSearchTypes: typeof validSearchTypes,
         currentQuery: string | null,
         currentSearchTypes: string[],
         } {
         return {
+            validSearchTypes,
             currentQuery: null,
             currentSearchTypes: [
                 ElementType.STATION,
