@@ -17,6 +17,28 @@
             />
         </div>
 
+        <div v-if="showExtendedOptions">
+            <v-checkbox
+                v-for="searchType in validSearchTypes"
+                :key="searchType"
+                v-model="currentSearchTypes"
+                :value="searchType"
+                color="primary"
+                density="compact"
+                hide-details
+                multiple
+            >
+                <template #label>
+                    {{ `Search for ${ElementTypeLabels[searchType]}` }}
+                    <img
+                        class="station-search-search-type-icon"
+                        :src="iconUrl + searchType + iconExtension"
+                        alt=""
+                    >
+                </template>
+            </v-checkbox>
+        </div>
+
         <v-list
             v-if="currentSearchedMapPositions.length > 1"
             density="compact"
@@ -42,12 +64,21 @@
 
 <script setup lang="ts">
 import SoroButton from '@/components/soro-button.vue';
+import { ElementTypeLabels, ElementType } from '@/components/infrastructure/elementTypes';
+import { iconUrl, iconExtension } from '@/components/infrastructure/addIcons';
+
+const validSearchTypes = [
+    ElementType.STATION,
+    ElementType.HALT,
+    ElementType.MAIN_SIGNAL,
+];
 </script>
 
 <script lang="ts">
 import { defineComponent } from 'vue';
 import { InfrastructureNamespace } from '@/stores/infrastructure-store';
 import { mapActions, mapMutations, mapState } from 'vuex';
+import { ElementType } from '@/components/infrastructure/elementTypes';
 
 const minSearchQueryLimit = 3;
 
@@ -67,9 +98,16 @@ export default defineComponent({
         },
     },
 
-    data(): { currentQuery: string | null } {
+    data(): {
+        currentQuery: string | null,
+        currentSearchTypes: string[],
+        } {
         return {
             currentQuery: null,
+            currentSearchTypes: [
+                ElementType.STATION,
+                ElementType.HALT,
+            ],
         };
     },
 
@@ -97,7 +135,15 @@ export default defineComponent({
                 return;
             }
 
-            this.searchPositionFromName(this.currentQuery);
+            const includedTypes: { [key: string]: boolean } = {};
+            this.currentSearchTypes.forEach((searchType) => {
+                includedTypes[searchType] = true; 
+            });
+
+            this.searchPositionFromName({
+                query: this.currentQuery,
+                includedTypes,
+            });
         },
 
         getSearchResultLabelParts(searchResult: string): { before: string, after: string } {
@@ -133,5 +179,10 @@ export default defineComponent({
 .station-search-result-list.v-list {
     overflow-y: scroll;
     max-height: 500px;
+}
+
+.station-search-search-type-icon {
+    margin-left: 5px;
+    height: 1.2em;
 }
 </style>

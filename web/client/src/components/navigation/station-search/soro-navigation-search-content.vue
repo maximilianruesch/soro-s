@@ -1,6 +1,9 @@
 <template>
     <div>
-        <station-search class="station-search-field" />
+        <station-search
+            class="station-search-field"
+            :show-extended-options="true"
+        />
     </div>
 </template>
 
