@@ -44,6 +44,7 @@
                 <soro-navigation-menu-content
                     v-if="selectedOverlay === 'menu'"
                     class="overlay"
+                    @change-overlay="overlay => selectedOverlay = overlay"
                 />
                 <soro-navigation-search-content
                     v-if="selectedOverlay === 'search'"

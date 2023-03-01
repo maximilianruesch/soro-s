@@ -38,7 +38,11 @@
                 />
             </div>
 
-            <station-search class="station-search-field" />
+            <station-search
+                :show-extended-link="true"
+                class="station-search-field"
+                @change-to-extended="changeToSearchOverlay"
+            />
 
             <soro-collapsible
                 label="Settings"
@@ -147,6 +151,7 @@ import { GoldenLayoutNamespace } from '@/stores/golden-layout-store';
 
 export default defineComponent({
     name: 'SoroNavigationMenuContent',
+    emits: ['change-overlay'],
 
     data() {
         return {
@@ -192,6 +197,10 @@ export default defineComponent({
 
         clearLocalStorage() {
             window.localStorage.clear();
+        },
+
+        changeToSearchOverlay() {
+            this.$emit('change-overlay', 'search');
         },
 
         ...mapActions(SettingsNamespace, [

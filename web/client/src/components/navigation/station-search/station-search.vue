@@ -1,5 +1,17 @@
 <template>
     <div>
+        <div
+            v-if="showExtendedLink"
+            class="station-search-extended-link"
+        >
+            <a
+                href="/"
+                @click="onClickExtended"
+            >
+                Go to extended Search
+            </a>
+        </div>
+
         <div class="station-search">
             <v-text-field
                 :disabled="!currentInfrastructure"
@@ -47,8 +59,8 @@
         >
             <v-list-subheader>SEARCH RESULTS</v-list-subheader>
             <v-list-item
-                v-for="(mapPosition) in currentSearchedMapPositions"
-                :key="mapPosition.name"
+                v-for="(mapPosition, index) in currentSearchedMapPositions"
+                :key="index"
                 :value="mapPosition.name"
                 @click="setCurrentSearchedMapPosition(mapPosition.position)"
             >
@@ -95,6 +107,8 @@ export default defineComponent({
             default: false,
         },
     },
+
+    emits: ['change-to-extended'],
 
     data(): {
         validSearchTypes: typeof validSearchTypes,
@@ -155,6 +169,12 @@ export default defineComponent({
             };
         },
 
+        onClickExtended(event: Event) {
+            event.preventDefault();
+
+            this.$emit('change-to-extended');
+        },
+
         ...mapMutations(InfrastructureNamespace, ['setCurrentSearchedMapPosition']),
         ...mapActions(InfrastructureNamespace, ['searchPositionFromName']),
     },
@@ -174,6 +194,19 @@ export default defineComponent({
 
 .search-match {
     color: rgb(var(--v-theme-primary));
+}
+
+.station-search-extended-link {
+    display: flex;
+    color: rgb(var(--v-theme-primary));
+    justify-content: right;
+}
+
+a,
+a:visited,
+a:hover,
+a:active {
+    color: inherit;
 }
 
 .station-search-result-list.v-list {
