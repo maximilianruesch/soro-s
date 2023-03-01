@@ -49,7 +49,7 @@ func main() {
 			&cli.StringFlag{
 				Name:        "output",
 				Aliases:     []string{"o"},
-				Value:       "./temp/finalOsm.xml",
+				Value:       "./finalOsm.xml",
 				Usage:       "The output file to write result to as XML file",
 				Destination: &outputFile,
 			},
