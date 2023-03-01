@@ -150,8 +150,8 @@ export default defineComponent({
             }
 
             const includedTypes: { [key: string]: boolean } = {};
-            this.currentSearchTypes.forEach((searchType) => {
-                includedTypes[searchType] = true; 
+            validSearchTypes.forEach((searchType) => {
+                includedTypes[searchType] = this.currentSearchTypes.includes(searchType);
             });
 
             this.searchPositionFromName({
