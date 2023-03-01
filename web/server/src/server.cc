@@ -66,7 +66,6 @@ std::vector<pugi::xml_node> filter_halt(const pugi::xml_document& xml_doc) {
     if (std::string("node") == child.name()) {
       auto tags = child.children();
 
-
       for (auto tag:tags) {
 
         if (std::string("railway") == tag.attribute("k").as_string() && 
@@ -83,8 +82,6 @@ std::vector<pugi::xml_node> filter_halt(const pugi::xml_document& xml_doc) {
 
   return filtered;
 }
-
-
 
 // Extract the information from the station and stop nodes
 std::vector<soro::server::osm_object> extract_halt_info(
@@ -111,10 +108,7 @@ std::vector<soro::server::osm_object> extract_halt_info(
                std::string("ms") == tag.attribute("v").as_string()) {
           type = soro::server::osm_type::MAIN_SIGNAL;
       }
-          
     }
-
-
 
     for (auto tag:tags) {
       switch (type) {
@@ -127,7 +121,6 @@ std::vector<soro::server::osm_object> extract_halt_info(
               if (std::string("id") == tag.attribute("k").as_string())
                   name = tag.attribute("v").as_string();
               break;
-          case soro::server::osm_type::UNDEFINED: break;
           default: break;
       }
     }

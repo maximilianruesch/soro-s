@@ -202,7 +202,7 @@ std::vector<soro::server::osm_object> get_object_info(
     }
 
    std::sort(matches.begin(), matches.end(),
-        [](const soro::server::osm_halt& a, const soro::server::osm_halt& b) {
+        [](const soro::server::osm_object& a, const soro::server::osm_object& b) {
             // Primary ordering by length
             if (a.name_.length() < b.name_.length()) return true;
             if (a.name_.length() > b.name_.length()) return false;
@@ -239,9 +239,9 @@ void serve_search(
   filter.station_ = true;
 
   if (req_body.HasMember("options")) {
-      auto const options = req_body["options"].GetObjectA();
+      auto const options = req_body["options"].GetObject();
       if (options.HasMember("includedTypes")) {
-          auto const include_types = options["includedTypes"].GetObjectA();
+          auto const include_types = options["includedTypes"].GetObject();
           filter.halt_ = include_types["hlt"].GetBool();
           filter.station_ = include_types["station"].GetBool();
           filter.main_signal_ = include_types["ms"].GetBool();
