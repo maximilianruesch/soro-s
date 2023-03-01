@@ -21,6 +21,7 @@
             v-if="currentSearchedMapPositions.length > 1"
             density="compact"
             elevation="5"
+            class="station-search-result-list"
         >
             <v-list-subheader>SEARCH RESULTS</v-list-subheader>
             <v-list-item
@@ -52,6 +53,19 @@ const minSearchQueryLimit = 3;
 
 export default defineComponent({
     name: 'StationSearch',
+
+    props: {
+        showExtendedLink: {
+            type: Boolean,
+            required: false,
+            default: false,
+        },
+        showExtendedOptions: {
+            type: Boolean,
+            required: false,
+            default: false,
+        },
+    },
 
     data(): { currentQuery: string | null } {
         return {
@@ -114,5 +128,10 @@ export default defineComponent({
 
 .search-match {
     color: rgb(var(--v-theme-primary));
+}
+
+.station-search-result-list.v-list {
+    overflow-y: scroll;
+    max-height: 500px;
 }
 </style>
