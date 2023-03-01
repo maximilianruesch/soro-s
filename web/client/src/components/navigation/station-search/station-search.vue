@@ -65,6 +65,11 @@
                 @click="setCurrentSearchedMapPosition(mapPosition.position)"
             >
                 <v-list-item-title>
+                    <img
+                        class="station-search-search-type-icon"
+                        :src="iconUrl + (mapPosition.type ?? 'hlt') + iconExtension"
+                        alt=""
+                    >
                     {{ getSearchResultLabelParts(mapPosition.name).before }}<strong class="search-match">
                         {{ currentSearchTerm }}
                     </strong>{{ getSearchResultLabelParts(mapPosition.name).after }}
@@ -216,6 +221,7 @@ a:active {
 
 .station-search-search-type-icon {
     margin-left: 5px;
+    margin-right: 5px;
     height: 1.2em;
 }
 </style>
