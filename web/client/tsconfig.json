@@ -15,8 +15,10 @@
     "allowJs": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
-    }
+      "@/*": ["src/*"],
+      "@test-utils/*": ["test-utils/*"]
+    },
+    "types": ["vitest/globals"],
   },
   "include": [
     "src/**/*.ts",
