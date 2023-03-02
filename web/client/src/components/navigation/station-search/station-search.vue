@@ -67,7 +67,7 @@
                 <v-list-item-title>
                     <img
                         class="station-search-search-type-icon"
-                        :src="iconUrl + (mapPosition.type ?? 'hlt') + iconExtension"
+                        :src="iconUrl + mapPosition.type + iconExtension"
                         alt=""
                     >
                     {{ getSearchResultLabelParts(mapPosition.name).before }}<strong class="search-match">
