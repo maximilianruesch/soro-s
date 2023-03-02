@@ -11,6 +11,7 @@
             />
 
             <soro-button
+                ref="search-button"
                 label="Search"
                 class="search-button"
                 @click="searchName"
