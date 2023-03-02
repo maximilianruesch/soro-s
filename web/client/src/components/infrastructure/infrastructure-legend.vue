@@ -13,9 +13,7 @@
             :class="isExpanded ? '' : 'infrastructure-map-legend-collapsed'"
             :elevation="5"
         >
-            <div
-                class="infrastructure-map-reset"
-            >
+            <div class="infrastructure-map-reset">
                 <a
                     href="/"
                     @click="onReset"
