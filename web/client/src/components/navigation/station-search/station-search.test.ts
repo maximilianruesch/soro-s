@@ -2,9 +2,10 @@ import { shallowMountWithDefaults } from '@test-utils/shallow-mount-with-default
 import StationSearch from './station-search.vue';
 import { InfrastructureNamespace } from '@/stores/infrastructure-store';
 import { Mock } from 'vitest';
+import { ExtendedVueWrapper } from '@test-utils/test-utils';
 
 describe('station-search', async () => {
-    let stationSearch: any;
+    let stationSearch: ExtendedVueWrapper;
     let searchPositionFromName: Mock;
     let setCurrentSearchedMapPosition: Mock;
     const infrastructureState = {

@@ -1,18 +1,7 @@
 import { flushPromises, MountingOptions, shallowMount } from '@vue/test-utils';
 import { Module, createStore } from 'vuex';
 import { allMocks } from './mocks';
-
-type Configuration = {
-    props?: any,
-    data?: any,
-    mixins?: any,
-    global?: any,
-    mocks?: any,
-    filters?: any,
-    injections?: any,
-    stubs?: any,
-    store?: any,
-};
+import { Configuration } from './test-utils';
 
 export async function shallowMountWithDefaults(vueComponent: any, configuration: Configuration = {}) {
     vueComponent.mixins = configuration.mixins || vueComponent.mixins;
