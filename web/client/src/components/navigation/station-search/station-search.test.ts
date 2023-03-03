@@ -1,5 +1,5 @@
 import { shallowMountWithDefaults } from '@test-utils/shallow-mount-with-defaults';
-import StationSearch from '@/components/station-search.vue';
+import StationSearch from './station-search.vue';
 import { InfrastructureNamespace } from '@/stores/infrastructure-store';
 import { Mock } from 'vitest';
 
@@ -30,7 +30,7 @@ describe('station-search', async () => {
     });
 
     describe('when the search button emits a click event', async () => {
-        it('does not call \'searchPositionFromName\' when no query is entered', function () {
+        it('does not call \'searchPositionFromName\' if no query is entered', function () {
             expect.assertions(1);
 
             stationSearch.vm.currentQuery = null;
