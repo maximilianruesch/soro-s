@@ -14,7 +14,7 @@ type Configuration = {
     store?: any,
 };
 
-export async function shallowMountWithDefaults(vueComponent: any, configuration: Configuration) {
+export async function shallowMountWithDefaults(vueComponent: any, configuration: Configuration = {}) {
     vueComponent.mixins = configuration.mixins || vueComponent.mixins;
 
     let mountConfiguration: MountingOptions<any> & Record<string, any> = {
