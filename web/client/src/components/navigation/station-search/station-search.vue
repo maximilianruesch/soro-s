@@ -66,6 +66,7 @@
             >
                 <v-list-item-title>
                     <img
+                        v-if="mapPosition.type !== 'undefined'"
                         class="station-search-search-type-icon"
                         :src="iconUrl + mapPosition.type + iconExtension"
                         alt=""
