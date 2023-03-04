@@ -16,12 +16,12 @@ export async function shallowMountWithDefaults(vueComponent: any, configuration:
         },
         propsData: configuration.props || {},
         filters: configuration.filters || {},
-        mocks: {
-            ...allMocks,
-            ...(configuration.mocks || {}),
-        },
+        mocks: configuration.mocks || {},
         provide: configuration.injections || {},
-        stubs: configuration.stubs || {},
+        stubs: {
+            ...allMocks,
+            ...(configuration.stubs || {}),
+        },
     };
     mountConfiguration = addStore(mountConfiguration, configuration);
 
