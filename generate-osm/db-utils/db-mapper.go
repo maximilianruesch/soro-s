@@ -15,7 +15,7 @@ func MapDB(
 	DBDir string,
 ) {
 	newNodeIdCounter := 0
-
+	linesWithNoAnchors := 0
 	for _, line := range refs {
 		var anchors map[string]([]*OSMUtil.Node) = map[string]([]*OSMUtil.Node){}
 		var osm OSMUtil.Osm
@@ -59,7 +59,10 @@ func MapDB(
 				)
 			}
 		}
-		fmt.Printf("Found %d anchors \n", foundAchnorCount)
+		if foundAchnorCount == 0 {
+			fmt.Printf("Found %d anchors \n", foundAchnorCount)
+			linesWithNoAnchors++
+		}
 		var issWithMappedSignals = XmlIssDaten{
 			Betriebsstellen: []*Spurplanbetriebsstelle{{
 				Abschnitte: []*Spurplanabschnitt{{
@@ -81,4 +84,6 @@ func MapDB(
 			}
 		}
 	}
+
+	fmt.Printf("Lines with no anchors: %d out of %d \n", linesWithNoAnchors, len(refs))
 }

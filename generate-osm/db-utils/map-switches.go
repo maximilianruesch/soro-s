@@ -19,7 +19,10 @@ func findAndMapAnchorSwitches(
 
 				railwayTag, _ := OSMUtil.FindTagOnNode(node, "railway")
 				refTag, _ := OSMUtil.FindTagOnNode(node, "ref")
-				if railwayTag == "switch" && refTag == switchBegin.Name.Value {
+				name, _ := OSMUtil.FindTagOnNode(node, "name")
+
+				if railwayTag == "switch" &&
+					(refTag == switchBegin.Name.Value || name == switchBegin.Name.Value) {
 					anchors[switchBegin.Kilometrierung.Value] = append(anchors[switchBegin.Kilometrierung.Value], node)
 					node.Tag = append(node.Tag, []*OSMUtil.Tag{
 						{XMLName: XML_TAG_NAME_CONST, K: "type", V: "element"},
@@ -43,11 +46,13 @@ func findAndMapAnchorSwitches(
 
 				railwayTag, _ := OSMUtil.FindTagOnNode(node, "railway")
 				refTag, _ := OSMUtil.FindTagOnNode(node, "ref")
+				name, _ := OSMUtil.FindTagOnNode(node, "name")
 
 				if railwayTag == "switch" {
 					partnerName := switchBegin.Partner.Name
 
-					if partnerName == refTag && anchors[switchBegin.Kilometrierung.Value] == nil {
+					if (partnerName == refTag || partnerName == name) &&
+						anchors[switchBegin.Kilometrierung.Value] == nil {
 						anchors[switchBegin.Kilometrierung.Value] = append(anchors[switchBegin.Kilometrierung.Value], node)
 						*foundAchnorCount++
 					}
