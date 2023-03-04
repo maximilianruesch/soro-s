@@ -4,8 +4,6 @@ import { VueWrapper } from '@vue/test-utils';
 
 describe('station-search', async () => {
     it('contains a station search with extended options', async () => {
-        expect.assertions(2);
-
         const soroNavigationSearchContent = await shallowMountWithDefaults(SoroNavigationSearchContent);
         const stationSearch = soroNavigationSearchContent.findComponent('station-search-stub') as VueWrapper;
 
