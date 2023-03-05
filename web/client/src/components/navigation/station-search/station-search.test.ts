@@ -30,6 +30,38 @@ describe('station-search', async () => {
         stationSearch = await shallowMountWithDefaults(StationSearch, defaults);
     });
 
+    describe('when setting \'showExtendedLink\' to true', function () {
+        beforeEach(async () => {
+            stationSearch = await shallowMountWithDefaults(StationSearch, {
+                ...defaults,
+                props: { showExtendedLink: true },
+            });
+        });
+
+        it('shows an extended link', async () => {
+            const showExtendedLink = stationSearch.find('.station-search-extended-link');
+            expect(showExtendedLink.exists()).toBe(true);
+        });
+
+        it('emits \'change-to-extended\' when clicking the extended link', async () => {
+            const showExtendedLink = stationSearch.find('.station-search-extended-link');
+
+            await showExtendedLink.find('a').trigger('click');
+
+            expect(stationSearch.emitted('change-to-extended')).toHaveLength(1);
+        });
+    });
+
+    it('does not show an extended link when setting \'showExtendedLink\' to false', async () => {
+        stationSearch = await shallowMountWithDefaults(StationSearch, {
+            ...defaults,
+            props: { showExtendedLink: false },
+        });
+
+        const showExtendedLink = stationSearch.find('.station-search-extended-link');
+        expect(showExtendedLink.exists()).toBe(false);
+    });
+
     it('updates the current query when the search text field emits \'change\' event', async () => {
         const searchTextField = stationSearch.findComponent({ ref: 'searchTextField' }) as ExtendedVueWrapper;
         searchTextField.vm.$emit('change', { target: { value: 'some-query' } });
@@ -80,37 +112,5 @@ describe('station-search', async () => {
                 );
             },
         );
-    });
-
-    describe('when setting \'showExtendedLink\' to true', function () {
-        beforeEach(async () => {
-            stationSearch = await shallowMountWithDefaults(StationSearch, {
-                ...defaults,
-                props: { showExtendedLink: true },
-            });
-        });
-
-        it('shows an extended link', async () => {
-            const showExtendedLink = stationSearch.find('.station-search-extended-link');
-            expect(showExtendedLink.exists()).toBe(true);
-        });
-
-        it('emits \'change-to-extended\' when clicking the extended link', async () => {
-            const showExtendedLink = stationSearch.find('.station-search-extended-link');
-
-            await showExtendedLink.find('a').trigger('click');
-
-            expect(stationSearch.emitted('change-to-extended')).toHaveLength(1);
-        });
-    });
-
-    it('does not show an extended link when setting \'showExtendedLink\' to false', async () => {
-        stationSearch = await shallowMountWithDefaults(StationSearch, {
-            ...defaults,
-            props: { showExtendedLink: false },
-        });
-
-        const showExtendedLink = stationSearch.find('.station-search-extended-link');
-        expect(showExtendedLink.exists()).toBe(false);
     });
 });
