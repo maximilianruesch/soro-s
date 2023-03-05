@@ -30,7 +30,10 @@
             />
         </div>
 
-        <div v-if="showExtendedOptions">
+        <div
+            v-if="showExtendedOptions"
+            class="station-search-extended-options"
+        >
             <v-checkbox
                 v-for="searchType in validSearchTypes"
                 :key="searchType"

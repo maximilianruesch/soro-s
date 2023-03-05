@@ -113,4 +113,27 @@ describe('station-search', async () => {
             },
         );
     });
+
+    it('shows a checkbox for each of the valid search types when setting \'showExtendedOptions\' to true', async () => {
+        stationSearch = await shallowMountWithDefaults(StationSearch, {
+            ...defaults,
+            props: { showExtendedOptions: true },
+        });
+
+        const extendedOptionList = stationSearch.find('.station-search-extended-options');
+
+        expect(extendedOptionList.exists()).toBe(true);
+        const checkboxes = extendedOptionList.findAllComponents({ name: 'v-checkbox' });
+        expect(checkboxes).toHaveLength(3);
+    });
+
+    it('does not show checkboxes when setting \'showExtendedOptions\' to false', async () => {
+        stationSearch = await shallowMountWithDefaults(StationSearch, {
+            ...defaults,
+            props: { showExtendedOptions: false },
+        });
+
+        const extendedOptionList = stationSearch.find('.station-search-extended-options');
+        expect(extendedOptionList.exists()).toBe(false);
+    });
 });
