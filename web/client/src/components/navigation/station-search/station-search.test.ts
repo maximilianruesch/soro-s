@@ -4,7 +4,7 @@ import { InfrastructureNamespace } from '@/stores/infrastructure-store';
 import { ExtendedVueWrapper } from '@test-utils/test-utils';
 
 describe('station-search', async () => {
-    let stationSearch: ExtendedVueWrapper;
+    let stationSearch: ExtendedVueWrapper<typeof StationSearch>;
     const searchPositionFromName = vi.fn();
     const setCurrentSearchedMapPosition = vi.fn();
     const infrastructureState = {
@@ -30,15 +30,56 @@ describe('station-search', async () => {
         stationSearch = await shallowMountWithDefaults(StationSearch, defaults);
     });
 
-    describe('when the search button emits a click event', async () => {
-        it('does not call \'searchPositionFromName\' if no query is entered', function () {
-            stationSearch.vm.currentQuery = null;
+    it('updates the current query when the search text field emits \'change\' event', async () => {
+        const searchTextField = stationSearch.findComponent({ ref: 'searchTextField' }) as ExtendedVueWrapper;
+        searchTextField.vm.$emit('change', { target: { value: 'some-query' } });
 
-            const searchButton = stationSearch.findComponent({ ref: 'search-button' });
+        expect(stationSearch.vm.$data.currentQuery).toBe('some-query');
+    });
+
+    // Testing the following is difficult with shallowMount (as of event modifiers like '.enter' and '.prevent'), we may
+    // have to think of a workaround
+    describe.todo('when the search text field emits an event following a \'enter\' key press');
+
+    describe('when the search button emits a \'click\' event', async () => {
+        it('does not call \'searchPositionFromName\' if no query is entered', async () => {
+            await stationSearch.setData({
+                currentQuery: null,
+            });
+
+            const searchButton = stationSearch.findComponent('.search-button') as ExtendedVueWrapper;
             searchButton.vm.$emit('click');
 
             expect(searchPositionFromName).not.toHaveBeenCalled();
         });
+
+        it(
+            'calls \'searchPositionFromName\' with the query and all selected search types if a query is entered',
+            async () => {
+                await stationSearch.setData({
+                    currentQuery: 'some-query',
+                    currentSearchTypes: [
+                        'station',
+                        'foo',
+                    ],
+                });
+
+                const searchButton = stationSearch.findComponent('.search-button') as ExtendedVueWrapper;
+                searchButton.vm.$emit('click');
+
+                expect(searchPositionFromName).toHaveBeenCalledWith(
+                    expect.any(Object),
+                    {
+                        query: 'some-query',
+                        includedTypes: {
+                            station: true,
+                            hlt: false,
+                            ms: false,
+                        },
+                    },
+                );
+            },
+        );
     });
 
     describe('when setting \'showExtendedLink\' to true', function () {

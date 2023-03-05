@@ -14,6 +14,7 @@
 
         <div class="station-search">
             <v-text-field
+                ref="searchTextField"
                 :disabled="!currentInfrastructure"
                 label="Search for item by name:"
                 :error-messages="currentSearchError"
@@ -23,7 +24,6 @@
             />
 
             <soro-button
-                ref="search-button"
                 label="Search"
                 class="search-button"
                 @click="searchName"

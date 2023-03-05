@@ -1,4 +1,5 @@
 import { VueWrapper } from '@vue/test-utils';
+import { ComponentPublicInstance } from 'vue';
 
 export type Configuration = {
     props?: any,
@@ -12,6 +13,6 @@ export type Configuration = {
     store?: any,
 };
 
-export type ExtendedVueWrapper = VueWrapper & {
+export type ExtendedVueWrapper<T = ComponentPublicInstance> = VueWrapper<T> & {
     vm: { [key: string]: any },
 }
