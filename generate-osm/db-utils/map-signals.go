@@ -4,6 +4,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"math"
+	"sort"
 	"strconv"
 	"strings"
 	OSMUtil "transform-osm/osm-utils"
@@ -248,19 +249,15 @@ func findBestOSMNode(
 	anchors *map[string]([]*OSMUtil.Node),
 	kilometrage float64,
 ) (*OSMUtil.Node, error) {
-	nearest, second_nearest := findTwoNearest(anchors, kilometrage)
+	sortedAnchors := sortAnchors(anchors, kilometrage)
 
-	if nearest == -1.0 || second_nearest == -1.0 {
-		return nil, errors.New("Could not find anchors.")
-	}
+	nearest, _ := strconv.ParseFloat(sortedAnchors[0], 64)
+	secondNearest, _ := strconv.ParseFloat(sortedAnchors[0], 64)
 
-	nearest_string := formatKilometrage(anchors, nearest)
-	second_nearest_string := formatKilometrage(anchors, second_nearest)
-
-	anchor1 := ((*anchors)[nearest_string])[0]
-	anchor2 := ((*anchors)[second_nearest_string])[0]
+	anchor1 := ((*anchors)[sortedAnchors[0]])[0]
+	anchor2 := ((*anchors)[sortedAnchors[1]])[0]
 	distance1 := math.Abs(nearest - kilometrage)
-	distance2 := math.Abs(second_nearest - kilometrage)
+	distance2 := math.Abs(secondNearest - kilometrage)
 
 	newNode, err := findNewNode(
 		osmData,
@@ -276,43 +273,22 @@ func findBestOSMNode(
 	return newNode, nil
 }
 
-func findTwoNearest(
+func sortAnchors(
 	anchors *map[string]([]*OSMUtil.Node),
 	kilometrage float64,
-) (nearest float64, second_nearest float64) {
-	nearest = -1.0
-	second_nearest = -1.0
-
-	for key := range *anchors {
-		if !strings.Contains(key, "+") {
-			float_key, _ := strconv.ParseFloat(strings.ReplaceAll(key, ",", "."), 64)
-			if nearest == -1.0 {
-				nearest = float_key
-			}
-			if math.Abs(float_key-kilometrage) < math.Abs(nearest-kilometrage) {
-				second_nearest = nearest
-				nearest = float_key
-			}
-		}
+) []string {
+	anchorKeys := []string{}
+	for anchorKey := range *anchors {
+		anchorKeys = append(anchorKeys, anchorKey)
 	}
 
-	if second_nearest != -1.0 {
-		return nearest, second_nearest
-	}
-	for key := range *anchors {
-		if !strings.Contains(key, "+") {
-			float_key, _ := strconv.ParseFloat(strings.ReplaceAll(key, ",", "."), 64)
-			if float_key != nearest {
-				if second_nearest == -1.0 {
-					second_nearest = float_key
-				}
-				if math.Abs(float_key-kilometrage) < math.Abs(second_nearest-kilometrage) {
-					second_nearest = float_key
-				}
-			}
-		}
-	}
-	return nearest, second_nearest
+	sort.SliceStable(anchorKeys, func(i, j int) bool {
+		floatKilometrage1, _ := strconv.ParseFloat(anchorKeys[i], 64)
+		floatKilometrage2, _ := strconv.ParseFloat(anchorKeys[j], 64)
+		return math.Abs(kilometrage-floatKilometrage1) < math.Abs(kilometrage-floatKilometrage2)
+	})
+
+	return anchorKeys
 }
 
 func formatKilometrage(
