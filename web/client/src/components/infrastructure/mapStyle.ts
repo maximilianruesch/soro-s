@@ -59,11 +59,9 @@ export const createInfrastructureMapStyle = ({ currentTheme, activatedElements }
                         ['has', 'color'], ['get', 'color'],
                         '#444'
                     ],
-                    'line-width': 2.0,
-                    'line-dasharray': [2, 4],
+                    'line-width': 3.0
                 }
             },
-
             {
                 'id': 'rail',
                 'type': 'line',
