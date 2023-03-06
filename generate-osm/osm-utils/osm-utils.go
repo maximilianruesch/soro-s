@@ -2,10 +2,11 @@ package osmUtils
 
 import (
 	"encoding/xml"
-	"errors"
 	"fmt"
 	"os"
 	"os/exec"
+
+	"github.com/pkg/errors"
 )
 
 type Tag struct {
@@ -73,7 +74,7 @@ func ExecuteOsmFilterCommand(args []string) error {
 	}
 
 	if err := cmd.Run(); err != nil {
-		return errors.New(fmt.Errorf("osmium command failed: %w", err).Error())
+		return errors.Wrap(err, fmt.Sprintf("osmUtils.ExecuteOsmFilterCommand: %s", argsArray))
 	}
 
 	return nil

@@ -33,10 +33,10 @@ func GenerateStationsAndHalts(inputFilePath string, tempFolderPath string) (sear
 		panic(err)
 	}
 
-	return generateSearchFile(osm)
+	return generateOsmAndSearchFile(&osm)
 }
 
-func generateSearchFile(osm Osm) (searchFile SearchFile, stationHaltOsm Osm) {
+func generateOsmAndSearchFile(osm *Osm) (searchFile SearchFile, stationHaltOsm Osm) {
 	stations := make(map[string]Station)
 	halts := make(map[string]Halt)
 	stationHaltsNodes := make([]*Node, 0)

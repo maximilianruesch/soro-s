@@ -160,8 +160,8 @@ func generateOsm(generateLines bool, mapDB bool, inputFile string, outputFile st
 	}
 	osmData.Node = append(osmData.Node, stationHaltOsm.Node...)
 
-	sortedOsmData := osmUtils.SortOsm(osmData)
-	output, err := xml.MarshalIndent(sortedOsmData, "", "     ")
+	osmUtils.SortAndRemoveDuplicatesOsm(&osmData)
+	output, err := xml.MarshalIndent(osmData, "", "     ")
 	if err != nil {
 		fmt.Printf("error: %v\n", err)
 	}
