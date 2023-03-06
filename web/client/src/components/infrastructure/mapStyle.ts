@@ -57,10 +57,10 @@ export const createInfrastructureMapStyle = ({ currentTheme, activatedElements }
                     'line-color': [
                         'case',
                         ['has', 'color'], ['get', 'color'],
-                        '#444'
+                        '#444',
                     ],
-                    'line-width': 3.0
-                }
+                    'line-width': 3.0,
+                },
             },
             {
                 'id': 'rail',
@@ -74,8 +74,8 @@ export const createInfrastructureMapStyle = ({ currentTheme, activatedElements }
                         ['has', 'color'], ['get', 'color'],
                         '#444'
                     ],
-                    'line-width': 2.0
-                }
+                    'line-width': 2.0,
+                },
             },
             {
                 'id': 'station-route-layer',
