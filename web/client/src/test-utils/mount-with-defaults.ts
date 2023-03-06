@@ -1,10 +1,10 @@
 import { flushPromises, MountingOptions, mount } from '@vue/test-utils';
-import { createStore, Module } from 'vuex';
-import { Configuration } from './test-utils';
+import { Module } from 'vuex';
+import { Configuration } from './index';
 import { vuetify } from '@/vuetify';
 import { createGlobalStore } from '@/stores/stores';
 
-export async function shallowMountWithDefaults(vueComponent: any, configuration: Configuration = {}) {
+export async function mountWithDefaults(vueComponent: any, configuration: Configuration = {}) {
     vueComponent.mixins = configuration.mixins || vueComponent.mixins;
 
     let mountConfiguration: MountingOptions<any> & Record<string, any> = {
@@ -15,7 +15,6 @@ export async function shallowMountWithDefaults(vueComponent: any, configuration:
                 ...(configuration.global?.plugins || []),
             ],
             stubs: configuration.stubs || {},
-            mocks: {},
         },
         data: configuration.data || function () {
             return {}; 
