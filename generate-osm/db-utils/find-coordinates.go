@@ -1,11 +1,12 @@
 package dbUtils
 
 import (
-	"errors"
 	"math"
 	"sort"
 	"strconv"
 	OSMUtil "transform-osm/osm-utils"
+
+	"github.com/pkg/errors"
 )
 
 type nodePair struct {
@@ -37,8 +38,11 @@ func findNewNode(
 	up1, upDist1, down1, downDist1, err1 := findNodes(osmData, node1, dist1)
 	up2, upDist2, down2, downDist2, err2 := findNodes(osmData, node2, dist2)
 
-	if err1 != nil || err2 != nil {
-		return nil, errors.New("insufficient anchor!")
+	if err1 != nil {
+		return nil, errors.Wrap(err1, "insufficient anchor: "+node1.Id)
+	}
+	if err2 != nil {
+		return nil, errors.Wrap(err2, "insufficient anchor: "+node2.Id)
 	}
 
 	if up1 == up2 || up1 == down2 {
@@ -111,7 +115,7 @@ func findNodes(
 	}
 
 	if len(startWay) > 2 {
-		return "", 0, "", 0, errors.New("too many ways!")
+		return "", 0, "", 0, errors.New("too many ways for node: " + node.Id)
 	}
 
 	if len(startWay) == 1 {

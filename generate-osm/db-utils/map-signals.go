@@ -17,7 +17,7 @@ var XML_TAG_NAME_CONSTR = xml.Name{Space: " ", Local: "tag"}
 func findAndMapAnchorMainSignals(
 	dbIss XmlIssDaten,
 	osm *OSMUtil.Osm,
-	anchors map[string][]*OSMUtil.Node,
+	anchors map[float64][]*OSMUtil.Node,
 	notFoundSignalsFalling *[]*Signal,
 	notFoundSignalsRising *[]*Signal,
 	optionalNewId *int,
@@ -49,7 +49,7 @@ func findAndMapAnchorMainSignals(
 func processHauptsignal(
 	knoten Spurplanknoten,
 	notFoundSignals *[]*Signal,
-	anchors map[string][]*OSMUtil.Node,
+	anchors map[float64][]*OSMUtil.Node,
 	osm *OSMUtil.Osm,
 	isFalling bool,
 	optionalNewId *int,
@@ -100,10 +100,13 @@ func insertNewHauptsignal(
 	signal *Signal,
 	isFalling bool,
 	notFound *[]*Signal,
-	anchors map[string][]*OSMUtil.Node,
+	anchors map[float64][]*OSMUtil.Node,
 	osm *OSMUtil.Osm,
 ) bool {
-	signalKilometrage := signal.KnotenTyp.Kilometrierung[0].Value
+	signalKilometrage, err := formatKilometrageStringInFloat(signal.KnotenTyp.Kilometrierung[0].Value)
+	if err != nil {
+		panic(err)
+	}
 	for anchorKilometrage, possibleAnchors := range anchors {
 		for _, possibleAnchorPair := range possibleAnchors {
 			if possibleAnchorPair.Id == signalNode.Id && anchorKilometrage != signalKilometrage {
@@ -111,7 +114,7 @@ func insertNewHauptsignal(
 					errorSignal := Signal{}
 					errorSignal.KnotenTyp = KnotenTyp{
 						Kilometrierung: []*Wert{{
-							Value: anchorKilometrage,
+							Value: strconv.FormatFloat(anchorKilometrage, 'f', -1, 64),
 						}},
 					}
 					errorSignal.Name = []*Wert{{
@@ -169,7 +172,7 @@ func createNewHauptsignal(
 
 func mapUnanchoredMainSignals(
 	osmData *OSMUtil.Osm,
-	anchors *map[string]([]*OSMUtil.Node),
+	anchors *map[float64]([]*OSMUtil.Node),
 	nodeIdCounter *int,
 	dbData XmlIssDaten,
 ) {
@@ -195,7 +198,7 @@ func mapUnanchoredMainSignals(
 
 func searchUnanchoredMainSignal(
 	osmData *OSMUtil.Osm,
-	anchors *map[string]([]*OSMUtil.Node),
+	anchors *map[float64]([]*OSMUtil.Node),
 	nodeIdCounter *int,
 	knoten Spurplanknoten,
 	isFalling bool,
@@ -218,9 +221,7 @@ func searchUnanchoredMainSignal(
 	}
 
 	for _, signal := range signals {
-		kilometrage, _ := strconv.ParseFloat(
-			strings.ReplaceAll(signal.KnotenTyp.Kilometrierung[0].Value, ",", "."),
-			64)
+		kilometrage, _ := formatKilometrageStringInFloat(signal.KnotenTyp.Kilometrierung[0].Value)
 
 		maxNode, err := findBestOSMNode(osmData, anchors, kilometrage)
 		if err != nil {
@@ -246,13 +247,12 @@ func searchUnanchoredMainSignal(
 
 func findBestOSMNode(
 	osmData *OSMUtil.Osm,
-	anchors *map[string]([]*OSMUtil.Node),
+	anchors *map[float64]([]*OSMUtil.Node),
 	kilometrage float64,
 ) (*OSMUtil.Node, error) {
 	sortedAnchors := sortAnchors(anchors, kilometrage)
 
-	nearest, _ := strconv.ParseFloat(sortedAnchors[0], 64)
-	secondNearest, _ := strconv.ParseFloat(sortedAnchors[0], 64)
+	nearest, secondNearest := sortedAnchors[0], sortedAnchors[1]
 
 	anchor1 := ((*anchors)[sortedAnchors[0]])[0]
 	anchor2 := ((*anchors)[sortedAnchors[1]])[0]
@@ -274,33 +274,42 @@ func findBestOSMNode(
 }
 
 func sortAnchors(
-	anchors *map[string]([]*OSMUtil.Node),
+	anchors *map[float64]([]*OSMUtil.Node),
 	kilometrage float64,
-) []string {
-	anchorKeys := []string{}
+) []float64 {
+	anchorKeys := []float64{}
 	for anchorKey := range *anchors {
 		anchorKeys = append(anchorKeys, anchorKey)
 	}
 
 	sort.SliceStable(anchorKeys, func(i, j int) bool {
-		floatKilometrage1, _ := strconv.ParseFloat(anchorKeys[i], 64)
-		floatKilometrage2, _ := strconv.ParseFloat(anchorKeys[j], 64)
+		floatKilometrage1, floatKilometrage2 := anchorKeys[i], anchorKeys[j]
 		return math.Abs(kilometrage-floatKilometrage1) < math.Abs(kilometrage-floatKilometrage2)
 	})
 
 	return anchorKeys
 }
 
-func formatKilometrage(
-	anchors *map[string]([]*OSMUtil.Node),
-	in float64,
-) (out string) {
-	out = strings.ReplaceAll(strconv.FormatFloat(in, 'f', -1, 64), ".", ",")
-
-	for ; len((*anchors)[out]) == 0; out += "0" {
-		if !strings.Contains(out, ",") {
-			out += ","
-		}
+func formatKilometrageStringInFloat(
+	in string,
+) (float64, error) {
+	split := strings.Split(in, "+")
+	if len(split) == 1 {
+		return strconv.ParseFloat(
+			strings.ReplaceAll(in, ",", "."),
+			64)
 	}
-	return
+
+	out := 0.0
+	for _, splitPart := range split {
+		floatPart, err := strconv.ParseFloat(
+			strings.ReplaceAll(splitPart, ",", "."),
+			64)
+		if err != nil {
+			return 0, errors.Wrap(err, "could not parse kilometrage: "+in)
+		}
+		out += floatPart
+	}
+
+	return out, nil
 }

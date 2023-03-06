@@ -17,7 +17,7 @@ func MapDB(
 	newNodeIdCounter := 0
 
 	for _, line := range refs {
-		var anchors map[string]([]*OSMUtil.Node) = map[string]([]*OSMUtil.Node){}
+		var anchors map[float64]([]*OSMUtil.Node) = map[float64]([]*OSMUtil.Node){}
 		var osm OSMUtil.Osm
 		var dbIss XmlIssDaten
 		osmFile, err := os.ReadFile(osmDir + "/" + line + ".xml")
