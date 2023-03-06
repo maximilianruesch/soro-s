@@ -2,12 +2,13 @@ package dbUtils
 
 import (
 	"encoding/xml"
-	"errors"
 	"fmt"
 	"math"
 	"strconv"
 	"strings"
 	OSMUtil "transform-osm/osm-utils"
+
+	"github.com/pkg/errors"
 )
 
 var XML_TAG_NAME_CONSTR = xml.Name{Space: " ", Local: "tag"}
@@ -166,24 +167,37 @@ func createNewHauptsignal(
 }
 
 func mapUnanchoredMainSignals(
-	osmData *OSMUtil.Osm, anchors *map[string]([]*OSMUtil.Node), nodeIdCounter *int,
+	osmData *OSMUtil.Osm,
+	anchors *map[string]([]*OSMUtil.Node),
+	nodeIdCounter *int,
 	dbData XmlIssDaten,
 ) {
 	for _, stelle := range dbData.Betriebsstellen {
 		for _, abschnitt := range stelle.Abschnitte {
 			for _, knoten := range abschnitt.Knoten {
-				searchUnanchoredMainSignal(osmData, anchors, nodeIdCounter,
-					*knoten, true)
-				searchUnanchoredMainSignal(osmData, anchors, nodeIdCounter,
-					*knoten, false)
+				searchUnanchoredMainSignal(
+					osmData,
+					anchors,
+					nodeIdCounter,
+					*knoten,
+					true)
+				searchUnanchoredMainSignal(
+					osmData,
+					anchors,
+					nodeIdCounter,
+					*knoten,
+					false)
 			}
 		}
 	}
 }
 
 func searchUnanchoredMainSignal(
-	osmData *OSMUtil.Osm, anchors *map[string]([]*OSMUtil.Node), nodeIdCounter *int,
-	knoten Spurplanknoten, isFalling bool,
+	osmData *OSMUtil.Osm,
+	anchors *map[string]([]*OSMUtil.Node),
+	nodeIdCounter *int,
+	knoten Spurplanknoten,
+	isFalling bool,
 ) {
 	if len(*anchors) == 0 {
 		fmt.Print("Could not find anchors! \n")
@@ -209,9 +223,11 @@ func searchUnanchoredMainSignal(
 
 		maxNode, err := findBestOSMNode(osmData, anchors, kilometrage)
 		if err != nil {
-			return
+			fmt.Printf("Error: %s \n", err.Error())
+			continue
 		}
 
+		*nodeIdCounter++
 		newSignalNode := OSMUtil.Node{
 			Id:  strconv.Itoa(*nodeIdCounter),
 			Lat: maxNode.Lat,
@@ -223,13 +239,13 @@ func searchUnanchoredMainSignal(
 				{XMLName: XML_TAG_NAME_CONSTR, K: "direction", V: directionString},
 			},
 		}
-
 		OSMUtil.InsertNewNodeWithReferenceNode(osmData, &newSignalNode, maxNode)
 	}
 }
 
 func findBestOSMNode(
-	osmData *OSMUtil.Osm, anchors *map[string]([]*OSMUtil.Node),
+	osmData *OSMUtil.Osm,
+	anchors *map[string]([]*OSMUtil.Node),
 	kilometrage float64,
 ) (*OSMUtil.Node, error) {
 	nearest, second_nearest := findTwoNearest(anchors, kilometrage)
@@ -241,11 +257,20 @@ func findBestOSMNode(
 	nearest_string := formatKilometrage(anchors, nearest)
 	second_nearest_string := formatKilometrage(anchors, second_nearest)
 
-	newNode, err := findNewNode(osmData,
-		((*anchors)[nearest_string])[0], ((*anchors)[second_nearest_string])[0],
-		math.Abs(nearest-kilometrage), math.Abs(second_nearest-kilometrage))
+	anchor1 := ((*anchors)[nearest_string])[0]
+	anchor2 := ((*anchors)[second_nearest_string])[0]
+	distance1 := math.Abs(nearest - kilometrage)
+	distance2 := math.Abs(second_nearest - kilometrage)
+
+	newNode, err := findNewNode(
+		osmData,
+		anchor1,
+		anchor2,
+		distance1,
+		distance2,
+	)
 	if err != nil {
-		return nil, errors.New("Could not find node.")
+		return nil, errors.Wrap(err, "could not find OSM-node")
 	}
 
 	return newNode, nil
