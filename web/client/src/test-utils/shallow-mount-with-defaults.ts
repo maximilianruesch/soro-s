@@ -1,7 +1,8 @@
-import { flushPromises, MountingOptions, shallowMount } from '@vue/test-utils';
-import { Module, createStore } from 'vuex';
+import { flushPromises, MountingOptions, mount } from '@vue/test-utils';
+import { createStore, Module } from 'vuex';
 import { Configuration } from './test-utils';
 import { vuetify } from '@/vuetify';
+import { createGlobalStore } from '@/stores/stores';
 
 export async function shallowMountWithDefaults(vueComponent: any, configuration: Configuration = {}) {
     vueComponent.mixins = configuration.mixins || vueComponent.mixins;
@@ -13,6 +14,8 @@ export async function shallowMountWithDefaults(vueComponent: any, configuration:
                 vuetify,
                 ...(configuration.global?.plugins || []),
             ],
+            stubs: configuration.stubs || {},
+            mocks: {},
         },
         data: configuration.data || function () {
             return {}; 
@@ -21,13 +24,10 @@ export async function shallowMountWithDefaults(vueComponent: any, configuration:
         filters: configuration.filters || {},
         mocks: configuration.mocks || {},
         provide: configuration.injections || {},
-        stubs: {
-            ...(configuration.stubs || {}),
-        },
     };
     mountConfiguration = addStore(mountConfiguration, configuration);
 
-    const wrapper = shallowMount(vueComponent, mountConfiguration);
+    const wrapper = mount(vueComponent, mountConfiguration);
 
     await flushPromises();
 
@@ -35,12 +35,20 @@ export async function shallowMountWithDefaults(vueComponent: any, configuration:
 }
 
 const addStore = (mountConfiguration: MountingOptions<any> & Record<string, any>, configuration: Configuration) => {
-    if (!configuration.store) {
-        return mountConfiguration;
-    }
-
     const storesWithDefaults: { [moduleName: string]: Module<any, any> } = {};
-    Object.keys(configuration.store).forEach((storeName) => {
+
+    const store = createGlobalStore();
+    Object.keys(configuration.store ?? {}).forEach((storeName) => {
+        store.unregisterModule(storeName);
+        store.registerModule(storeName, {
+            namespaced: true,
+            getters: {},
+            actions: {},
+            mutations: {},
+            state: {},
+            ...configuration.store[storeName],
+        });
+
         storesWithDefaults[storeName] = {
             namespaced: true,
             getters: {},
@@ -50,9 +58,7 @@ const addStore = (mountConfiguration: MountingOptions<any> & Record<string, any>
             ...configuration.store[storeName],
         };
     });
-    mountConfiguration.global?.plugins?.push(createStore({
-        modules: storesWithDefaults,
-    }));
+    mountConfiguration.global?.plugins?.push(store);
 
     return mountConfiguration;
 };

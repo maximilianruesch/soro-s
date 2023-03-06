@@ -6,7 +6,6 @@ export default mergeConfig(viteConfig, defineConfig({
     test: {
         watch: false,
         globals: true,
-        silent: true,
         environment: 'jsdom',
         deps: {
             inline: ['vuetify'],
