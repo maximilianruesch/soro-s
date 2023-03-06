@@ -75,7 +75,7 @@ export const createInfrastructureMapStyle = ({ currentTheme, activatedElements }
                         '#444',
                     ],
                     'line-width': 3.0,
-                }
+                },
             },
             {
                 'id': 'station-route-layer',
