@@ -1,4 +1,4 @@
-import { shallowMountWithDefaults } from '@test-utils/shallow-mount-with-defaults';
+import { shallowMountWithDefaults } from '@/test-utils/shallow-mount-with-defaults';
 import SoroNavigationSearchContent from './soro-navigation-search-content.vue';
 import { VueWrapper } from '@vue/test-utils';
 
