@@ -20,28 +20,31 @@ func findAndMapAnchorMainSignals(
 	anchors map[float64][]*OSMUtil.Node,
 	notFoundSignalsFalling *[]*Signal,
 	notFoundSignalsRising *[]*Signal,
+	foundAnchorCount *int,
 	optionalNewId *int,
 ) {
 	conflictingSignalNames := map[string]bool{}
 	for _, knoten := range abschnitt.Knoten {
-				processHauptsignal(
-					*knoten,
-					notFoundSignalsFalling,
-					anchors,
-					&conflictingSignalNames,
-					osm,
-					true,
-					optionalNewId,
-				)
-				processHauptsignal(
-					*knoten,
-					notFoundSignalsRising,
-					anchors,
-					&conflictingSignalNames,
-					osm,
-					false,
-					optionalNewId,
-				)
+		processHauptsignal(
+			*knoten,
+			notFoundSignalsFalling,
+			anchors,
+			&conflictingSignalNames,
+			osm,
+			true,
+			foundAnchorCount,
+			optionalNewId,
+		)
+		processHauptsignal(
+			*knoten,
+			notFoundSignalsRising,
+			anchors,
+			&conflictingSignalNames,
+			osm,
+			false,
+			foundAnchorCount,
+			optionalNewId,
+		)
 	}
 }
 
@@ -52,6 +55,7 @@ func processHauptsignal(
 	conflictingSignalNames *map[string]bool,
 	osm *OSMUtil.Osm,
 	isFalling bool,
+	foundAnchorCount *int,
 	optionalNewId *int,
 ) {
 	signals := knoten.HauptsigF
@@ -76,7 +80,7 @@ func processHauptsignal(
 		}
 
 		if len(matchingSignalNodes) > 1 {
-			(*conflictingSignalNames)[signal.Name[0].Value] = true
+			(*conflictingSignalNames)[signal.Name.Value] = true
 		} else if len(matchingSignalNodes) == 1 {
 			conflictFreeSignal = insertNewHauptsignal(
 				optionalNewId,
@@ -87,11 +91,13 @@ func processHauptsignal(
 				anchors,
 				*conflictingSignalNames,
 				osm,
+				foundAnchorCount,
 			)
 			if conflictFreeSignal {
+				*foundAnchorCount++
 				return
 			}
-			(*conflictingSignalNames)[signal.Name[0].Value] = true
+			(*conflictingSignalNames)[signal.Name.Value] = true
 		}
 		*notFoundSignals = append(*notFoundSignals, signal)
 	}
@@ -106,11 +112,12 @@ func insertNewHauptsignal(
 	anchors map[float64][]*OSMUtil.Node,
 	conflictingSignalNames map[string]bool,
 	osm *OSMUtil.Osm,
+	foundAnchorCount *int,
 ) bool {
-	if conflictingSignalNames[signal.Name[0].Value] {
+	if conflictingSignalNames[signal.Name.Value] {
 		return false
 	}
-	signalKilometrage, err := formatKilometrageStringInFloat(signal.KnotenTyp.Kilometrierung[0].Value)
+	signalKilometrage, err := formatKilometrageStringInFloat(signal.KnotenTyp.Kilometrierung.Value)
 	if err != nil {
 		panic(err)
 	}
@@ -121,13 +128,14 @@ func insertNewHauptsignal(
 					errorSignal := Signal{}
 					errorSignal.KnotenTyp = KnotenTyp{
 						Kilometrierung: Wert{
-							Value: anchorKilometrage,
+							Value: strconv.FormatFloat(anchorKilometrage, 'f', 3, 64),
 						},
 					}
 					errorSignal.Name = Wert{
 						Value: errorAnchor.Tag[3].V,
 					}
 					*notFound = append(*notFound, &errorSignal)
+					*foundAnchorCount--
 
 					errorAnchor.Tag = errorAnchor.Tag[:(len(errorAnchor.Tag) - 4)]
 				}
@@ -227,7 +235,7 @@ func searchUnanchoredMainSignal(
 	}
 
 	for _, signal := range signals {
-		kilometrage, _ := formatKilometrageStringInFloat(signal.KnotenTyp.Kilometrierung[0].Value)
+		kilometrage, _ := formatKilometrageStringInFloat(signal.KnotenTyp.Kilometrierung.Value)
 
 		maxNode, err := findBestOSMNode(osmData, anchors, kilometrage)
 		if err != nil {
@@ -245,10 +253,10 @@ func searchUnanchoredMainSignal(
 			Lat: maxNode.Lat,
 			Lon: maxNode.Lon,
 			Tag: []*OSMUtil.Tag{
-				{XMLName: XML_TAG_NAME_CONSTR, K: "type", V: "element"},
-				{XMLName: XML_TAG_NAME_CONSTR, K: "subtype", V: "ms"},
-				{XMLName: XML_TAG_NAME_CONSTR, K: "id", V: signal.Name[0].Value},
-				{XMLName: XML_TAG_NAME_CONSTR, K: "direction", V: directionString},
+				{XMLName: XML_TAG_NAME_CONST, K: "type", V: "element"},
+				{XMLName: XML_TAG_NAME_CONST, K: "subtype", V: "ms"},
+				{XMLName: XML_TAG_NAME_CONST, K: "id", V: signal.Name.Value},
+				{XMLName: XML_TAG_NAME_CONST, K: "direction", V: directionString},
 			},
 		}
 		OSMUtil.InsertNewNodeWithReferenceNode(osmData, &newSignalNode, maxNode)
