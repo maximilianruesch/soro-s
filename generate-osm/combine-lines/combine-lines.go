@@ -50,8 +50,6 @@ func CombineAllLines(tempLineDir string) (osmUtils.Osm, error) {
 
 func getRandomColor() string {
 
-	var r, g, b int64
-
 	var h, s, v float64
 
 	//s=1 and v=1 leads to bright and saturated colors
@@ -59,7 +57,14 @@ func getRandomColor() string {
 	s = 1
 	v = 1
 
-	//convert HSV to RGB
+	return hsvToHexRgb(h, s, v)
+}
+
+func hsvToHexRgb(h float64, s float64, v float64) string {
+
+	var r, g, b int64
+
+	//convert HSV to RGB using the standart formula
 	h_i := math.Floor(h / 60)
 
 	f := (h / 60) - h_i
@@ -99,6 +104,7 @@ func getRandomColor() string {
 	color := "#"
 
 	//translate rgb values to hex
+	//this is done by translating the int64 to a hexadecimal string and padding it to a length of two if needed  (11 -> "b" -> "0b")
 	color += leftPad(strconv.FormatInt((r), 16), 2, "0") + leftPad(strconv.FormatInt((g), 16), 2, "0") + leftPad(strconv.FormatInt((b), 16), 2, "0")
 
 	return color
