@@ -1,7 +1,7 @@
 import { mountWithDefaults } from '@/test-utils/mount-with-defaults';
 import SoroNavigationSearchContent from './soro-navigation-search-content.vue';
 
-describe('station-search', async () => {
+describe('soro-navigation-search-content', async () => {
     it('contains a station search with extended options', async () => {
         const soroNavigationSearchContent = await mountWithDefaults(SoroNavigationSearchContent);
         const stationSearch = soroNavigationSearchContent.findComponent({ name: 'station-search' });
