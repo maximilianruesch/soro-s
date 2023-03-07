@@ -58,6 +58,10 @@ jobs:
         run: |
           .\build\${{ matrix.config.preset }}\soro-server.exe -t --resource_dir .\resources --server_resource_dir .\build\${{ matrix.config.preset }}\server_resources\
 
+      - name: Run Client
+        run: |
+          npm run test --prefix web/client
+
       # ==== DISTRIBUTION ====
       - name: Delete unnecessary files
         if: matrix.config.artifact

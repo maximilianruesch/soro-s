@@ -73,6 +73,10 @@ jobs:
           cd ./build/${{ matrix.config.preset }}
           ./soro-server -t --resource_dir ../../resources
 
+      - name: Run Client
+        run: |
+          npm run test --prefix web/client
+
       # ==== DISTRIBUTION ====
       - name: Create Distribution
         if: matrix.config.artifact
