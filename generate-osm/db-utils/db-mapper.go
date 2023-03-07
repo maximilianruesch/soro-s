@@ -56,6 +56,7 @@ func MapDB(
 					&osm,
 					anchors,
 					&foundAchnorCount,
+					&newNodeIdCounter,
 				)
 			}
 		}

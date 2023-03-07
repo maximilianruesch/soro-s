@@ -1,6 +1,7 @@
 package dbUtils
 
 import (
+	"strconv"
 	OSMUtil "transform-osm/osm-utils"
 )
 
@@ -9,6 +10,7 @@ func findAndMapAnchorSwitches(
 	osm *OSMUtil.Osm,
 	anchors map[string][]*OSMUtil.Node,
 	foundAchnorCount *int,
+	optionalNewId *int,
 ) {
 	for _, knoten := range abschnitt.Knoten {
 		for _, switchBegin := range knoten.WeichenAnf {
@@ -24,11 +26,8 @@ func findAndMapAnchorSwitches(
 				if railwayTag == "switch" &&
 					(refTag == switchBegin.Name.Value || name == switchBegin.Name.Value) {
 					anchors[switchBegin.Kilometrierung.Value] = append(anchors[switchBegin.Kilometrierung.Value], node)
-					node.Tag = append(node.Tag, []*OSMUtil.Tag{
-						{XMLName: XML_TAG_NAME_CONST, K: "type", V: "element"},
-						{XMLName: XML_TAG_NAME_CONST, K: "subtype", V: "simple_switch"},
-						{XMLName: XML_TAG_NAME_CONST, K: "id", V: refTag},
-					}...)
+					newSwitchNode := createNewSwitch(optionalNewId, node, switchBegin)
+					osm.Node = append(osm.Node, &newSwitchNode)
 					*foundAchnorCount++
 				}
 			}
@@ -59,5 +58,24 @@ func findAndMapAnchorSwitches(
 				}
 			}
 		}
+	}
+}
+
+func createNewSwitch(
+	id *int,
+	node *OSMUtil.Node,
+	switchBegin *Weichenanfang,
+) OSMUtil.Node {
+	*id++
+
+	return OSMUtil.Node{
+		Id:  strconv.Itoa(*id),
+		Lat: node.Lat,
+		Lon: node.Lon,
+		Tag: []*OSMUtil.Tag{
+			{XMLName: XML_TAG_NAME_CONST, K: "type", V: "element"},
+			{XMLName: XML_TAG_NAME_CONST, K: "subtype", V: "simple_switch"},
+			{XMLName: XML_TAG_NAME_CONST, K: "id", V: switchBegin.Name.Value},
+		},
 	}
 }
