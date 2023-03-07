@@ -12,10 +12,10 @@ import (
 	"github.com/pkg/errors"
 )
 
-var XML_TAG_NAME_CONSTR = xml.Name{Space: " ", Local: "tag"}
+var XML_TAG_NAME_CONST = xml.Name{Space: " ", Local: "tag"}
 
 func findAndMapAnchorMainSignals(
-	dbIss XmlIssDaten,
+	abschnitt *Spurplanabschnitt,
 	osm *OSMUtil.Osm,
 	anchors map[float64][]*OSMUtil.Node,
 	notFoundSignalsFalling *[]*Signal,
@@ -23,9 +23,7 @@ func findAndMapAnchorMainSignals(
 	optionalNewId *int,
 ) {
 	conflictingSignalNames := map[string]bool{}
-	for _, stelle := range dbIss.Betriebsstellen {
-		for _, abschnitt := range stelle.Abschnitte {
-			for _, knoten := range abschnitt.Knoten {
+	for _, knoten := range abschnitt.Knoten {
 				processHauptsignal(
 					*knoten,
 					notFoundSignalsFalling,
@@ -44,8 +42,6 @@ func findAndMapAnchorMainSignals(
 					false,
 					optionalNewId,
 				)
-			}
-		}
 	}
 }
 
@@ -73,7 +69,7 @@ func processHauptsignal(
 				refTag, _ := OSMUtil.FindTagOnNode(node, "ref")
 
 				if railwayTag == "signal" &&
-					strings.ReplaceAll(refTag, " ", "") == signal.Name[0].Value {
+					strings.ReplaceAll(refTag, " ", "") == signal.Name.Value {
 					matchingSignalNodes = append(matchingSignalNodes, node)
 				}
 			}
@@ -124,13 +120,13 @@ func insertNewHauptsignal(
 				for _, errorAnchor := range currentAnchors {
 					errorSignal := Signal{}
 					errorSignal.KnotenTyp = KnotenTyp{
-						Kilometrierung: []*Wert{{
-							Value: strconv.FormatFloat(anchorKilometrage, 'f', -1, 64),
-						}},
+						Kilometrierung: Wert{
+							Value: anchorKilometrage,
+						},
 					}
-					errorSignal.Name = []*Wert{{
-						Value: signal.Name[0].Value,
-					}}
+					errorSignal.Name = Wert{
+						Value: errorAnchor.Tag[3].V,
+					}
 					*notFound = append(*notFound, &errorSignal)
 
 					errorAnchor.Tag = errorAnchor.Tag[:(len(errorAnchor.Tag) - 4)]
@@ -172,10 +168,10 @@ func createNewHauptsignal(
 		Lat: node.Lat,
 		Lon: node.Lon,
 		Tag: []*OSMUtil.Tag{
-			{XMLName: XML_TAG_NAME_CONSTR, K: "type", V: "element"},
-			{XMLName: XML_TAG_NAME_CONSTR, K: "subtype", V: "ms"},
-			{XMLName: XML_TAG_NAME_CONSTR, K: "id", V: signal.Name[0].Value},
-			{XMLName: XML_TAG_NAME_CONSTR, K: "direction", V: directionString},
+			{XMLName: XML_TAG_NAME_CONST, K: "type", V: "element"},
+			{XMLName: XML_TAG_NAME_CONST, K: "subtype", V: "ms"},
+			{XMLName: XML_TAG_NAME_CONST, K: "id", V: signal.Name.Value},
+			{XMLName: XML_TAG_NAME_CONST, K: "direction", V: directionString},
 		},
 	}
 }
