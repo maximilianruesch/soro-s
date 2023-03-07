@@ -281,49 +281,45 @@ func findBestOSMNode(
 		distance2,
 	)
 
-	if err != nil {
-		return nil, errors.Wrap(err, "could not find OSM-node")
+	if err == nil {
+		return newNode, nil
+	}
+
+	newAnchorCounter := 2
+	for err != nil && newAnchorCounter < len(sortedAnchors) {
+		innerError := errors.Unwrap(err)
+		errorParts := strings.Split(innerError.Error(), ": ")
+		if errorParts[0] != "insufficient anchor" {
+			return nil, errors.Wrap(err, "could not find OSM-node")
+		}
+
+		faultyNodeID := strings.ReplaceAll(errorParts[1], " ", "")
+
+		if faultyNodeID == anchor1.Id {
+			nearest = sortedAnchors[newAnchorCounter]
+			anchor1 = ((*anchors)[nearest])[0]
+			distance1 = math.Abs(nearest - kilometrage)
+			newAnchorCounter++
+		} else {
+			secondNearest = sortedAnchors[newAnchorCounter]
+			anchor2 = ((*anchors)[secondNearest])[0]
+			distance2 = math.Abs(secondNearest - kilometrage)
+			newAnchorCounter++
+		}
+		newNode, err = findNewNode(
+			osmData,
+			anchor1,
+			anchor2,
+			distance1,
+			distance2,
+		)
+	}
+
+	if newAnchorCounter == len(sortedAnchors) {
+		return nil, errors.New("could not find OSM-node")
 	}
 
 	return newNode, nil
-
-	/*
-
-		newAnchorCounter := 2
-		for err != nil && newAnchorCounter < len(sortedAnchors) {
-			fmt.Printf("%s \n", err.Error())
-			innerError := errors.Unwrap(err)
-			errorParts := strings.Split(innerError.Error(), ": ")
-			if errorParts[0] != "insufficient anchor" {
-				return nil, errors.Wrap(err, "could not find OSM-node")
-			}
-
-			faultyNodeID := strings.ReplaceAll(errorParts[1], " ", "")
-
-			if faultyNodeID == anchor1.Id {
-				nearest = sortedAnchors[newAnchorCounter]
-				anchor1 = ((*anchors)[nearest])[0]
-				distance1 = math.Abs(nearest - kilometrage)
-				newAnchorCounter++
-			} else {
-				secondNearest = sortedAnchors[newAnchorCounter]
-				anchor2 = ((*anchors)[secondNearest])[0]
-				distance2 = math.Abs(secondNearest - kilometrage)
-				newAnchorCounter++
-			}
-			newNode, err = findNewNode(
-				osmData,
-				anchor1,
-				anchor2,
-				distance1,
-				distance2,
-			)
-		}
-
-		if newAnchorCounter == len(sortedAnchors) {
-			return nil, errors.New("could not find OSM-node")
-		}
-	*/
 }
 
 func sortAnchors(
