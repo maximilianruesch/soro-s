@@ -52,15 +52,13 @@ func MapDB(
 					&foundAnchorCount,
 					&newNodeIdCounter,
 				)
-				/*
-					findAndMapAnchorSwitches(
-						abschnitt,
-						&osm,
-						anchors,
-						&foundAnchorCount,
-						&newNodeIdCounter,
-					)
-				*/
+				findAndMapAnchorSwitches(
+					abschnitt,
+					&osm,
+					anchors,
+					&foundAnchorCount,
+					&newNodeIdCounter,
+				)
 			}
 		}
 
