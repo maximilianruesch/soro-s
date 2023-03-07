@@ -9,6 +9,7 @@
             :checked-controls="checkedControls"
             @checked="(name) => onLegendControlChanged(name, true)"
             @unchecked="(name) => onLegendControlChanged(name, false)"
+            @reset="resetLegend"
         />
         <div
             ref="infrastructureTooltip"
@@ -21,10 +22,6 @@
         </div>
     </div>
 </template>
-
-<script setup lang="ts">
-import InfrastructureLegend from '@/components/infrastructure/infrastructure-legend.vue';
-</script>
 
 <script lang="ts">
 import { mapState } from 'vuex';
@@ -43,6 +40,7 @@ import { defineComponent } from 'vue';
 import { transformUrl } from '@/api/api-client';
 import { ThemeInstance, useTheme } from 'vuetify';
 import { SpecialLegendControls, SpecialLegendControl } from '@/components/infrastructure/infrastructure-legend.vue';
+import InfrastructureLegend from '@/components/infrastructure/infrastructure-legend.vue';
 
 const initiallyCheckedControls = [
     ElementType.STATION,
@@ -69,6 +67,7 @@ export type MapPosition = {
 
 export default defineComponent({
     name: 'InfrastructureMap',
+    components: { InfrastructureLegend },
     inject: {
         goldenLayoutKeyInjection: {
             default: '',
@@ -79,9 +78,12 @@ export default defineComponent({
         return { currentTheme: useTheme().global };
     },
 
-    data() {
+    data(): {
+        libreGLMap?: Map,
+        checkedControls: typeof initiallyCheckedControls,
+        } {
         return {
-            libreGLMap: null as (Map | null),
+            libreGLMap: undefined,
             checkedControls: Array.from(initiallyCheckedControls),
         };
     },
@@ -101,9 +103,18 @@ export default defineComponent({
 
     watch: {
         currentInfrastructure(newInfrastructure: string | null) {
+            if (this.libreGLMap) {
+                this.libreGLMap.remove();
+                this.libreGLMap = undefined;
+            }
+
+            if (!newInfrastructure) {
+                return;
+            }
+
             // Re-instantiating the map on infrastructure change currently leads to duplicated icon fetching on change.
             // @ts-ignore type instantiation for some reason is too deep
-            this.libreGLMap = newInfrastructure ? this.createMap(newInfrastructure) : null;
+            this.libreGLMap = this.createMap(newInfrastructure);
         },
 
         currentSearchedMapPosition(mapPosition: MapPosition) {
@@ -179,7 +190,7 @@ export default defineComponent({
                 this.checkedControls = this.checkedControls.filter((control) => control !== legendControl);
             }
 
-            window.localStorage.setItem(this.checkedLegendControlLocalStorageKey, JSON.stringify(this.checkedControls));
+            this.saveControls();
 
             if (!this.libreGLMap) {
                 return;
@@ -192,6 +203,20 @@ export default defineComponent({
             }
 
             this.setElementTypeVisibility(legendControl, checked);
+        },
+
+        resetLegend() {
+            this.checkedControls = initiallyCheckedControls;
+            this.saveControls();
+            this.setVisibilityOfAllControls();
+        },
+
+        saveControls() {
+            window.localStorage.setItem(this.checkedLegendControlLocalStorageKey, JSON.stringify(this.checkedControls));
+        },
+
+        setVisibilityOfAllControls() {
+            ElementTypes.forEach((type) => this.setElementTypeVisibility(type, this.checkedControls.includes(type)));
         },
 
         setElementTypeVisibility(elementType: string, visible: boolean) {
@@ -239,7 +264,7 @@ export default defineComponent({
             });
         },
 
-        createMap(infrastructure: string) {
+        createMap(infrastructure: string): Map {
             const map = new Map({
                 ...mapDefaults,
                 container: this.$refs.map as HTMLElement,
@@ -257,7 +282,7 @@ export default defineComponent({
 
             map.on('load', async () => {
                 await addIcons(map);
-                ElementTypes.forEach((type) => this.setElementTypeVisibility(type, this.checkedControls.includes(type)));
+                this.setVisibilityOfAllControls();
             });
 
             map.dragPan.enable({
