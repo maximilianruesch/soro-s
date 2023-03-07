@@ -22,6 +22,7 @@ func findAndMapAnchorMainSignals(
 	notFoundSignalsRising *[]*Signal,
 	optionalNewId *int,
 ) {
+	conflictingSignalNames := map[string]bool{}
 	for _, stelle := range dbIss.Betriebsstellen {
 		for _, abschnitt := range stelle.Abschnitte {
 			for _, knoten := range abschnitt.Knoten {
@@ -29,6 +30,7 @@ func findAndMapAnchorMainSignals(
 					*knoten,
 					notFoundSignalsFalling,
 					anchors,
+					&conflictingSignalNames,
 					osm,
 					true,
 					optionalNewId,
@@ -37,6 +39,7 @@ func findAndMapAnchorMainSignals(
 					*knoten,
 					notFoundSignalsRising,
 					anchors,
+					&conflictingSignalNames,
 					osm,
 					false,
 					optionalNewId,
@@ -50,6 +53,7 @@ func processHauptsignal(
 	knoten Spurplanknoten,
 	notFoundSignals *[]*Signal,
 	anchors map[float64][]*OSMUtil.Node,
+	conflictingSignalNames *map[string]bool,
 	osm *OSMUtil.Osm,
 	isFalling bool,
 	optionalNewId *int,
@@ -75,7 +79,9 @@ func processHauptsignal(
 			}
 		}
 
-		if len(matchingSignalNodes) == 1 {
+		if len(matchingSignalNodes) > 1 {
+			(*conflictingSignalNames)[signal.Name[0].Value] = true
+		} else if len(matchingSignalNodes) == 1 {
 			conflictFreeSignal = insertNewHauptsignal(
 				optionalNewId,
 				matchingSignalNodes[0],
@@ -83,14 +89,15 @@ func processHauptsignal(
 				isFalling,
 				notFoundSignals,
 				anchors,
+				*conflictingSignalNames,
 				osm,
 			)
-			if !conflictFreeSignal {
-				*notFoundSignals = append(*notFoundSignals, signal)
+			if conflictFreeSignal {
+				return
 			}
-		} else {
-			*notFoundSignals = append(*notFoundSignals, signal)
+			(*conflictingSignalNames)[signal.Name[0].Value] = true
 		}
+		*notFoundSignals = append(*notFoundSignals, signal)
 	}
 }
 
@@ -101,16 +108,20 @@ func insertNewHauptsignal(
 	isFalling bool,
 	notFound *[]*Signal,
 	anchors map[float64][]*OSMUtil.Node,
+	conflictingSignalNames map[string]bool,
 	osm *OSMUtil.Osm,
 ) bool {
+	if conflictingSignalNames[signal.Name[0].Value] {
+		return false
+	}
 	signalKilometrage, err := formatKilometrageStringInFloat(signal.KnotenTyp.Kilometrierung[0].Value)
 	if err != nil {
 		panic(err)
 	}
-	for anchorKilometrage, possibleAnchors := range anchors {
-		for _, possibleAnchorPair := range possibleAnchors {
-			if possibleAnchorPair.Id == signalNode.Id && anchorKilometrage != signalKilometrage {
-				for _, errorAnchor := range possibleAnchors {
+	for anchorKilometrage, currentAnchors := range anchors {
+		for _, possibleAnchor := range currentAnchors {
+			if possibleAnchor.Lat == signalNode.Lat && possibleAnchor.Lon == signalNode.Lon && anchorKilometrage != signalKilometrage {
+				for _, errorAnchor := range currentAnchors {
 					errorSignal := Signal{}
 					errorSignal.KnotenTyp = KnotenTyp{
 						Kilometrierung: []*Wert{{
@@ -125,7 +136,6 @@ func insertNewHauptsignal(
 					errorAnchor.Tag = errorAnchor.Tag[:(len(errorAnchor.Tag) - 4)]
 				}
 				delete(anchors, anchorKilometrage)
-				print("Been here \n")
 				return false
 			}
 		}
@@ -229,6 +239,10 @@ func searchUnanchoredMainSignal(
 			continue
 		}
 
+		if maxNode == nil {
+			print("Hello")
+		}
+
 		*nodeIdCounter++
 		newSignalNode := OSMUtil.Node{
 			Id:  strconv.Itoa(*nodeIdCounter),
@@ -254,8 +268,8 @@ func findBestOSMNode(
 
 	nearest, secondNearest := sortedAnchors[0], sortedAnchors[1]
 
-	anchor1 := ((*anchors)[sortedAnchors[0]])[0]
-	anchor2 := ((*anchors)[sortedAnchors[1]])[0]
+	anchor1 := ((*anchors)[nearest])[0]
+	anchor2 := ((*anchors)[secondNearest])[0]
 	distance1 := math.Abs(nearest - kilometrage)
 	distance2 := math.Abs(secondNearest - kilometrage)
 
@@ -266,11 +280,50 @@ func findBestOSMNode(
 		distance1,
 		distance2,
 	)
+
 	if err != nil {
 		return nil, errors.Wrap(err, "could not find OSM-node")
 	}
 
 	return newNode, nil
+
+	/*
+
+		newAnchorCounter := 2
+		for err != nil && newAnchorCounter < len(sortedAnchors) {
+			fmt.Printf("%s \n", err.Error())
+			innerError := errors.Unwrap(err)
+			errorParts := strings.Split(innerError.Error(), ": ")
+			if errorParts[0] != "insufficient anchor" {
+				return nil, errors.Wrap(err, "could not find OSM-node")
+			}
+
+			faultyNodeID := strings.ReplaceAll(errorParts[1], " ", "")
+
+			if faultyNodeID == anchor1.Id {
+				nearest = sortedAnchors[newAnchorCounter]
+				anchor1 = ((*anchors)[nearest])[0]
+				distance1 = math.Abs(nearest - kilometrage)
+				newAnchorCounter++
+			} else {
+				secondNearest = sortedAnchors[newAnchorCounter]
+				anchor2 = ((*anchors)[secondNearest])[0]
+				distance2 = math.Abs(secondNearest - kilometrage)
+				newAnchorCounter++
+			}
+			newNode, err = findNewNode(
+				osmData,
+				anchor1,
+				anchor2,
+				distance1,
+				distance2,
+			)
+		}
+
+		if newAnchorCounter == len(sortedAnchors) {
+			return nil, errors.New("could not find OSM-node")
+		}
+	*/
 }
 
 func sortAnchors(

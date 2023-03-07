@@ -41,6 +41,8 @@ func MapDB(
 		var notFoundSignalsFalling []*Signal = []*Signal{}
 		var notFoundSignalsRising []*Signal = []*Signal{}
 
+		oldNewNodeIDCounter := newNodeIdCounter
+
 		findAndMapAnchorMainSignals(
 			dbIss,
 			&osm,
@@ -49,7 +51,7 @@ func MapDB(
 			&notFoundSignalsRising,
 			&newNodeIdCounter,
 		)
-		fmt.Printf("Found %d anchors and could not find %d \n", newNodeIdCounter, len(notFoundSignalsFalling)+len(notFoundSignalsRising))
+		fmt.Printf("Found %d anchors and could not find %d \n", newNodeIdCounter-oldNewNodeIDCounter, len(notFoundSignalsFalling)+len(notFoundSignalsRising))
 		var issWithMappedSignals = XmlIssDaten{
 			Betriebsstellen: []*Spurplanbetriebsstelle{{
 				Abschnitte: []*Spurplanabschnitt{{
