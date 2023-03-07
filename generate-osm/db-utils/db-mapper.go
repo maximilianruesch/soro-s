@@ -15,9 +15,9 @@ func MapDB(
 	DBDir string,
 ) {
 	newNodeIdCounter := 0
-
+	linesWithNoAnchors := 0
 	for _, line := range refs {
-		var anchors map[string]([]*OSMUtil.Node) = map[string]([]*OSMUtil.Node){}
+		var anchors map[float64]([]*OSMUtil.Node) = map[float64]([]*OSMUtil.Node){}
 		var osm OSMUtil.Osm
 		var dbIss XmlIssDaten
 		osmFile, err := os.ReadFile(osmDir + "/" + line + ".xml")
@@ -37,18 +37,35 @@ func MapDB(
 		}
 
 		fmt.Printf("Processing line %s \n", line)
+
 		var notFoundSignalsFalling []*Signal = []*Signal{}
 		var notFoundSignalsRising []*Signal = []*Signal{}
+		var foundAnchorCount = 0
+		for _, stelle := range dbIss.Betriebsstellen {
+			for _, abschnitt := range stelle.Abschnitte {
+				findAndMapAnchorMainSignals(
+					abschnitt,
+					&osm,
+					anchors,
+					&notFoundSignalsFalling,
+					&notFoundSignalsRising,
+					&foundAnchorCount,
+					&newNodeIdCounter,
+				)
+				findAndMapAnchorSwitches(
+					abschnitt,
+					&osm,
+					anchors,
+					&foundAnchorCount,
+					&newNodeIdCounter,
+				)
+			}
+		}
 
-		findAndMapAnchorMainSignals(
-			dbIss,
-			&osm,
-			anchors,
-			&notFoundSignalsFalling,
-			&notFoundSignalsRising,
-			&newNodeIdCounter,
-		)
-		fmt.Printf("Found %d anchors and could not find %d \n", newNodeIdCounter-1, len(notFoundSignalsFalling)+len(notFoundSignalsRising))
+		numSignalsNotFound := (float64)(len(notFoundSignalsFalling) + len(notFoundSignalsRising))
+		percentAnchored := ((float64)(foundAnchorCount) / ((float64)(foundAnchorCount) + numSignalsNotFound)) * 100.0
+		fmt.Printf("Could anchor %f %% of signals. \n", percentAnchored)
+
 		var issWithMappedSignals = XmlIssDaten{
 			Betriebsstellen: []*Spurplanbetriebsstelle{{
 				Abschnitte: []*Spurplanabschnitt{{
@@ -59,7 +76,9 @@ func MapDB(
 				}},
 			}},
 		}
-		_ = issWithMappedSignals
+
+		mapUnanchoredMainSignals(&osm, &anchors,
+			&newNodeIdCounter, issWithMappedSignals)
 
 		if new_Data, err := xml.MarshalIndent(osm, "", "	"); err != nil {
 			panic(err)
@@ -70,4 +89,6 @@ func MapDB(
 			}
 		}
 	}
+
+	fmt.Printf("Lines with no anchors: %d out of %d \n", linesWithNoAnchors, len(refs))
 }
