@@ -64,20 +64,10 @@ func getClosestMatch(
 	up1, up2, down1, down2 string,
 	upDist1, upDist2, downDist1, downDist2 float64,
 ) *OSMUtil.Node {
-	upNode1, _ := OSMUtil.GetNodeById(osmData, up1)
-	upNode2, _ := OSMUtil.GetNodeById(osmData, up2)
-	downNode1, _ := OSMUtil.GetNodeById(osmData, down1)
-	downNode2, _ := OSMUtil.GetNodeById(osmData, down2)
-
-	upNode1Lat, _ := strconv.ParseFloat(upNode1.Lat, 64)
-	upNode1Lon, _ := strconv.ParseFloat(upNode1.Lon, 64)
-	downNode1Lat, _ := strconv.ParseFloat(downNode1.Lat, 64)
-	downNode1Lon, _ := strconv.ParseFloat(downNode1.Lon, 64)
-
-	upNode2Lat, _ := strconv.ParseFloat(upNode2.Lat, 64)
-	upNode2Lon, _ := strconv.ParseFloat(upNode2.Lon, 64)
-	downNode2Lat, _ := strconv.ParseFloat(downNode2.Lat, 64)
-	downNode2Lon, _ := strconv.ParseFloat(downNode2.Lon, 64)
+	upNode1, upNode1Lat, upNode1Lon := computeNodeInformation(osmData, up1)
+	upNode2, upNode2Lat, upNode2Lon := computeNodeInformation(osmData, up2)
+	downNode1, downNode1Lat, downNode1Lon := computeNodeInformation(osmData, down1)
+	downNode2, downNode2Lat, downNode2Lon := computeNodeInformation(osmData, down2)
 
 	distUp1Up2 := distance(upNode1Lat, upNode2Lat, upNode1Lon, upNode2Lon)
 	distUp1Down2 := distance(upNode1Lat, downNode2Lat, upNode1Lon, downNode2Lon)
@@ -301,6 +291,14 @@ func findNextWay(
 	}
 
 	return runningWay, index, wayDirUp, nil
+}
+
+func computeNodeInformation(osmData *OSMUtil.Osm, nodeID string) (node *OSMUtil.Node, nodeLat float64, nodeLon float64) {
+	node, _ = OSMUtil.GetNodeById(osmData, nodeID)
+	nodeLat, _ = strconv.ParseFloat(node.Lat, 64)
+	nodeLon, _ = strconv.ParseFloat(node.Lon, 64)
+
+	return node, nodeLat, nodeLon
 }
 
 func distance(phi1 float64, phi2 float64, lambda1 float64, lambda2 float64) float64 {
