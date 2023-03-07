@@ -58,6 +58,9 @@ jobs:
       - name: Run Tests
         run: ./build/${{ matrix.config.preset }}/soro-test
 
+      - name: Run Webclient Tests
+        run: npm run test --prefix web/client
+
       # ==== WEB BUILD ====
       - name: Build
         run: |
@@ -72,10 +75,6 @@ jobs:
         run: |
           cd ./build/${{ matrix.config.preset }}
           ./soro-server -t --resource_dir ../../resources
-
-      - name: Run Client
-        run: |
-          npm run test --prefix web/client
 
       # ==== DISTRIBUTION ====
       - name: Create Distribution
