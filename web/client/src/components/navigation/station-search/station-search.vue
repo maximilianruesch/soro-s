@@ -70,14 +70,14 @@
             >
                 <v-list-item-title>
                     <img
-                        v-if="mapPosition.type !== 'undefined'"
+                        v-if="validSearchTypes.includes(mapPosition.type)"
                         class="station-search-search-type-icon"
                         :src="iconUrl + mapPosition.type + iconExtension"
                         alt=""
                     >
-                    {{ getSearchResultLabelParts(mapPosition.name).before }}<strong class="search-match">
-                        {{ currentSearchTerm }}
-                    </strong>{{ getSearchResultLabelParts(mapPosition.name).after }}
+                    <span> {{ getSearchResultLabelParts(mapPosition.name).before }}</span>
+                    <strong class="search-match">{{ currentSearchTerm }}</strong>
+                    <span>{{ getSearchResultLabelParts(mapPosition.name).after }}</span>
                 </v-list-item-title>
             </v-list-item>
         </v-list>
