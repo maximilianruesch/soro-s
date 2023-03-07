@@ -9,7 +9,7 @@ func findAndMapAnchorSwitches(
 	abschnitt *Spurplanabschnitt,
 	osm *OSMUtil.Osm,
 	anchors map[string][]*OSMUtil.Node,
-	foundAchnorCount *int,
+	foundAnchorCount *int,
 	optionalNewId *int,
 ) {
 	for _, knoten := range abschnitt.Knoten {
@@ -28,7 +28,7 @@ func findAndMapAnchorSwitches(
 					anchors[switchBegin.Kilometrierung.Value] = append(anchors[switchBegin.Kilometrierung.Value], node)
 					newSwitchNode := createNewSwitch(optionalNewId, node, switchBegin)
 					osm.Node = append(osm.Node, &newSwitchNode)
-					*foundAchnorCount++
+					*foundAnchorCount++
 				}
 			}
 		}
@@ -53,7 +53,7 @@ func findAndMapAnchorSwitches(
 					if (partnerName == refTag || partnerName == name) &&
 						anchors[switchBegin.Kilometrierung.Value] == nil {
 						anchors[switchBegin.Kilometrierung.Value] = append(anchors[switchBegin.Kilometrierung.Value], node)
-						*foundAchnorCount++
+						*foundAnchorCount++
 					}
 				}
 			}
