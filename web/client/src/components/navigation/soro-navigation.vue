@@ -56,7 +56,7 @@
 </template>
 
 <script setup lang="ts">
-import SoroNavigationMenuContent from '@/components/navigation/soro-navigation-menu-content.vue';
+import SoroNavigationMenuContent from '@/components/navigation/menu/soro-navigation-menu-content.vue';
 import SoroNavigationSearchContent from '@/components/navigation/station-search/soro-navigation-search-content.vue';
 </script>
 
