@@ -4,38 +4,13 @@
             ref="map"
             class="map infrastructure-map"
         />
-        <v-sheet
-            ref="mapLegend"
-            class="map-overlay infrastructure-map-legend"
-            :elevation="5"
-        >
-            <template
-                v-for="(elementType, index) in legendControlTypes"
-                :key="index"
-            >
-                <v-checkbox
-                    :ref="elementType"
-                    v-model="checkedControls"
-                    :name="elementType"
-                    :value="elementType"
-                    class="legend-key"
-                    color="primary"
-                    density="compact"
-                    min-height="0px"
-                    hide-details
-                >
-                    <template #label>
-                        <img
-                            v-if="hasImage(elementType)"
-                            class="legend-key-icon"
-                            :src="iconUrl + elementType + iconExtension"
-                            alt=""
-                        >
-                        {{ elementTypeLabels[elementType] ?? elementType }}
-                    </template>
-                </v-checkbox>
-            </template>
-        </v-sheet>
+        <infrastructure-legend
+            class="map-overlay"
+            :checked-controls="checkedControls"
+            @checked="(name) => onLegendControlChanged(name, true)"
+            @unchecked="(name) => onLegendControlChanged(name, false)"
+            @reset="resetLegend"
+        />
         <div
             ref="infrastructureTooltip"
             class="infrastructureTooltip infrastructure-tooltip"
@@ -59,23 +34,21 @@ import {
 } from './infrastructureMap';
 import { FilterSpecification, Map } from 'maplibre-gl';
 import { createInfrastructureMapStyle } from './mapStyle';
-import { addIcons, iconExtension, iconUrl } from './addIcons';
-import { ElementTypes, ElementType, ElementTypeLabels } from './elementTypes';
+import { addIcons } from './addIcons';
+import { ElementTypes, ElementType } from './elementTypes';
 import { defineComponent } from 'vue';
 import { transformUrl } from '@/api/api-client';
 import { ThemeInstance, useTheme } from 'vuetify';
+import { SpecialLegendControls, SpecialLegendControl } from '@/components/infrastructure/infrastructure-legend.vue';
+import InfrastructureLegend from '@/components/infrastructure/infrastructure-legend.vue';
 
-const specialLayoutControls = ['Rising', 'Falling'];
 const initiallyCheckedControls = [
     ElementType.STATION,
+    ElementType.HALT,
     ElementType.MAIN_SIGNAL,
     ElementType.APPROACH_SIGNAL,
     ElementType.END_OF_TRAIN_DETECTOR,
-    ...specialLayoutControls,
-];
-const legendControlTypes = [
-    ...ElementTypes,
-    ...specialLayoutControls,
+    ...SpecialLegendControls,
 ];
 
 const mapDefaults = {
@@ -94,23 +67,32 @@ export type MapPosition = {
 
 export default defineComponent({
     name: 'InfrastructureMap',
+    components: { InfrastructureLegend },
+    inject: {
+        goldenLayoutKeyInjection: {
+            default: '',
+        },
+    },
 
     setup() {
         return { currentTheme: useTheme().global };
     },
 
-    data() {
+    data(): {
+        libreGLMap?: Map,
+        checkedControls: typeof initiallyCheckedControls,
+        } {
         return {
-            libreGLMap: null as (Map | null),
-            legendControlTypes,
+            libreGLMap: undefined,
             checkedControls: Array.from(initiallyCheckedControls),
-            iconUrl,
-            iconExtension,
-            elementTypeLabels: ElementTypeLabels as { [elementType: string]: string },
         };
     },
 
     computed: {
+        checkedLegendControlLocalStorageKey() {
+            return `infrastructure[${this.goldenLayoutKeyInjection}].checkedControls`;
+        },
+
         ...mapState(InfrastructureNamespace, [
             'currentInfrastructure',
             'currentSearchedMapPosition',
@@ -121,38 +103,18 @@ export default defineComponent({
 
     watch: {
         currentInfrastructure(newInfrastructure: string | null) {
-            // Re-instantiating the map on infrastructure change currently leads to duplicated icon fetching on change.
-            // @ts-ignore type instantiation for some reason is too deep
-            this.libreGLMap = newInfrastructure ? this.createMap(newInfrastructure) : null;
-        },
+            if (this.libreGLMap) {
+                this.libreGLMap.remove();
+                this.libreGLMap = undefined;
+            }
 
-        checkedControls(newCheckedControls: string[], oldCheckedControls: string[]) {
-            if (!this.libreGLMap) {
+            if (!newInfrastructure) {
                 return;
             }
 
-            const controlsToDeactivate = oldCheckedControls.filter((control) => !newCheckedControls.includes(control));
-            const controlsToActivate = newCheckedControls.filter((control) => !oldCheckedControls.includes(control));
-
-            controlsToDeactivate.forEach((control) => {
-                if (specialLayoutControls.includes(control)) {
-                    this.evaluateSpecialLegendControls();
-
-                    return;
-                }
-
-                this.setElementTypeVisibility(control, false);
-            });
-
-            controlsToActivate.forEach((control) => {
-                if (specialLayoutControls.includes(control)) {
-                    this.evaluateSpecialLegendControls();
-
-                    return;
-                }
-
-                this.setElementTypeVisibility(control, true);
-            });
+            // Re-instantiating the map on infrastructure change currently leads to duplicated icon fetching on change.
+            // @ts-ignore type instantiation for some reason is too deep
+            this.libreGLMap = this.createMap(newInfrastructure);
         },
 
         currentSearchedMapPosition(mapPosition: MapPosition) {
@@ -205,6 +167,13 @@ export default defineComponent({
         },
     },
 
+    created() {
+        const checkedControlsString = window.localStorage.getItem(this.checkedLegendControlLocalStorageKey);
+        if (checkedControlsString) {
+            this.checkedControls = JSON.parse(checkedControlsString);
+        }
+    },
+
     methods: {
         resize() {
             if (!this.libreGLMap) {
@@ -214,8 +183,40 @@ export default defineComponent({
             this.libreGLMap.resize();
         },
 
-        hasImage(elementType: string) {
-            return !specialLayoutControls.includes(elementType);
+        onLegendControlChanged(legendControl: string, checked: boolean) {
+            if (checked) {
+                this.checkedControls.push(legendControl);
+            } else {
+                this.checkedControls = this.checkedControls.filter((control) => control !== legendControl);
+            }
+
+            this.saveControls();
+
+            if (!this.libreGLMap) {
+                return;
+            }
+
+            if (SpecialLegendControls.includes(legendControl)) {
+                this.evaluateSpecialLegendControls();
+
+                return;
+            }
+
+            this.setElementTypeVisibility(legendControl, checked);
+        },
+
+        resetLegend() {
+            this.checkedControls = initiallyCheckedControls;
+            this.saveControls();
+            this.setVisibilityOfAllControls();
+        },
+
+        saveControls() {
+            window.localStorage.setItem(this.checkedLegendControlLocalStorageKey, JSON.stringify(this.checkedControls));
+        },
+
+        setVisibilityOfAllControls() {
+            ElementTypes.forEach((type) => this.setElementTypeVisibility(type, this.checkedControls.includes(type)));
         },
 
         setElementTypeVisibility(elementType: string, visible: boolean) {
@@ -239,8 +240,8 @@ export default defineComponent({
                 return;
             }
 
-            const rising_checked = (this.$refs.Rising as HTMLInputElement).checked;
-            const falling_checked = (this.$refs.Falling as HTMLInputElement).checked;
+            const rising_checked = this.checkedControls.includes(SpecialLegendControl.RISING);
+            const falling_checked = this.checkedControls.includes(SpecialLegendControl.FALLING);
 
             let filter: FilterSpecification;
             if (!rising_checked && falling_checked) {
@@ -263,7 +264,7 @@ export default defineComponent({
             });
         },
 
-        createMap(infrastructure: string) {
+        createMap(infrastructure: string): Map {
             const map = new Map({
                 ...mapDefaults,
                 container: this.$refs.map as HTMLElement,
@@ -281,7 +282,7 @@ export default defineComponent({
 
             map.on('load', async () => {
                 await addIcons(map);
-                ElementTypes.forEach((type) => this.setElementTypeVisibility(type, this.checkedControls.includes(type)));
+                this.setVisibilityOfAllControls();
             });
 
             map.dragPan.enable({
@@ -320,26 +321,6 @@ export default defineComponent({
     bottom: 0;
     right: 0;
     margin-right: 20px;
-}
-
-.infrastructure-map-legend {
-    padding: 10px 10px 20px;
-    height: fit-content;
-    margin-bottom: 40px;
-    width: fit-content;
-}
-
-.legend-key {
-    height: 1.5em;
-    margin-right: 5px;
-    margin-left: 5px;
-}
-
-.legend-key-icon {
-    margin-right: 7px;
-    margin-left: 7px;
-    display: inline-block;
-    height: 1em;
 }
 </style>
 
