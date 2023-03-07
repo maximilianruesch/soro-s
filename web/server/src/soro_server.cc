@@ -2,8 +2,6 @@
 
 #include <chrono>
 
-#include <regex>
-
 #include "utl/logging.h"
 #include "utl/parser/mmap_reader.h"
 
