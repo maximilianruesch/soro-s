@@ -51,7 +51,10 @@ func MapDB(
 			&notFoundSignalsRising,
 			&newNodeIdCounter,
 		)
-		fmt.Printf("Found %d anchors and could not find %d \n", newNodeIdCounter-oldNewNodeIDCounter, len(notFoundSignalsFalling)+len(notFoundSignalsRising))
+		numSignalsFound := (float64)(newNodeIdCounter - oldNewNodeIDCounter)
+		numSignalsNotFound := (float64)(len(notFoundSignalsFalling) + len(notFoundSignalsRising))
+		percentAnchored := (numSignalsFound / (numSignalsFound + numSignalsNotFound)) * 100.0
+		fmt.Printf("Could anchor %f %% of signals. \n", percentAnchored)
 		var issWithMappedSignals = XmlIssDaten{
 			Betriebsstellen: []*Spurplanbetriebsstelle{{
 				Abschnitte: []*Spurplanabschnitt{{
