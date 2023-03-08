@@ -74,7 +74,7 @@ export const createInfrastructureMapStyle = ({ currentTheme, activatedElements }
                         ['has', 'color'], ['get', 'color'],
                         '#444',
                     ],
-                    'line-width': 3.0,
+                    'line-width': 3.5,
                 },
             },
             {
