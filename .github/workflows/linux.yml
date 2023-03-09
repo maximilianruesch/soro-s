@@ -53,6 +53,9 @@ jobs:
           buildcache -z
           cmake --build build/${{ matrix.config.preset }} --target soro-test
           buildcache -s
+          
+      - name: Install Webclient
+        run: npm clean-install --prefix web/client
 
       # ==== TESTS ====
       - name: Run Tests
@@ -65,7 +68,6 @@ jobs:
       - name: Build
         run: |
           buildcache -z
-          npm clean-install --prefix web/client
           cmake --build build/${{ matrix.config.preset }} --target soro-client
           cmake --build build/${{ matrix.config.preset }} --target soro-server
           buildcache -s

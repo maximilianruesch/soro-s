@@ -75,16 +75,39 @@ describe('station-search', async () => {
         expect(showExtendedLink.exists()).toBe(false);
     });
 
-    it('updates the current query when the search text field emits \'change\' event', async () => {
-        const searchTextField = stationSearch.findComponent({ ref: 'searchTextField' });
-        searchTextField.vm.$emit('change', { target: { value: 'some-query' } });
+    describe('when the search text field emits an event following a \'enter\' key press', async () => {
+        it('does not search for a position from a name if the text field does not contain anything', async () => {
+            const searchTextField = stationSearch.findComponent({ ref: 'searchTextField' });
 
-        expect(stationSearch.vm.$data.currentQuery).toBe('some-query');
+            await searchTextField.trigger('keydown', { keyCode: 13 });
+
+            expect(searchPositionFromName).not.toHaveBeenCalled();
+        });
+
+        it('searches for a position from a name if the text field contains a search string', async () => {
+            const searchTextField = stationSearch.findComponent({ ref: 'searchTextField' });
+            stationSearch.vm.currentSearchTypes.length = 0;
+            stationSearch.vm.currentSearchTypes.push(
+                ElementType.HALT,
+                ElementType.MAIN_SIGNAL,
+            );
+            searchTextField.vm.$emit('update:modelValue', 'some-search-string');
+
+            await searchTextField.find('input').trigger('keydown.enter');
+
+            expect(searchPositionFromName).toHaveBeenCalledWith(
+                expect.any(Object),
+                {
+                    query: 'some-search-string',
+                    includedTypes: {
+                        [ElementType.STATION]: false,
+                        [ElementType.HALT]: true,
+                        [ElementType.MAIN_SIGNAL]: true,
+                    },
+                },
+            );
+        });
     });
-
-    // Testing the following is difficult with shallowMount (as of event modifiers like '.enter' and '.prevent'), we may
-    // have to think of a workaround
-    describe.todo('when the search text field emits an event following a \'enter\' key press');
 
     describe('when the search button emits a \'click\' event', async () => {
         it('does not call \'searchPositionFromName\' if no query is entered', async () => {

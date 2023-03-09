@@ -15,12 +15,12 @@
         <div class="station-search">
             <v-text-field
                 ref="searchTextField"
+                v-model="currentQuery"
                 :disabled="!currentInfrastructure"
                 label="Search for item by name:"
                 :error-messages="currentSearchError"
                 hide-details="auto"
-                @change="updateQuery"
-                @keydown.enter.prevent="updateQueryAndSearch"
+                @keydown.enter.prevent="searchName"
             />
 
             <soro-button
@@ -145,15 +145,6 @@ export default defineComponent({
     },
 
     methods: {
-        updateQuery(event: { target: HTMLInputElement }) {
-            this.currentQuery = event.target?.value;
-        },
-
-        updateQueryAndSearch(event: never) {
-            this.updateQuery(event);
-            this.searchName();
-        },
-
         searchName() {
             if (!this.currentQuery) {
                 return;
