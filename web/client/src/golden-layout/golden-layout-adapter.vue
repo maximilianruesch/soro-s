@@ -68,7 +68,7 @@ const store = useStore();
  *******************/
 /** @internal */
 const addComponent = (componentType: string, alreadyUsedIndex?: number) => {
-    const glc = markRaw(defineAsyncComponent(() => import(`../components/golden-layout-components/${componentType}.vue`)));
+    const glc = markRaw(defineAsyncComponent(() => import(`./components/${componentType}.vue`)));
 
     let index;
     if (alreadyUsedIndex) {
