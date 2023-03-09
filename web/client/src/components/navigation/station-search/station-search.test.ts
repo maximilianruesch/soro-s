@@ -75,13 +75,6 @@ describe('station-search', async () => {
         expect(showExtendedLink.exists()).toBe(false);
     });
 
-    it('updates the current query when the search text field emits \'change\' event', async () => {
-        const searchTextField = stationSearch.findComponent({ ref: 'searchTextField' });
-        searchTextField.vm.$emit('change', { target: { value: 'some-query' } });
-
-        expect(stationSearch.vm.$data.currentQuery).toBe('some-query');
-    });
-
     // Testing the following is difficult with shallowMount (as of event modifiers like '.enter' and '.prevent'), we may
     // have to think of a workaround
     describe.todo('when the search text field emits an event following a \'enter\' key press');

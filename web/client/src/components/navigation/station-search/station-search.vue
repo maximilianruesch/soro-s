@@ -15,11 +15,11 @@
         <div class="station-search">
             <v-text-field
                 ref="searchTextField"
+                v-model="currentQuery"
                 :disabled="!currentInfrastructure"
                 label="Search for item by name:"
                 :error-messages="currentSearchError"
                 hide-details="auto"
-                @change="updateQuery"
                 @keydown.enter.prevent="updateQueryAndSearch"
             />
 
