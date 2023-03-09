@@ -20,7 +20,7 @@
                 label="Search for item by name:"
                 :error-messages="currentSearchError"
                 hide-details="auto"
-                @keydown.enter.prevent="updateQueryAndSearch"
+                @keydown.enter.prevent="searchName"
             />
 
             <soro-button
@@ -145,15 +145,6 @@ export default defineComponent({
     },
 
     methods: {
-        updateQuery(event: { target: HTMLInputElement }) {
-            this.currentQuery = event.target?.value;
-        },
-
-        updateQueryAndSearch(event: never) {
-            this.updateQuery(event);
-            this.searchName();
-        },
-
         searchName() {
             if (!this.currentQuery) {
                 return;
