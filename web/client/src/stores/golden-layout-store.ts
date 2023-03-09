@@ -1,6 +1,6 @@
 import { Module } from 'vuex';
 import { LayoutConfig } from 'golden-layout';
-import { ComponentTechnicalName, GLComponentNames } from '@/golden-layout/golden-layout-constants';
+import { ComponentTechnicalName } from '@/golden-layout/golden-layout-constants';
 import { GoldenLayoutAdapter } from '@/golden-layout/golden-layout-adapter';
 
 type GoldenLayoutState = {
@@ -48,7 +48,7 @@ export const GoldenLayoutStore: Module<GoldenLayoutState, unknown> = {
         },
 
         async addGoldenLayoutTab({ state }, { componentTechnicalName, title }: { componentTechnicalName: ComponentTechnicalName, title: string}) {
-            await state.rootComponent?.addGLComponent(GLComponentNames[componentTechnicalName], title);
+            await state.rootComponent?.addGLComponent(componentTechnicalName, title);
         },
     },
 };
