@@ -46,7 +46,7 @@ describe('menu-settings', async () => {
     it('updates the dark light mode preference when the button toggle emits an \'update\'', async () => {
         const buttonToggle = menuSettings.findComponent({ name: 'v-btn-toggle' });
 
-        buttonToggle.vm.$emit('update:model-value', 'some-preference');
+        buttonToggle.vm.$emit('update:modelValue', 'some-preference');
 
         expect(settingsActions.setDarkLightModePreference).toHaveBeenCalledWith(
             expect.any(Object),
@@ -68,7 +68,7 @@ describe('menu-settings', async () => {
         await colorPickerContainer.findComponent({ name: 'v-btn' }).trigger('click');
 
         const colorPicker = colorPickerContainer.findComponent({ name: 'v-color-picker' });
-        colorPicker.vm.$emit('update:model-value', 'some-color');
+        colorPicker.vm.$emit('update:modelValue', 'some-color');
 
         expect(settingsActions.setPrimaryColor).toHaveBeenCalledWith(
             expect.any(Object),
