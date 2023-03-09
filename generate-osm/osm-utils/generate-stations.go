@@ -34,7 +34,7 @@ func GenerateStationsAndHalts(inputFilePath string, tempFolderPath string) (Sear
 	data, _ := os.ReadFile(stationsFile)
 	var osm Osm
 	if err := xml.Unmarshal([]byte(data), &osm); err != nil {
-		return SearchFile{}, Osm{}, errors.Wrap(err, "failed to unmarshal osm: "+stationsFile)
+		return SearchFile{}, Osm{}, errors.Wrap(err, "failed unmarshalling osm: "+stationsFile)
 	}
 
 	searchFile, stationHaltOsm := generateSearchFile(osm)

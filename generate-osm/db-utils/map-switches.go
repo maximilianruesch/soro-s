@@ -35,7 +35,7 @@ func findAndMapAnchorSwitches(
 
 					kilometrageFloat, err := formatKilometrageStringInFloat(switchBegin.Kilometrierung.Value)
 					if err != nil {
-						return errors.Wrap(err, "could not format kilometrage")
+						return errors.Wrap(err, "failed to format kilometrage")
 					}
 
 					anchors[kilometrageFloat] = append(anchors[kilometrageFloat], node)
@@ -65,7 +65,7 @@ func findAndMapAnchorSwitches(
 
 					kilometrageFloat, err := formatKilometrageStringInFloat(switchBegin.Kilometrierung.Value)
 					if err != nil {
-						return errors.Wrap(err, "could not format kilometrage")
+						return errors.Wrap(err, "failed to format kilometrage")
 					}
 
 					if (partnerName == refTag || partnerName == name) &&

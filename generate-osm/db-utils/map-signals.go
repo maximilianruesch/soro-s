@@ -40,7 +40,7 @@ func findAndMapAnchorMainSignals(
 			optionalNewId,
 		)
 		if err != nil {
-			return errors.Wrap(err, "could not process falling main signals")
+			return errors.Wrap(err, "failed processing falling main signals")
 		}
 		err = processHauptsignal(
 			*knoten,
@@ -53,7 +53,7 @@ func findAndMapAnchorMainSignals(
 			optionalNewId,
 		)
 		if err != nil {
-			return errors.Wrap(err, "could not process rising main signals")
+			return errors.Wrap(err, "failed processing rising main signals")
 		}
 	}
 	return nil
@@ -106,7 +106,7 @@ func processHauptsignal(
 				foundAnchorCount,
 			)
 			if err != nil {
-				return errors.Wrap(err, "could not insert signal")
+				return errors.Wrap(err, "failed to insert signal")
 			}
 			if conflictFreeSignal {
 				*foundAnchorCount++
@@ -139,7 +139,7 @@ func insertNewHauptsignal(
 	}
 	signalKilometrage, err := formatKilometrageStringInFloat(signal.KnotenTyp.Kilometrierung.Value)
 	if err != nil {
-		return false, errors.Wrap(err, "could not format kilometrage")
+		return false, errors.Wrap(err, "failed to format kilometrage")
 	}
 	for anchorKilometrage, currentAnchors := range anchors {
 		for _, possibleAnchor := range currentAnchors {
@@ -261,7 +261,7 @@ func searchUnanchoredMainSignal(
 
 		maxNode, err := findBestOSMNode(osmData, anchors, kilometrage)
 		if err != nil {
-			fmt.Printf("Error with finding node for signal %s: %s \n", signal.ID.Value, err.Error())
+			fmt.Printf("Error with finding node for signal %s: %s \n", signal.Name.Value, err.Error())
 			continue
 		}
 
@@ -282,7 +282,7 @@ func searchUnanchoredMainSignal(
 }
 
 // findBestOSMNode determines a pair of anchors based on which a new Node is searched.
-// Based on thos, a new Node is then determined.
+// Based on those, a new Node is then determined.
 func findBestOSMNode(
 	osmData *OSMUtil.Osm,
 	anchors *map[float64]([]*OSMUtil.Node),
@@ -314,7 +314,7 @@ func findBestOSMNode(
 		innerError := errors.Unwrap(err)
 		errorParts := strings.Split(innerError.Error(), ": ")
 		if errorParts[0] != "insufficient anchor" {
-			return nil, errors.Wrap(err, "could not find OSM-node")
+			return nil, errors.Wrap(err, "failed to find OSM-node")
 		}
 
 		faultyNodeID := strings.ReplaceAll(errorParts[1], " ", "")
@@ -340,7 +340,7 @@ func findBestOSMNode(
 	}
 
 	if newAnchorCounter == len(sortedAnchors) {
-		return nil, errors.New("could not find OSM-node")
+		return nil, errors.New("failed to find suitable anchors")
 	}
 
 	return newNode, nil
@@ -384,7 +384,7 @@ func formatKilometrageStringInFloat(
 			strings.ReplaceAll(splitPart, ",", "."),
 			64)
 		if err != nil {
-			return 0, errors.Wrap(err, "could not parse kilometrage: "+in)
+			return 0, errors.Wrap(err, "failed to parse kilometrage: "+in)
 		}
 		out += floatPart
 	}

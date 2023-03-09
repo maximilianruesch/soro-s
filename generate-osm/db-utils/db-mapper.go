@@ -27,19 +27,19 @@ func MapDB(
 		osmLineFilePath := osmDir + "/" + line + ".xml"
 		osmFile, err := os.ReadFile(osmLineFilePath)
 		if err != nil {
-			return errors.Wrap(err, "could not read osm line file: "+osmLineFilePath)
+			return errors.Wrap(err, "failed reading osm line file: "+osmLineFilePath)
 		}
 		dbLineFilePath := DBDir + "/" + line + "_DB.xml"
 		dbFile, err := os.ReadFile(dbLineFilePath)
 		if err != nil {
-			return errors.Wrap(err, "could not read DB line file: "+dbLineFilePath)
+			return errors.Wrap(err, "failed reading DB line file: "+dbLineFilePath)
 		}
 
 		if err := xml.Unmarshal([]byte(osmFile), &osm); err != nil {
-			return errors.Wrap(err, "could not unmarshal osm file: "+osmLineFilePath)
+			return errors.Wrap(err, "failed unmarshalling osm file: "+osmLineFilePath)
 		}
 		if err := xml.Unmarshal([]byte(dbFile), &dbIss); err != nil {
-			return errors.Wrap(err, "could not unmarshal db file: "+dbLineFilePath)
+			return errors.Wrap(err, "failed unmarshalling db file: "+dbLineFilePath)
 		}
 
 		fmt.Printf("Processing line %s \n", line)
@@ -59,7 +59,7 @@ func MapDB(
 					&newNodeIdCounter,
 				)
 				if err != nil {
-					return errors.Wrap(err, "could not anchor main signals")
+					return errors.Wrap(err, "failed anchoring main signals")
 				}
 				err = findAndMapAnchorSwitches(
 					abschnitt,
@@ -69,7 +69,7 @@ func MapDB(
 					&newNodeIdCounter,
 				)
 				if err != nil {
-					return errors.Wrap(err, "could not anchor switches")
+					return errors.Wrap(err, "failed anchoring switches")
 				}
 			}
 		}
@@ -97,11 +97,11 @@ func MapDB(
 		}
 
 		if new_Data, err := xml.MarshalIndent(osm, "", "	"); err != nil {
-			return errors.Wrap(err, "could not marshal osm data")
+			return errors.Wrap(err, "failed marshalling osm data")
 		} else {
 			if err := os.WriteFile(osmLineFilePath,
 				[]byte(xml.Header+string(new_Data)), 0644); err != nil {
-				return errors.Wrap(err, "could not write file: "+osmLineFilePath)
+				return errors.Wrap(err, "failed writing file: "+osmLineFilePath)
 			}
 		}
 	}

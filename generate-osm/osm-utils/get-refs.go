@@ -23,11 +23,11 @@ func GenerateOsmTrackRefs(inputFilePath string, tempFilePath string) (refs []str
 
 	var data []byte
 	if data, err = os.ReadFile(refsPath); err != nil {
-		return nil, errors.Wrap(err, "failed to read track ref file")
+		return nil, errors.Wrap(err, "failed reading track ref file")
 	}
 	var osmData Osm
 	if err := xml.Unmarshal([]byte(data), &osmData); err != nil {
-		return nil, errors.Wrap(err, "failed to unmarshal osm file: "+refsPath)
+		return nil, errors.Wrap(err, "failed unmarshalling osm file: "+refsPath)
 	}
 
 	return getRefIds(osmData), nil

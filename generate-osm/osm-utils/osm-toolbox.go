@@ -7,9 +7,9 @@ import (
 	"github.com/pkg/errors"
 )
 
-func nodeNotFound(id string) error       { return errors.New("could not find node: " + id) }
-func tagOnNodeNotFound(key string) error { return errors.New("could not find tag on node: " + key) }
-func wayNotFound(id string) error        { return errors.New("could not find way: " + id) }
+func nodeNotFound(id string) error       { return errors.New("failed to find node: " + id) }
+func tagOnNodeNotFound(key string) error { return errors.New("failed to find tag on node: " + key) }
+func wayNotFound(id string) error        { return errors.New("failed to find way: " + id) }
 
 // FindTagOnNode searches through the Tag-list of an OSM-node to look for a tag with key 'key'.
 // If the tag is existant, the value of this tag is returned, otherwise an error.
@@ -103,7 +103,7 @@ func ExecuteOsmFilterCommand(args []string) error {
 	}
 
 	if err := cmd.Run(); err != nil {
-		return errors.Wrap(err, "osmium command failed.")
+		return errors.Wrap(err, "osmium command failed")
 	}
 
 	return nil

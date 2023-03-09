@@ -130,7 +130,7 @@ func generateOsm(generateLines bool, mapDB bool, inputFile string, outputFile st
 			}
 			relevant_refs, err := dbUtils.Parse(refs, tempDBLinesDir, tempDBResoucesDir)
 			if err != nil {
-				return errors.Wrap(err, "could not parse DB data")
+				return errors.Wrap(err, "failed parsing DB data")
 			}
 			dbUtils.MapDB(relevant_refs, tempLinesDir, tempDBLinesDir)
 		}
@@ -155,12 +155,12 @@ func generateOsm(generateLines bool, mapDB bool, inputFile string, outputFile st
 
 	searchFile, stationHaltOsm, err := osmUtils.GenerateStationsAndHalts(inputFile, tempFolderPath)
 	if err != nil {
-		return errors.Wrap(err, "failed to generate stations and halts")
+		return errors.Wrap(err, "failed generating stations and halts")
 	}
 	searchFileJsonPath, _ := filepath.Abs(tempFolderPath + "/searchFile.json")
 	err = saveSearchFile(searchFile, searchFileJsonPath)
 	if err != nil {
-		return errors.Wrap(err, "failed to write station JSON")
+		return errors.Wrap(err, "failed writing stations JSON")
 	}
 
 	for i, node := range osmData.Node {
@@ -177,19 +177,24 @@ func generateOsm(generateLines bool, mapDB bool, inputFile string, outputFile st
 	sortedOsmData := osmUtils.SortOsm(osmData)
 	output, err := xml.MarshalIndent(sortedOsmData, "", "     ")
 	if err != nil {
-		return errors.Wrap(err, "failed to marshal final data")
+		return errors.Wrap(err, "failed marshalling final data")
 	}
 	output = []byte(xml.Header + string(output))
-	os.WriteFile(outputFile, output, 0644)
-
+	err = os.WriteFile(outputFile, output, 0644)
+	if err != nil {
+		return errors.Wrap(err, "failed writing final osm file: "+outputFile)
+	}
 	return nil
 }
 
 func saveSearchFile(searchFile osmUtils.SearchFile, searchFileJsonPath string) error {
 	output, err := json.MarshalIndent(searchFile, "", "     ")
 	if err != nil {
-		return errors.Wrap(err, "could not marshal staion JSON file")
+		return errors.Wrap(err, "failed marshalling stations JSON file")
 	}
-	os.WriteFile(searchFileJsonPath, output, 0644)
+	err = os.WriteFile(searchFileJsonPath, output, 0644)
+	if err != nil {
+		return errors.Wrap(err, "failed writing stations JSON file: "+searchFileJsonPath)
+	}
 	return nil
 }

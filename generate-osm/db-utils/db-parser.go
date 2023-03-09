@@ -21,7 +21,7 @@ type XmlIssBookeeping struct {
 func Parse(refs []string, tempDBLinesPath string, dbResourcesPath string) ([]string, error) {
 	combinedDBIss, err := readDBFiles(dbResourcesPath)
 	if err != nil {
-		return []string{}, errors.Wrap(err, "could not read DB data")
+		return []string{}, errors.Wrap(err, "failed to read DB data")
 	}
 
 	lineMap := make(map[string]*XmlIssBookeeping)
@@ -75,13 +75,13 @@ func Parse(refs []string, tempDBLinesPath string, dbResourcesPath string) ([]str
 
 		newIssBytes, err := xml.MarshalIndent(*lineInfo.XmlIssData, "", "	")
 		if err != nil {
-			return []string{}, errors.Wrap(err, "could not marshal line "+line)
+			return []string{}, errors.Wrap(err, "failed marshalling line "+line)
 		}
 
 		tempLinePath := filepath.Join(tempDBLinesPath, line+"_DB.xml")
 		err = os.WriteFile(tempLinePath, []byte(xml.Header+string(newIssBytes)), 0644)
 		if err != nil {
-			return []string{}, errors.Wrap(err, "could not write file "+tempLinePath)
+			return []string{}, errors.Wrap(err, "failed writing file "+tempLinePath)
 		}
 
 		relevantRefs = append(relevantRefs, line)
@@ -96,7 +96,7 @@ func readDBFiles(dbResourcesPath string) (XmlIssDaten, error) {
 	// read all files and unmarshal them into one XmlIssDaten-struct
 	files, err := os.ReadDir(dbResourcesPath)
 	if err != nil {
-		return XmlIssDaten{}, errors.Wrap(err, "could not find dir: "+dbResourcesPath)
+		return XmlIssDaten{}, errors.Wrap(err, "failed to find dir: "+dbResourcesPath)
 	}
 	var xmlIssComplete XmlIssDaten
 
@@ -108,7 +108,7 @@ func readDBFiles(dbResourcesPath string) (XmlIssDaten, error) {
 		decoder.CharsetReader = charset.NewReaderLabel
 		err = decoder.Decode(&xmlIssComplete)
 		if err != nil {
-			return XmlIssDaten{}, errors.Wrap(err, "could not unmarshal "+file.Name())
+			return XmlIssDaten{}, errors.Wrap(err, "failed unmarshalling "+file.Name())
 		}
 	}
 
