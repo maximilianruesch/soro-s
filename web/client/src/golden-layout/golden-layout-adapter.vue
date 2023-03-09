@@ -13,6 +13,7 @@
             >
                 <component
                     :is="pair[1].glc"
+                    :golden-layout-key="GlcKeyPrefix + pair[0]"
                     :container="pair[1].container"
                 />
             </golden-layout-component>
@@ -40,8 +41,11 @@ import {
     ResolvedComponentItemConfig,
     LogicalZIndex,
     VirtualLayout,
+    ResolvedLayoutConfig,
 } from 'golden-layout';
 import GoldenLayoutComponent from './golden-layout-component.vue';
+import { useStore } from 'vuex';
+import { GoldenLayoutNamespace } from '@/stores/golden-layout-store';
 
 /*******************
  * Data
@@ -57,19 +61,26 @@ let CurIndex = 0;
 let GlBoundingClientRect: DOMRect;
 
 const instance = getCurrentInstance();
+const store = useStore();
 
 /*******************
  * Method
  *******************/
 /** @internal */
-const addComponent = (componentType: string) => {
+const addComponent = (componentType: string, alreadyUsedIndex?: number) => {
     const glc = markRaw(defineAsyncComponent(() => import(`../components/golden-layout-components/${componentType}.vue`)));
 
-    let index = CurIndex;
-    if (UnusedIndexes.length > 0) {
+    let index;
+    if (alreadyUsedIndex) {
+        index = alreadyUsedIndex;
+    } else if (UnusedIndexes.length > 0) {
         index = UnusedIndexes.pop() as number;
     } else {
-        CurIndex++;
+        while (AllComponents.value.has(CurIndex)) {
+            CurIndex++; 
+        }
+
+        index = CurIndex;
     }
 
     AllComponents.value.set(index, { glc });
@@ -89,7 +100,8 @@ const addGLComponent = async (componentType: string, title: string) => {
     GLayout.addComponent(componentType, { refId: index }, title);
 };
 
-const loadGLLayout = async (layoutConfig: LayoutConfig) => {
+type ValidItemConfig = RowOrColumnItemConfig | StackItemConfig | ComponentItemConfig;
+const loadGLLayout = async (layoutConfig: LayoutConfig | ResolvedLayoutConfig) => {
     GLayout.clear();
     AllComponents.value.clear();
 
@@ -97,34 +109,35 @@ const loadGLLayout = async (layoutConfig: LayoutConfig) => {
         throw new Error('GoldenLayout: Root element not found');
     }
 
-    const contents = [layoutConfig.root.content];
+    const config = LayoutConfig.isResolved(layoutConfig)
+        ? LayoutConfig.fromResolved(layoutConfig as ResolvedLayoutConfig)
+        : layoutConfig;
+    const contents = [layoutConfig.root.content] as ValidItemConfig[][];
 
     let index = 0;
     while (contents.length > 0) {
-        const content = contents.shift() as
-        | RowOrColumnItemConfig[]
-        | StackItemConfig[]
-        | ComponentItemConfig[];
-        for (const itemConfig of content) {
-            if (itemConfig.type == 'component') {
-                index = addComponent(itemConfig.componentType as string);
-                if (typeof itemConfig.componentState === 'object' && itemConfig.componentState) {
-                    (itemConfig.componentState as any)['refId'] = index;
-                } else {
-                    itemConfig.componentState = { refId: index };
-                }
-            } else if (itemConfig.content.length > 0) {
-                contents.push(itemConfig.content as
-                | RowOrColumnItemConfig[]
-                | StackItemConfig[]
-                | ComponentItemConfig[]);
+        const content = contents.shift() ?? [];
+
+        content.forEach((itemConfig) => {
+            if (itemConfig.type !== 'component') {
+                contents.push(itemConfig.content);
+
+                return;
             }
-        }
+
+            if (!itemConfig.componentState || !(typeof itemConfig.componentState === 'object')) {
+                itemConfig.componentState = {};
+            }
+
+            const usedIndex = (itemConfig.componentState as Json).refId;
+            index = addComponent(itemConfig.componentType as string, usedIndex as number);
+            (itemConfig.componentState as Json).refId = index;
+        });
     }
 
     await nextTick(); // wait 1 tick for vue to add the dom
 
-    GLayout.loadLayout(layoutConfig);
+    GLayout.loadLayout(config);
 };
 
 const getLayoutConfig = () => {
@@ -155,7 +168,7 @@ onMounted(() => {
     const handleContainerVirtualRectingRequiredEvent = (
         container: ComponentContainer,
         width: number,
-        height: number
+        height: number,
     ): void => {
         const component = MapComponents.get(container);
         if (!component || !component?.glc) {
@@ -172,7 +185,7 @@ onMounted(() => {
 
     const handleContainerVirtualVisibilityChangeRequiredEvent = (
         container: ComponentContainer,
-        visible: boolean
+        visible: boolean,
     ): void => {
         const component = MapComponents.get(container);
         if (!component || !component?.glc) {
@@ -185,7 +198,7 @@ onMounted(() => {
     const handleContainerVirtualZIndexChangeRequiredEvent = (
         container: ComponentContainer,
         logicalZIndex: LogicalZIndex,
-        defaultZIndex: string
+        defaultZIndex: string,
     ): void => {
         const component = MapComponents.get(container);
         if (!component || !component?.glc) {
@@ -197,7 +210,7 @@ onMounted(() => {
 
     const bindComponentEventListener = (
         container: ComponentContainer,
-        itemConfig: ResolvedComponentItemConfig
+        itemConfig: ResolvedComponentItemConfig,
     ): ComponentContainer.BindableComponent => {
         let refId = -1;
         if (itemConfig && itemConfig.componentState) {
@@ -210,7 +223,10 @@ onMounted(() => {
         // @ts-ignore
         const component = instance?.refs[ref][0] as typeof GoldenLayoutComponent;
 
-        MapComponents.set(container, { refId, glc: component });
+        MapComponents.set(container, {
+            refId,
+            glc: component, 
+        });
         // @ts-ignore
         AllComponents.value.get(refId).container = container;
 
@@ -238,10 +254,11 @@ onMounted(() => {
     GLayout = new VirtualLayout(
       GLRoot.value as HTMLElement,
       bindComponentEventListener,
-      unbindComponentEventListener
+      unbindComponentEventListener,
     );
 
     GLayout.beforeVirtualRectingEvent = handleBeforeVirtualRectingEvent;
+    GLayout.on('stateChanged', () => store.dispatch(`${GoldenLayoutNamespace}/saveSettings`));
 });
 
 /*******************

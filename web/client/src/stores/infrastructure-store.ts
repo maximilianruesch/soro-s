@@ -80,7 +80,6 @@ export const InfrastructureStore: Module<InfrastructureState, undefined> = {
         },
 
         load({ commit }, infrastructureFilename) {
-            console.log('Switching to infrastructure to', infrastructureFilename);
             commit('setCurrentInfrastructure', infrastructureFilename);
         },
 
@@ -88,7 +87,7 @@ export const InfrastructureStore: Module<InfrastructureState, undefined> = {
             commit('setCurrentInfrastructure', null);
         },
 
-        searchPositionFromName({ commit, state }, query) {
+        searchPositionFromName({ commit, state }, { query, includedTypes }) {
             if (!state.currentInfrastructure) {
                 console.error('Tried search with no selected infrastructure');
 
@@ -106,6 +105,7 @@ export const InfrastructureStore: Module<InfrastructureState, undefined> = {
                 data: {
                     query,
                     infrastructure: state.currentInfrastructure,
+                    options: { includedTypes },
                 },
             })
                 .then(response => response.json())
@@ -127,6 +127,6 @@ export const InfrastructureStore: Module<InfrastructureState, undefined> = {
 
                     return;
                 });
-        }
+        },
     },
 };

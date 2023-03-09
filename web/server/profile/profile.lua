@@ -16,6 +16,12 @@ function process_node(node)
     node:add_tag_as_integer("population")
   end
 
+  if node:has_tag("railway", "halt") then
+    node:set_approved_min(5)
+    node:set_target_layer("hlt")
+    node:add_tag_as_string("name")
+  end
+
   if node:has_any_tag("type") then
     node:set_approved_min(5)
     if node:has_any_tag("subtype") then
@@ -97,6 +103,11 @@ function process_way(way)
       way:set_target_layer("rail")
       way:set_approved_min(10)
       way:add_string("rail", "secondary")
+    elseif way:has_tag("bridge","yes") then
+      way:set_target_layer("rail")
+      way:set_approved_min(5)
+      way:add_string("rail", "bridges")
+      way:add_tag_as_string("color")
     elseif way:has_tag("tunnel","yes") then
       way:set_target_layer("rail")
       way:set_approved_min(5)
