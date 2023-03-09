@@ -2,13 +2,14 @@ package combineLines
 
 import (
 	"encoding/xml"
-	"errors"
 	"fmt"
 	"math"
 	"math/rand"
 	"os"
 	"strconv"
 	osmUtils "transform-osm/osm-utils"
+
+	"github.com/pkg/errors"
 )
 
 var ErrLinesDirNotFound = errors.New("lines directory not found")
@@ -17,7 +18,7 @@ func CombineAllLines(tempLineDir string) (osmUtils.Osm, error) {
 	files, err := os.ReadDir(tempLineDir)
 
 	if err != nil {
-		return osmUtils.Osm{}, ErrLinesDirNotFound
+		return osmUtils.Osm{}, errors.Wrap(err, ErrLinesDirNotFound.Error())
 	}
 
 	var osmData osmUtils.Osm
@@ -28,7 +29,7 @@ func CombineAllLines(tempLineDir string) (osmUtils.Osm, error) {
 
 		var fileOsmData osmUtils.Osm
 		if err := xml.Unmarshal([]byte(data), &fileOsmData); err != nil {
-			panic(err)
+			return osmUtils.Osm{}, errors.Wrap(err, "could not unmarshal osm-data from file: "+file.Name())
 		}
 		// Gernerate random colours for the lines
 		var color = getRandomColor()
@@ -49,6 +50,7 @@ func CombineAllLines(tempLineDir string) (osmUtils.Osm, error) {
 	return osmData, nil
 }
 
+// getRandomColor generates a bright and saturated colour and returns its RGB-Hex value.
 func getRandomColor() string {
 
 	var h, s, v float64
@@ -61,11 +63,12 @@ func getRandomColor() string {
 	return hsvToHexRgb(h, s, v)
 }
 
+// hsvToHexRgb converts a colour from the hsv colour space into a RGB-hex string, starting with '#'.
 func hsvToHexRgb(h float64, s float64, v float64) string {
 
 	var r, g, b int64
 
-	//convert HSV to RGB using the standart formula
+	//convert HSV to RGB using the standard formula
 	h_i := math.Floor(h / 60)
 
 	f := (h / 60) - h_i
@@ -99,7 +102,6 @@ func hsvToHexRgb(h float64, s float64, v float64) string {
 		r = int64(math.Floor(v * 255))
 		g = int64(math.Floor(p * 255))
 		b = int64(math.Floor(q * 255))
-
 	}
 
 	color := "#"
@@ -111,6 +113,7 @@ func hsvToHexRgb(h float64, s float64, v float64) string {
 	return color
 }
 
+// leftPad appends 'padding' as many times to the front of 'stringToPad' until the desired length is reached.
 func leftPad(stringToPad string, length int, padding string) string {
 	for len(stringToPad) < length {
 		stringToPad = padding + stringToPad
