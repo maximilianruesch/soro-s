@@ -37,10 +37,7 @@
                     <i class="material-icons">train</i>
                 </v-btn>
             </div>
-            <div
-                ref="overlayContainer"
-                class="overlay-container"
-            >
+            <div class="overlay-container">
                 <soro-navigation-menu-content
                     v-if="selectedOverlay === 'menu'"
                     class="overlay"
