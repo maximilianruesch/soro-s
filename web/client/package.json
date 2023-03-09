@@ -17,6 +17,7 @@
   "devDependencies": {
     "@typescript-eslint/parser": "^5.45.1",
     "@vitejs/plugin-vue": "^3.2.0",
+    "@vitest/coverage-c8": "^0.29.2",
     "@vitest/ui": "^0.29.2",
     "@vue/eslint-config-typescript": "^11.0.2",
     "@vue/test-utils": "^2.3.0",
@@ -39,6 +40,7 @@
     "preview": "vite preview",
     "test": "vitest",
     "test:ui": "vitest --watch --ui",
+    "test:coverage": "vitest --coverage.enabled",
     "lint:eslint": "npx eslint ./src",
     "lint:eslint:fix": "npx eslint --fix ./src",
     "lint:stylelint": "npx stylelint ./src",
