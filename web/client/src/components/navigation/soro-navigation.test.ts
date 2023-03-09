@@ -34,7 +34,7 @@ describe('soro-navigation', async () => {
         expect(tabButtons[1].find('i').text()).toBe('search');
     });
 
-    it('enables the navigation drawer when it is disabled and an overlay button is clicked', async () => {
+    it('enables the navigation drawer when it is disabled and the overlay button of the selected overlay is clicked', async () => {
         const overlayTabs = soroNavigation.find('.overlay-tabs');
         soroNavigation.vm.showOverlay = false;
 
@@ -53,6 +53,17 @@ describe('soro-navigation', async () => {
         expect(soroNavigation.vm.showOverlay).toBe(false);
     });
 
+    it('enables the navigation drawer when it is disabled and the overlay button another than the selected ' +
+        'overlay is clicked', async () => {
+        const overlayTabs = soroNavigation.find('.overlay-tabs');
+        soroNavigation.vm.showOverlay = false;
+        soroNavigation.vm.selectedOverlay = 'menu';
+
+        const tabButtons = overlayTabs.findAllComponents({ name: 'v-btn' });
+        await tabButtons[1].find('button').trigger('click');
+        expect(soroNavigation.vm.showOverlay).toBe(true);
+    });
+
     it('does not disable the navigation drawer when it is enabled and the overlay button another than the selected ' +
         'overlay is clicked', async () => {
         const overlayTabs = soroNavigation.find('.overlay-tabs');
@@ -62,14 +73,14 @@ describe('soro-navigation', async () => {
         const tabButtons = overlayTabs.findAllComponents({ name: 'v-btn' });
         await tabButtons[1].find('button').trigger('click');
         expect(soroNavigation.vm.showOverlay).toBe(true);
-        expect(soroNavigation.vm.selectedOverlay).toBe('search');
     });
 
-    it('displays only the menu content when the selected overlay is \'menu\'', async () => {
+    it('displays only the menu content when the \'menu\' overlay button is clicked', async () => {
         const overlayContainer = soroNavigation.find('.overlay-container');
+        const overlayTabs = soroNavigation.find('.overlay-tabs');
 
-        soroNavigation.vm.selectedOverlay = 'menu';
-        await soroNavigation.vm.$nextTick();
+        const tabButtons = overlayTabs.findAllComponents({ name: 'v-btn' });
+        await tabButtons[0].find('button').trigger('click');
 
         expect(overlayContainer.findComponent({ name: 'soro-navigation-menu-content' }).exists()).toBe(true);
         expect(overlayContainer.findComponent({ name: 'soro-navigation-search-content' }).exists()).toBe(false);
@@ -77,9 +88,10 @@ describe('soro-navigation', async () => {
 
     it('displays only the search content when the selected overlay is \'search\'', async () => {
         const overlayContainer = soroNavigation.find('.overlay-container');
+        const overlayTabs = soroNavigation.find('.overlay-tabs');
 
-        soroNavigation.vm.selectedOverlay = 'search';
-        await soroNavigation.vm.$nextTick();
+        const tabButtons = overlayTabs.findAllComponents({ name: 'v-btn' });
+        await tabButtons[1].find('button').trigger('click');
 
         expect(overlayContainer.findComponent({ name: 'soro-navigation-menu-content' }).exists()).toBe(false);
         expect(overlayContainer.findComponent({ name: 'soro-navigation-search-content' }).exists()).toBe(true);
