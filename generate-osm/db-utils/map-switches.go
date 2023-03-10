@@ -1,7 +1,6 @@
 package dbUtils
 
 import (
-	"strconv"
 	OSMUtil "transform-osm/osm-utils"
 
 	"github.com/pkg/errors"
@@ -40,7 +39,7 @@ func findAndMapAnchorSwitches(
 
 					anchors[kilometrageFloat] = append(anchors[kilometrageFloat], node)
 					newSwitchNode := createNewSwitch(optionalNewId, node, switchBegin)
-					osm.Node = append(osm.Node, &newSwitchNode)
+					OSMUtil.InsertNewNodeWithReferenceNode(osm, &newSwitchNode, node)
 					*foundAnchorCount++
 				}
 			}
@@ -78,25 +77,4 @@ func findAndMapAnchorSwitches(
 		}
 	}
 	return nil
-}
-
-// createNewSwitch creates a new node with the tags 'type:element', 'subtype:simple_switch' and 'id:...' where ... is the name of the provided switch.
-// It also increments the "global" NodeIDCounter provided in 'id'.
-func createNewSwitch(
-	id *int,
-	node *OSMUtil.Node,
-	switchBegin *Weichenanfang,
-) OSMUtil.Node {
-	*id++
-
-	return OSMUtil.Node{
-		Id:  strconv.Itoa(*id),
-		Lat: node.Lat,
-		Lon: node.Lon,
-		Tag: []*OSMUtil.Tag{
-			{XMLName: XML_TAG_NAME_CONST, K: "type", V: "element"},
-			{XMLName: XML_TAG_NAME_CONST, K: "subtype", V: "simple_switch"},
-			{XMLName: XML_TAG_NAME_CONST, K: "id", V: switchBegin.Name.Value},
-		},
-	}
 }
