@@ -53,8 +53,8 @@ type Osm struct {
 	XMLName   xml.Name    `xml:"osm"`
 	Version   string      `xml:"version,attr"`
 	Generator string      `xml:"generator,attr"`
-	Way       []*Way      `xml:"way"`
 	Node      []*Node     `xml:"node"`
+	Way       []*Way      `xml:"way"`
 	Relation  []*Relation `xml:"relation"`
 }
 
