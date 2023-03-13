@@ -154,13 +154,15 @@ describe('golden-layout-adapter', async () => {
             // Unbind first component with its container
             const usedContainer = virtualLayoutInstance.bindComponentEvent.mock.calls[0][0];
             virtualLayoutInstance.unbindComponentEvent(usedContainer);
+
+            vi.clearAllMocks();
             // Add fresh third component
-            await adapter.vm.addGLComponent(ComponentTechnicalName.TIMETABLE);
+            await adapter.vm.addGLComponent(ComponentTechnicalName.ORDERING_GRAPH);
 
             expect(virtualLayoutInstance.addComponent).toHaveBeenLastCalledWith(
-                GLComponentNames[ComponentTechnicalName.TIMETABLE],
+                GLComponentNames[ComponentTechnicalName.ORDERING_GRAPH],
                 { refId: 0 },
-                GLComponentTitles[ComponentTechnicalName.TIMETABLE],
+                GLComponentTitles[ComponentTechnicalName.ORDERING_GRAPH],
             );
         });
     });
@@ -226,8 +228,8 @@ describe('golden-layout-adapter', async () => {
                             type: 'column',
                             content: [ {
                                 type: 'component',
-                                title: GLComponentTitles[ComponentTechnicalName.TIMETABLE],
-                                componentType: GLComponentNames[ComponentTechnicalName.TIMETABLE],
+                                title: GLComponentTitles[ComponentTechnicalName.SIMULATION],
+                                componentType: GLComponentNames[ComponentTechnicalName.SIMULATION],
                                 componentState: givenComponentStates[1],
                             }],
                         },
@@ -251,8 +253,8 @@ describe('golden-layout-adapter', async () => {
                             type: 'column',
                             content: [ {
                                 type: 'component',
-                                title: GLComponentTitles[ComponentTechnicalName.TIMETABLE],
-                                componentType: GLComponentNames[ComponentTechnicalName.TIMETABLE],
+                                title: GLComponentTitles[ComponentTechnicalName.SIMULATION],
+                                componentType: GLComponentNames[ComponentTechnicalName.SIMULATION],
                                 componentState: expectedComponentStates[1],
                             }],
                         },
@@ -313,7 +315,7 @@ describe('golden-layout-adapter', async () => {
     });
 
     it('handles virtual z index change required events by calling its component equivalent with the default z index', async () => {
-        await adapter.vm.addGLComponent(ComponentTechnicalName.INFRASTRUCTURE);
+        await adapter.vm.addGLComponent(ComponentTechnicalName.ORDERING_GRAPH);
         await vi.dynamicImportSettled();
 
         const usedContainer = virtualLayoutInstance.bindComponentEvent.mock.lastCall[0];
