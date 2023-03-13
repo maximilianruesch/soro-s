@@ -99,22 +99,21 @@ func MapDB(
 		if len(anchors) == 1 {
 			fmt.Print("Could not find enough anchors! \n")
 			// TODO: Node not found, find closest mapped Node and work from there
-			continue
-		}
-
-		for _, stelle := range issWithMappedSignals.Betriebsstellen {
-			for _, abschnitt := range stelle.Abschnitte {
-				mapUnanchoredMainSignals(
-					&osm,
-					&anchors,
-					&newNodeIdCounter,
-					*abschnitt,
-				)
-				mapUnanchoredSwitches(&osm,
-					&anchors,
-					&newNodeIdCounter,
-					*abschnitt,
-				)
+		} else {
+			for _, stelle := range issWithMappedSignals.Betriebsstellen {
+				for _, abschnitt := range stelle.Abschnitte {
+					mapUnanchoredMainSignals(
+						&osm,
+						&anchors,
+						&newNodeIdCounter,
+						*abschnitt,
+					)
+					mapUnanchoredSwitches(&osm,
+						&anchors,
+						&newNodeIdCounter,
+						*abschnitt,
+					)
+				}
 			}
 		}
 

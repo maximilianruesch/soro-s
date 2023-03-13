@@ -41,8 +41,16 @@ func findAndMapAnchorSwitches(
 					}
 
 					anchors[kilometrageFloat] = append(anchors[kilometrageFloat], node)
-					newSwitchNode := createNewSwitch(optionalNewId, node, switchBegin)
-					OSMUtil.InsertNewNodeWithReferenceNode(osm, &newSwitchNode, node)
+					newSwitchNode := createNewSwitch(
+						optionalNewId,
+						node,
+						switchBegin,
+					)
+					OSMUtil.InsertNewNodeWithReferenceNode(
+						osm,
+						&newSwitchNode,
+						node,
+					)
 					*foundAnchorCount++
 					foundSwitch = true
 					break
@@ -105,8 +113,16 @@ func mapUnanchoredSwitches(
 				continue
 			}
 
-			newSignalNode := createNewSwitch(nodeIdCounter, maxNode, simple_switch)
-			OSMUtil.InsertNewNodeWithReferenceNode(osmData, &newSignalNode, maxNode)
+			newSignalNode := createNewSwitch(
+				nodeIdCounter,
+				maxNode,
+				simple_switch,
+			)
+			OSMUtil.InsertNewNodeWithReferenceNode(
+				osmData,
+				&newSignalNode,
+				maxNode,
+			)
 		}
 	}
 }

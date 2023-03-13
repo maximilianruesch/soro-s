@@ -89,9 +89,7 @@ func processHauptsignal(
 			}
 		}
 
-		if len(matchingSignalNodes) > 1 {
-			(*conflictingSignalNames)[signal.Name.Value] = true
-		} else if len(matchingSignalNodes) == 1 {
+		if len(matchingSignalNodes) == 1 {
 			conflictFreeSignal, err := insertNewHauptsignal(
 				optionalNewId,
 				matchingSignalNodes[0],
@@ -110,8 +108,8 @@ func processHauptsignal(
 				*foundAnchorCount++
 				return nil
 			}
-			(*conflictingSignalNames)[signal.Name.Value] = true
 		}
+		(*conflictingSignalNames)[signal.Name.Value] = true
 		*notFoundSignals = append(*notFoundSignals, signal)
 	}
 	return nil
@@ -162,13 +160,19 @@ func insertNewHauptsignal(
 			}
 		}
 	}
+
 	newSignalNode := createNewHauptsignal(
 		newId,
 		signalNode,
 		signal,
 		isFalling,
 	)
-	OSMUtil.InsertNewNodeWithReferenceNode(osm, &newSignalNode, signalNode)
+	OSMUtil.InsertNewNodeWithReferenceNode(
+		osm,
+		&newSignalNode,
+		signalNode,
+	)
+
 	if len(anchors[signalKilometrage]) == 0 {
 		anchors[signalKilometrage] = []*OSMUtil.Node{&newSignalNode}
 	} else {
@@ -224,7 +228,16 @@ func searchUnanchoredMainSignal(
 			continue
 		}
 
-		newSignalNode := createNewHauptsignal(nodeIdCounter, maxNode, signal, isFalling)
-		OSMUtil.InsertNewNodeWithReferenceNode(osmData, &newSignalNode, maxNode)
+		newSignalNode := createNewHauptsignal(
+			nodeIdCounter,
+			maxNode,
+			signal,
+			isFalling,
+		)
+		OSMUtil.InsertNewNodeWithReferenceNode(
+			osmData,
+			&newSignalNode,
+			maxNode,
+		)
 	}
 }
