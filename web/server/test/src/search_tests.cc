@@ -8,7 +8,7 @@ using namespace soro::server;
 
 TEST_SUITE_BEGIN("osm search suite");
 
-const std::vector<soro::server::osm_object> generate_objects() {
+std::vector<soro::server::osm_object> generate_objects() {
   std::vector<soro::server::osm_object> objects;
 
   objects.emplace_back("Frankfurt", osm_type::STATION, 50, 34);
@@ -20,7 +20,7 @@ const std::vector<soro::server::osm_object> generate_objects() {
   return objects;
 }
 
-const std::vector<std::string> map_names(
+std::vector<std::string> map_names(
     const std::vector<soro::server::osm_object>& objects) {
   std::vector<std::string> names;
 
