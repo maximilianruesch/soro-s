@@ -1,8 +1,8 @@
 export enum ComponentTechnicalName {
-    INFRASTRUCTURE,
-    SIMULATION,
-    TIMETABLE,
-    ORDERING_GRAPH,
+    INFRASTRUCTURE = 'INFRASTRUCTURE',
+    SIMULATION = 'SIMULATION',
+    TIMETABLE = 'TIMETABLE',
+    ORDERING_GRAPH = 'ORDERING_GRAPH',
 }
 
 export const GLComponentNames: { [key in ComponentTechnicalName]: string } = {

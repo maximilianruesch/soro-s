@@ -327,4 +327,18 @@ describe('golden-layout-adapter', async () => {
         usedContainer.virtualZIndexChangeRequiredEvent(usedContainer, 10, 50);
         expect(glComponent.setZIndex).toHaveBeenCalledWith(50);
     });
+
+    // This test explicitly asserts that all known components can be mounted and is automatically extended
+    it.each(Object.keys(ComponentTechnicalName).map((key) => ({
+        componentTechnicalName: key as ComponentTechnicalName,
+        componentName: GLComponentNames[key as ComponentTechnicalName],
+    })))('GL component mount test %#: $componentName', async ({ componentTechnicalName, componentName }) => {
+        await adapter.vm.addGLComponent(componentTechnicalName);
+        await vi.dynamicImportSettled();
+
+        const glComponents = adapter.findAllComponents({ name: 'golden-layout-component' });
+        expect(glComponents).toHaveLength(1);
+        const subComponent = glComponents[0].findComponent({ name: componentName });
+        expect(subComponent.exists()).toBe(true);
+    });
 });
