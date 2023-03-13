@@ -210,20 +210,8 @@ func searchUnanchoredMainSignal(
 	knoten Spurplanknoten,
 	isFalling bool,
 ) {
-	if len(*anchors) == 0 {
-		fmt.Print("Could not find anchors! \n")
-		return
-	}
-	if len(*anchors) == 1 {
-		fmt.Print("Could not find enough anchors! \n")
-		// TODO: Node not found, find closest mapped Node and work from there
-		return
-	}
-
-	directionString := "falling"
 	signals := knoten.HauptsigF
 	if !isFalling {
-		directionString = "rising"
 		signals = knoten.HauptsigS
 	}
 
@@ -236,18 +224,7 @@ func searchUnanchoredMainSignal(
 			continue
 		}
 
-		*nodeIdCounter++
-		newSignalNode := OSMUtil.Node{
-			Id:  strconv.Itoa(*nodeIdCounter),
-			Lat: maxNode.Lat,
-			Lon: maxNode.Lon,
-			Tag: []*OSMUtil.Tag{
-				{XMLName: XML_TAG_NAME_CONST, K: "type", V: "element"},
-				{XMLName: XML_TAG_NAME_CONST, K: "subtype", V: "ms"},
-				{XMLName: XML_TAG_NAME_CONST, K: "id", V: signal.Name.Value},
-				{XMLName: XML_TAG_NAME_CONST, K: "direction", V: directionString},
-			},
-		}
+		newSignalNode := createNewHauptsignal(nodeIdCounter, maxNode, signal, isFalling)
 		OSMUtil.InsertNewNodeWithReferenceNode(osmData, &newSignalNode, maxNode)
 	}
 }

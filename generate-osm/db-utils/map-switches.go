@@ -1,6 +1,7 @@
 package dbUtils
 
 import (
+	"fmt"
 	OSMUtil "transform-osm/osm-utils"
 
 	"github.com/pkg/errors"
@@ -15,10 +16,12 @@ func findAndMapAnchorSwitches(
 	abschnitt *Spurplanabschnitt,
 	osm *OSMUtil.Osm,
 	anchors map[float64][]*OSMUtil.Node,
+	notFoundSwitches *[]*Weichenanfang,
 	foundAnchorCount *int,
 	optionalNewId *int,
 ) error {
 	for _, knoten := range abschnitt.Knoten {
+		foundSwitch := false
 		for _, switchBegin := range knoten.WeichenAnf {
 			for _, node := range osm.Node {
 				if len(node.Tag) == 0 {
@@ -41,7 +44,12 @@ func findAndMapAnchorSwitches(
 					newSwitchNode := createNewSwitch(optionalNewId, node, switchBegin)
 					OSMUtil.InsertNewNodeWithReferenceNode(osm, &newSwitchNode, node)
 					*foundAnchorCount++
+					foundSwitch = true
+					break
 				}
+			}
+			if !foundSwitch {
+				*notFoundSwitches = append(*notFoundSwitches, switchBegin)
 			}
 		}
 
@@ -77,4 +85,28 @@ func findAndMapAnchorSwitches(
 		}
 	}
 	return nil
+}
+
+// mapUnanchoredSwitches processes all switches for which no unique Node could be determined.
+func mapUnanchoredSwitches(
+	osmData *OSMUtil.Osm,
+	anchors *map[float64]([]*OSMUtil.Node),
+	nodeIdCounter *int,
+	abschnitt Spurplanabschnitt,
+) {
+
+	for _, knoten := range abschnitt.Knoten {
+		for _, simple_switch := range knoten.WeichenAnf {
+			kilometrage, _ := formatKilometrageStringInFloat(simple_switch.KnotenTyp.Kilometrierung.Value)
+
+			maxNode, err := findBestOSMNode(osmData, anchors, kilometrage)
+			if err != nil {
+				fmt.Printf("Error with finding node for switch %s: %s \n", simple_switch.Name.Value, err.Error())
+				continue
+			}
+
+			newSignalNode := createNewSwitch(nodeIdCounter, maxNode, simple_switch)
+			OSMUtil.InsertNewNodeWithReferenceNode(osmData, &newSignalNode, maxNode)
+		}
+	}
 }
