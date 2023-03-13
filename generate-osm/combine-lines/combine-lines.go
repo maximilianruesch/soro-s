@@ -14,6 +14,8 @@ import (
 
 var ErrLinesDirNotFound = errors.New("lines directory not found")
 
+// CombineAllLines reads all files from the provided 'tempLineDir' and tries to combine them into one OSM-data-set.
+// Therefore, all files in the tempLineDir must be OSM-files.
 func CombineAllLines(tempLineDir string) (osmUtils.Osm, error) {
 	files, err := os.ReadDir(tempLineDir)
 
