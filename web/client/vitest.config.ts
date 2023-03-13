@@ -29,6 +29,7 @@ export default mergeConfig(viteConfig, defineConfig({
             // in coverage measurement.
             exclude: [
                 'src/stores/timetable-store.ts',
+                'src/components/infrastructure/infrastructureMap.ts',
                 'src/components/disruption-detail.vue',
                 'src/components/station-detail.vue',
                 'src/components/simulation/**',
