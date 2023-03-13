@@ -28,8 +28,7 @@ export const GoldenLayoutStore: Module<GoldenLayoutState, unknown> = {
 
     actions: {
         async loadSettings({ state }) {
-            const storage = window.localStorage;
-            const layout = storage.getItem('goldenLayout.layout');
+            const layout = window.localStorage.getItem('goldenLayout.layout');
             if (layout) {
                 await state.rootComponent?.loadGLLayout(JSON.parse(layout));
             }
