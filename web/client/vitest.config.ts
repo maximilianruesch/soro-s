@@ -32,6 +32,7 @@ export default mergeConfig(viteConfig, defineConfig({
                 'src/components/disruption-detail.vue',
                 'src/components/station-detail.vue',
                 'src/components/simulation/**',
+                'src/golden-layout/components/OrderingGraphComponent.vue',
                 'src/golden-layout/components/SimulationComponent.vue',
                 'src/golden-layout/components/TimetableComponent.vue',
                 // defaults
