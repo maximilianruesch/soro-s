@@ -171,7 +171,6 @@ func mapSpeedLimits(
 	if err != nil {
 		return errors.Wrap(err, "failed finding rising speed limit")
 	}
-
 	return nil
 }
 
@@ -369,7 +368,7 @@ func mapLineSwitches(
 	knoten Spurplanknoten,
 	elementsNotFound map[string]([]string),
 ) error {
-	for _, line_switch := range knoten.Streckenwechsel0 {
+	for _, line_switch := range knoten.Neigung {
 		kilometrage, _ := formatKilometrageStringInFloat(line_switch.KnotenTyp.Kilometrierung.Value)
 
 		maxNode, err := findBestOSMNode(osmData, anchors, kilometrage)
@@ -378,7 +377,7 @@ func mapLineSwitches(
 				elementsNotFound["line switches"] = append(elementsNotFound["line switches"], line_switch.Kilometrierung.Value)
 				continue
 			}
-			return errors.Wrap(err, "failed to map line switch "+line_switch.Kilometrierung.Value)
+			return errors.Wrap(err, "failed to map line switche "+line_switch.Kilometrierung.Value)
 		}
 
 		newSignalNode := createSimpleNode(
@@ -394,45 +393,3 @@ func mapLineSwitches(
 	}
 	return nil
 }
-
-/*
-func mapSimpleElement(
-	osmData *OSMUtil.Osm,
-	anchors map[float64]([]*OSMUtil.Node),
-	nodeIdCounter *int,
-	knoten Spurplanknoten,
-	elementType string,
-	elementsNotFound map[string]([]string),
-) error {
-	switch elementType {
-	case "line_switch":
-		elementList := knoten.Streckenwechsel0
-
-	}
-	for _, element := range elementList {
-		kilometrage, _ := formatKilometrageStringInFloat(element.KnotenTyp.Kilometrierung.Value)
-
-		maxNode, err := findBestOSMNode(osmData, anchors, kilometrage)
-		if err != nil {
-			if errors.Cause(err) == errNoSuitableAnchors {
-				elementsNotFound[elementType+"s"] = append(elementsNotFound[elementType+"s"], element.Kilometrierung.Value)
-				continue
-			}
-			return errors.Wrap(err, "failed to map line switch "+element.Kilometrierung.Value)
-		}
-
-		newSignalNode := createSimpleNode(
-			nodeIdCounter,
-			maxNode,
-			elementType,
-		)
-		OSMUtil.InsertNewNodeWithReferenceNode(
-			osmData,
-			&newSignalNode,
-			maxNode,
-		)
-	}
-
-	return nil
-}
-*/

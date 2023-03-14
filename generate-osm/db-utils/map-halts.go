@@ -24,7 +24,6 @@ func mapHalts(
 	if err != nil {
 		return errors.Wrap(err, "failed finding falling stop position")
 	}
-
 	err = searchHalt(
 		osmData,
 		anchors,

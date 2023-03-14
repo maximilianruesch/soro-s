@@ -202,6 +202,16 @@ func MapDB(
 						if err != nil {
 							return errors.Wrap(err, "failed finding track ends")
 						}
+						err = mapKmJump(
+							&osm,
+							&anchors,
+							&newNodeIdCounter,
+							*knoten,
+							elementsNotFound,
+						)
+						if err != nil {
+							return errors.Wrap(err, "failed finding kilometrage jumps")
+						}
 						err = mapSpeedLimits(
 							&osm,
 							&anchors,
@@ -253,7 +263,6 @@ func MapDB(
 							return errors.Wrap(err, "failed finding line switches")
 						}
 					}
-
 				}
 			}
 

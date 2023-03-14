@@ -52,7 +52,6 @@ func findAndMapAnchorMainSignals(
 	if err != nil {
 		return errors.Wrap(err, "failed processing rising main signals")
 	}
-
 	return nil
 }
 
