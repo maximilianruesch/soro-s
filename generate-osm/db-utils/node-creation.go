@@ -111,3 +111,31 @@ func createNewProtectionSignal(
 		},
 	}
 }
+
+// createNewHauptsignal creates a new OSM-Node with the following tags:
+// 'type:element', 'subtype:ms', 'id:(Signal name)' and 'direction:...' where ... depends on 'isFalling'.
+// It also increments the "global" NodeIDCounter provided in 'id'.
+func createNewHalt(
+	id *int,
+	node *OSMUtil.Node,
+	halt *Halteplatz,
+	isFalling bool,
+) OSMUtil.Node {
+	directionString := "falling"
+	if !isFalling {
+		directionString = "rising"
+	}
+	*id++
+
+	return OSMUtil.Node{
+		Id:  strconv.Itoa(*id),
+		Lat: node.Lat,
+		Lon: node.Lon,
+		Tag: []*OSMUtil.Tag{
+			{XMLName: XML_TAG_NAME_CONST, K: "type", V: "element"},
+			{XMLName: XML_TAG_NAME_CONST, K: "subtype", V: "hlt"},
+			{XMLName: XML_TAG_NAME_CONST, K: "id", V: halt.Name.Value},
+			{XMLName: XML_TAG_NAME_CONST, K: "direction", V: directionString},
+		},
+	}
+}
