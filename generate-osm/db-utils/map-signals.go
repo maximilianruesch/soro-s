@@ -207,7 +207,7 @@ func mapUnanchoredMainSignals(
 			elementsNotFound,
 			false)
 		if err != nil {
-			return errors.Wrap(err, "failed finding falling main signal")
+			return errors.Wrap(err, "failed finding rising main signal")
 		}
 	}
 	return nil
@@ -238,7 +238,7 @@ func searchUnanchoredMainSignal(
 				elementsNotFound["main signals"] = append(elementsNotFound["main signals"], signal.Name.Value)
 				continue
 			}
-			return errors.Wrap(err, "failed to map main signal  "+signal.Name.Value)
+			return errors.Wrap(err, "failed to map main signal "+signal.Name.Value)
 		}
 
 		newSignalNode := createNewMainSignal(
@@ -283,7 +283,7 @@ func mapApproachSignals(
 			elementsNotFound,
 			false)
 		if err != nil {
-			return errors.Wrap(err, "failed finding falling approach signal")
+			return errors.Wrap(err, "failed finding rising approach signal")
 		}
 	}
 	return nil
@@ -359,7 +359,7 @@ func mapProtectionSignals(
 			elementsNotFound,
 			false)
 		if err != nil {
-			return errors.Wrap(err, "failed finding falling protection signal")
+			return errors.Wrap(err, "failed finding rising protection signal")
 		}
 	}
 	return nil

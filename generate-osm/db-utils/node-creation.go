@@ -199,3 +199,90 @@ func createNewTrackEnd(
 		},
 	}
 }
+
+// createNewKmJump creates a new node with the following tags:
+// 'type:element' and 'subtype:km_jump'.
+// It also increments the "global" NodeIDCounter provided in 'id'.
+func createNewKmJump(
+	id *int,
+	node *OSMUtil.Node,
+) OSMUtil.Node {
+	*id++
+
+	return OSMUtil.Node{
+		Id:  strconv.Itoa(*id),
+		Lat: node.Lat,
+		Lon: node.Lon,
+		Tag: []*OSMUtil.Tag{
+			{XMLName: XML_TAG_NAME_CONST, K: "type", V: "element"},
+			{XMLName: XML_TAG_NAME_CONST, K: "subtype", V: "km_jump"},
+		},
+	}
+}
+
+// createNewSpeedLimit creates a new OSM-Node with the following tags:
+// 'type:element', 'subtype:spl' and 'direction:...' where ... depends on 'isFalling'.
+// It also increments the "global" NodeIDCounter provided in 'id'.
+func createNewSpeedLimit(
+	id *int,
+	node *OSMUtil.Node,
+	halt *MaxGeschwindigkeit,
+	isFalling bool,
+) OSMUtil.Node {
+	directionString := "falling"
+	if !isFalling {
+		directionString = "rising"
+	}
+	*id++
+
+	return OSMUtil.Node{
+		Id:  strconv.Itoa(*id),
+		Lat: node.Lat,
+		Lon: node.Lon,
+		Tag: []*OSMUtil.Tag{
+			{XMLName: XML_TAG_NAME_CONST, K: "type", V: "element"},
+			{XMLName: XML_TAG_NAME_CONST, K: "subtype", V: "spl"},
+			{XMLName: XML_TAG_NAME_CONST, K: "direction", V: directionString},
+		},
+	}
+}
+
+// createNewSlope creates a new node with the following tags:
+// 'type:element' and 'subtype:slope'.
+// It also increments the "global" NodeIDCounter provided in 'id'.
+func createNewSlope(
+	id *int,
+	node *OSMUtil.Node,
+) OSMUtil.Node {
+	*id++
+
+	return OSMUtil.Node{
+		Id:  strconv.Itoa(*id),
+		Lat: node.Lat,
+		Lon: node.Lon,
+		Tag: []*OSMUtil.Tag{
+			{XMLName: XML_TAG_NAME_CONST, K: "type", V: "element"},
+			{XMLName: XML_TAG_NAME_CONST, K: "subtype", V: "slope"},
+		},
+	}
+}
+
+// createNewTunnel creates a new node with the following tags:
+// 'type:element' and 'subtype:tunnel'.
+// It also increments the "global" NodeIDCounter provided in 'id'.
+func createNewTunnel(
+	id *int,
+	node *OSMUtil.Node,
+) OSMUtil.Node {
+	*id++
+
+	return OSMUtil.Node{
+		Id:  strconv.Itoa(*id),
+		Lat: node.Lat,
+		Lon: node.Lon,
+		Tag: []*OSMUtil.Tag{
+			{XMLName: XML_TAG_NAME_CONST, K: "type", V: "element"},
+			{XMLName: XML_TAG_NAME_CONST, K: "subtype", V: "tunnel"},
+		},
+	}
+}

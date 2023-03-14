@@ -194,6 +194,36 @@ func MapDB(
 					if err != nil {
 						return errors.Wrap(err, "failed finding track ends")
 					}
+					err = mapSpeedLimits(
+						&osm,
+						&anchors,
+						&newNodeIdCounter,
+						*abschnitt,
+						elementsNotFound,
+					)
+					if err != nil {
+						return errors.Wrap(err, "failed finding speed limits")
+					}
+					err = mapSlopes(
+						&osm,
+						&anchors,
+						&newNodeIdCounter,
+						*abschnitt,
+						elementsNotFound,
+					)
+					if err != nil {
+						return errors.Wrap(err, "failed finding slopes")
+					}
+					err = mapTunnels(
+						&osm,
+						&anchors,
+						&newNodeIdCounter,
+						*abschnitt,
+						elementsNotFound,
+					)
+					if err != nil {
+						return errors.Wrap(err, "failed finding tunnels")
+					}
 				}
 			}
 
