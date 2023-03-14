@@ -53,29 +53,33 @@ func MapDB(
 		var foundAnchorCount = 0
 		for _, stelle := range dbIss.Betriebsstellen {
 			for _, abschnitt := range stelle.Abschnitte {
-				err = findAndMapAnchorMainSignals(
-					abschnitt,
-					&osm,
-					anchors,
-					&notFoundSignalsFalling,
-					&notFoundSignalsRising,
-					&foundAnchorCount,
-					&newNodeIdCounter,
-				)
-				if err != nil {
-					return errors.Wrap(err, "failed anchoring main signals")
+				for _, knoten := range abschnitt.Knoten {
+					err = findAndMapAnchorMainSignals(
+						*knoten,
+						&osm,
+						anchors,
+						&notFoundSignalsFalling,
+						&notFoundSignalsRising,
+						&foundAnchorCount,
+						&newNodeIdCounter,
+					)
+					if err != nil {
+						return errors.Wrap(err, "failed anchoring main signals")
+					}
+
+					err = findAndMapAnchorSwitches(
+						*knoten,
+						&osm,
+						anchors,
+						&notFoundSwitches,
+						&foundAnchorCount,
+						&newNodeIdCounter,
+					)
+					if err != nil {
+						return errors.Wrap(err, "failed anchoring switches")
+					}
 				}
-				err = findAndMapAnchorSwitches(
-					abschnitt,
-					&osm,
-					anchors,
-					&notFoundSwitches,
-					&foundAnchorCount,
-					&newNodeIdCounter,
-				)
-				if err != nil {
-					return errors.Wrap(err, "failed anchoring switches")
-				}
+
 			}
 		}
 
@@ -109,141 +113,147 @@ func MapDB(
 			elementsNotFound := make(map[string]([]string))
 			for _, stelle := range issWithMappedSignals.Betriebsstellen {
 				for _, abschnitt := range stelle.Abschnitte {
-					err = mapUnanchoredMainSignals(
-						&osm,
-						&anchors,
-						&newNodeIdCounter,
-						*abschnitt,
-						elementsNotFound,
-					)
-					if err != nil {
-						return errors.Wrap(err, "failed finding main signals")
+					for _, knoten := range abschnitt.Knoten {
+						err = mapUnanchoredMainSignals(
+							&osm,
+							&anchors,
+							&newNodeIdCounter,
+							*knoten,
+							elementsNotFound,
+						)
+						if err != nil {
+							return errors.Wrap(err, "failed finding main signals")
+						}
+						err = mapUnanchoredSwitches(
+							&osm,
+							&anchors,
+							&newNodeIdCounter,
+							*knoten,
+							elementsNotFound,
+						)
+						if err != nil {
+							return errors.Wrap(err, "failed finding switches")
+						}
 					}
-					err = mapUnanchoredSwitches(
-						&osm,
-						&anchors,
-						&newNodeIdCounter,
-						*abschnitt,
-						elementsNotFound,
-					)
-					if err != nil {
-						return errors.Wrap(err, "failed finding switches")
-					}
+
 				}
 			}
 
 			for _, stelle := range dbIss.Betriebsstellen {
 				for _, abschnitt := range stelle.Abschnitte {
-					err = mapApproachSignals(
-						&osm,
-						&anchors,
-						&newNodeIdCounter,
-						*abschnitt,
-						elementsNotFound,
-					)
-					if err != nil {
-						return errors.Wrap(err, "failed finding approach signals")
+					for _, knoten := range abschnitt.Knoten {
+						err = mapApproachSignals(
+							&osm,
+							&anchors,
+							&newNodeIdCounter,
+							*knoten,
+							elementsNotFound,
+						)
+						if err != nil {
+							return errors.Wrap(err, "failed finding approach signals")
+						}
+						err = mapProtectionSignals(
+							&osm,
+							&anchors,
+							&newNodeIdCounter,
+							*knoten,
+							elementsNotFound,
+						)
+						if err != nil {
+							return errors.Wrap(err, "failed finding protection signals")
+						}
+						err = mapHalts(
+							&osm,
+							&anchors,
+							&newNodeIdCounter,
+							*knoten,
+							elementsNotFound,
+						)
+						if err != nil {
+							return errors.Wrap(err, "failed finding halts")
+						}
+						err = mapBorder(
+							&osm,
+							&anchors,
+							&newNodeIdCounter,
+							*knoten,
+							elementsNotFound,
+						)
+						if err != nil {
+							return errors.Wrap(err, "failed finding borders")
+						}
+						err = mapBumper(
+							&osm,
+							&anchors,
+							&newNodeIdCounter,
+							*knoten,
+							elementsNotFound,
+						)
+						if err != nil {
+							return errors.Wrap(err, "failed finding bumpers")
+						}
+						err = mapTrackEnd(
+							&osm,
+							&anchors,
+							&newNodeIdCounter,
+							*knoten,
+							elementsNotFound,
+						)
+						if err != nil {
+							return errors.Wrap(err, "failed finding track ends")
+						}
+						err = mapSpeedLimits(
+							&osm,
+							&anchors,
+							&newNodeIdCounter,
+							*knoten,
+							elementsNotFound,
+						)
+						if err != nil {
+							return errors.Wrap(err, "failed finding speed limits")
+						}
+						err = mapSlopes(
+							&osm,
+							&anchors,
+							&newNodeIdCounter,
+							*knoten,
+							elementsNotFound,
+						)
+						if err != nil {
+							return errors.Wrap(err, "failed finding slopes")
+						}
+						err = mapTunnels(
+							&osm,
+							&anchors,
+							&newNodeIdCounter,
+							*knoten,
+							elementsNotFound,
+						)
+						if err != nil {
+							return errors.Wrap(err, "failed finding tunnels")
+						}
+						err = mapEoTDs(
+							&osm,
+							&anchors,
+							&newNodeIdCounter,
+							*knoten,
+							elementsNotFound,
+						)
+						if err != nil {
+							return errors.Wrap(err, "failed finding end of train detectors")
+						}
+						err = mapLineSwitches(
+							&osm,
+							&anchors,
+							&newNodeIdCounter,
+							*knoten,
+							elementsNotFound,
+						)
+						if err != nil {
+							return errors.Wrap(err, "failed finding line switches")
+						}
 					}
-					err = mapProtectionSignals(
-						&osm,
-						&anchors,
-						&newNodeIdCounter,
-						*abschnitt,
-						elementsNotFound,
-					)
-					if err != nil {
-						return errors.Wrap(err, "failed finding protection signals")
-					}
-					err = mapHalts(
-						&osm,
-						&anchors,
-						&newNodeIdCounter,
-						*abschnitt,
-						elementsNotFound,
-					)
-					if err != nil {
-						return errors.Wrap(err, "failed finding halts")
-					}
-					err = mapBorder(
-						&osm,
-						&anchors,
-						&newNodeIdCounter,
-						*abschnitt,
-						elementsNotFound,
-					)
-					if err != nil {
-						return errors.Wrap(err, "failed finding borders")
-					}
-					err = mapBumper(
-						&osm,
-						&anchors,
-						&newNodeIdCounter,
-						*abschnitt,
-						elementsNotFound,
-					)
-					if err != nil {
-						return errors.Wrap(err, "failed finding bumpers")
-					}
-					err = mapTrackEnd(
-						&osm,
-						&anchors,
-						&newNodeIdCounter,
-						*abschnitt,
-						elementsNotFound,
-					)
-					if err != nil {
-						return errors.Wrap(err, "failed finding track ends")
-					}
-					err = mapSpeedLimits(
-						&osm,
-						&anchors,
-						&newNodeIdCounter,
-						*abschnitt,
-						elementsNotFound,
-					)
-					if err != nil {
-						return errors.Wrap(err, "failed finding speed limits")
-					}
-					err = mapSlopes(
-						&osm,
-						&anchors,
-						&newNodeIdCounter,
-						*abschnitt,
-						elementsNotFound,
-					)
-					if err != nil {
-						return errors.Wrap(err, "failed finding slopes")
-					}
-					err = mapTunnels(
-						&osm,
-						&anchors,
-						&newNodeIdCounter,
-						*abschnitt,
-						elementsNotFound,
-					)
-					if err != nil {
-						return errors.Wrap(err, "failed finding tunnels")
-					}
-					err = mapEoTDs(
-						&osm,
-						&anchors,
-						&newNodeIdCounter,
-						*abschnitt,
-						elementsNotFound,
-					)
-					if err != nil {
-						return errors.Wrap(err, "failed finding end of train detectors")
-					}
-					err = mapLineSwitches(
-						&osm,
-						&anchors,
-						&newNodeIdCounter,
-						*abschnitt,
-						elementsNotFound,
-					)
-					if err != nil {
-						return errors.Wrap(err, "failed finding line switches")
-					}
+
 				}
 			}
 

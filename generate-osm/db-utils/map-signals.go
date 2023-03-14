@@ -16,7 +16,7 @@ var XML_TAG_NAME_CONST = xml.Name{Space: " ", Local: "tag"}
 // (excluding spaces) as the Signal-name.
 // In notFoundSignals... all signals that could not be identified will be returned.
 func findAndMapAnchorMainSignals(
-	abschnitt *Spurplanabschnitt,
+	knoten Spurplanknoten,
 	osm *OSMUtil.Osm,
 	anchors map[float64][]*OSMUtil.Node,
 	notFoundSignalsFalling *[]*Signal,
@@ -25,34 +25,34 @@ func findAndMapAnchorMainSignals(
 	nodeIdCounter *int,
 ) error {
 	conflictingSignalNames := map[string]bool{}
-	for _, knoten := range abschnitt.Knoten {
-		err := processHauptsignal(
-			*knoten,
-			notFoundSignalsFalling,
-			anchors,
-			&conflictingSignalNames,
-			osm,
-			true,
-			foundAnchorCount,
-			nodeIdCounter,
-		)
-		if err != nil {
-			return errors.Wrap(err, "failed processing falling main signals")
-		}
-		err = processHauptsignal(
-			*knoten,
-			notFoundSignalsRising,
-			anchors,
-			&conflictingSignalNames,
-			osm,
-			false,
-			foundAnchorCount,
-			nodeIdCounter,
-		)
-		if err != nil {
-			return errors.Wrap(err, "failed processing rising main signals")
-		}
+	err := processHauptsignal(
+		knoten,
+		notFoundSignalsFalling,
+		anchors,
+		&conflictingSignalNames,
+		osm,
+		true,
+		foundAnchorCount,
+		nodeIdCounter,
+	)
+	if err != nil {
+		return errors.Wrap(err, "failed processing falling main signals")
 	}
+
+	err = processHauptsignal(
+		knoten,
+		notFoundSignalsRising,
+		anchors,
+		&conflictingSignalNames,
+		osm,
+		false,
+		foundAnchorCount,
+		nodeIdCounter,
+	)
+	if err != nil {
+		return errors.Wrap(err, "failed processing rising main signals")
+	}
+
 	return nil
 }
 
@@ -186,30 +186,29 @@ func mapUnanchoredMainSignals(
 	osmData *OSMUtil.Osm,
 	anchors *map[float64]([]*OSMUtil.Node),
 	nodeIdCounter *int,
-	abschnitt Spurplanabschnitt,
+	knoten Spurplanknoten,
 	elementsNotFound map[string]([]string),
 ) error {
-	for _, knoten := range abschnitt.Knoten {
-		err := searchUnanchoredMainSignal(
-			osmData,
-			anchors,
-			nodeIdCounter,
-			*knoten,
-			elementsNotFound,
-			true)
-		if err != nil {
-			return errors.Wrap(err, "failed finding falling main signal")
-		}
-		err = searchUnanchoredMainSignal(
-			osmData,
-			anchors,
-			nodeIdCounter,
-			*knoten,
-			elementsNotFound,
-			false)
-		if err != nil {
-			return errors.Wrap(err, "failed finding rising main signal")
-		}
+	err := searchUnanchoredMainSignal(
+		osmData,
+		anchors,
+		nodeIdCounter,
+		knoten,
+		elementsNotFound,
+		true)
+	if err != nil {
+		return errors.Wrap(err, "failed finding falling main signal")
+	}
+
+	err = searchUnanchoredMainSignal(
+		osmData,
+		anchors,
+		nodeIdCounter,
+		knoten,
+		elementsNotFound,
+		false)
+	if err != nil {
+		return errors.Wrap(err, "failed finding rising main signal")
 	}
 	return nil
 }
@@ -263,30 +262,29 @@ func mapApproachSignals(
 	osmData *OSMUtil.Osm,
 	anchors *map[float64]([]*OSMUtil.Node),
 	nodeIdCounter *int,
-	abschnitt Spurplanabschnitt,
+	knoten Spurplanknoten,
 	elementsNotFound map[string]([]string),
 ) error {
-	for _, knoten := range abschnitt.Knoten {
-		err := searchApproachSignal(
-			osmData,
-			anchors,
-			nodeIdCounter,
-			*knoten,
-			elementsNotFound,
-			true)
-		if err != nil {
-			return errors.Wrap(err, "failed finding falling approach signal")
-		}
-		err = searchApproachSignal(
-			osmData,
-			anchors,
-			nodeIdCounter,
-			*knoten,
-			elementsNotFound,
-			false)
-		if err != nil {
-			return errors.Wrap(err, "failed finding rising approach signal")
-		}
+	err := searchApproachSignal(
+		osmData,
+		anchors,
+		nodeIdCounter,
+		knoten,
+		elementsNotFound,
+		true)
+	if err != nil {
+		return errors.Wrap(err, "failed finding falling approach signal")
+	}
+
+	err = searchApproachSignal(
+		osmData,
+		anchors,
+		nodeIdCounter,
+		knoten,
+		elementsNotFound,
+		false)
+	if err != nil {
+		return errors.Wrap(err, "failed finding rising approach signal")
 	}
 	return nil
 }
@@ -340,30 +338,29 @@ func mapProtectionSignals(
 	osmData *OSMUtil.Osm,
 	anchors *map[float64]([]*OSMUtil.Node),
 	nodeIdCounter *int,
-	abschnitt Spurplanabschnitt,
+	knoten Spurplanknoten,
 	elementsNotFound map[string]([]string),
 ) error {
-	for _, knoten := range abschnitt.Knoten {
-		err := searchProtectionSignal(
-			osmData,
-			anchors,
-			nodeIdCounter,
-			*knoten,
-			elementsNotFound,
-			true)
-		if err != nil {
-			return errors.Wrap(err, "failed finding falling protection signal")
-		}
-		err = searchProtectionSignal(
-			osmData,
-			anchors,
-			nodeIdCounter,
-			*knoten,
-			elementsNotFound,
-			false)
-		if err != nil {
-			return errors.Wrap(err, "failed finding rising protection signal")
-		}
+	err := searchProtectionSignal(
+		osmData,
+		anchors,
+		nodeIdCounter,
+		knoten,
+		elementsNotFound,
+		true)
+	if err != nil {
+		return errors.Wrap(err, "failed finding falling protection signal")
+	}
+
+	err = searchProtectionSignal(
+		osmData,
+		anchors,
+		nodeIdCounter,
+		knoten,
+		elementsNotFound,
+		false)
+	if err != nil {
+		return errors.Wrap(err, "failed finding rising protection signal")
 	}
 	return nil
 }

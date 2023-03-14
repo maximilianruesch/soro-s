@@ -11,30 +11,29 @@ func mapHalts(
 	osmData *OSMUtil.Osm,
 	anchors *map[float64]([]*OSMUtil.Node),
 	nodeIdCounter *int,
-	abschnitt Spurplanabschnitt,
+	knoten Spurplanknoten,
 	elementsNotFound map[string]([]string),
 ) error {
-	for _, knoten := range abschnitt.Knoten {
-		err := searchHalt(
-			osmData,
-			anchors,
-			nodeIdCounter,
-			*knoten,
-			elementsNotFound,
-			true)
-		if err != nil {
-			return errors.Wrap(err, "failed finding falling stop position")
-		}
-		err = searchHalt(
-			osmData,
-			anchors,
-			nodeIdCounter,
-			*knoten,
-			elementsNotFound,
-			false)
-		if err != nil {
-			return errors.Wrap(err, "failed finding falling stop position")
-		}
+	err := searchHalt(
+		osmData,
+		anchors,
+		nodeIdCounter,
+		knoten,
+		elementsNotFound,
+		true)
+	if err != nil {
+		return errors.Wrap(err, "failed finding falling stop position")
+	}
+
+	err = searchHalt(
+		osmData,
+		anchors,
+		nodeIdCounter,
+		knoten,
+		elementsNotFound,
+		false)
+	if err != nil {
+		return errors.Wrap(err, "failed finding falling stop position")
 	}
 	return nil
 }
