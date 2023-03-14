@@ -102,7 +102,6 @@ func mapUnanchoredSwitches(
 	abschnitt Spurplanabschnitt,
 	elementsNotFound map[string]([]string),
 ) error {
-
 	for _, knoten := range abschnitt.Knoten {
 		for _, simple_switch := range knoten.WeichenAnf {
 			kilometrage, _ := formatKilometrageStringInFloat(simple_switch.KnotenTyp.Kilometrierung.Value)

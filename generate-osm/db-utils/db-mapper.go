@@ -154,6 +154,46 @@ func MapDB(
 					if err != nil {
 						return errors.Wrap(err, "failed finding protection signals")
 					}
+					err = mapHalts(
+						&osm,
+						&anchors,
+						&newNodeIdCounter,
+						*abschnitt,
+						elementsNotFound,
+					)
+					if err != nil {
+						return errors.Wrap(err, "failed finding halts")
+					}
+					err = mapBorder(
+						&osm,
+						&anchors,
+						&newNodeIdCounter,
+						*abschnitt,
+						elementsNotFound,
+					)
+					if err != nil {
+						return errors.Wrap(err, "failed finding borders")
+					}
+					err = mapBumper(
+						&osm,
+						&anchors,
+						&newNodeIdCounter,
+						*abschnitt,
+						elementsNotFound,
+					)
+					if err != nil {
+						return errors.Wrap(err, "failed finding bumpers")
+					}
+					err = mapTrackEnd(
+						&osm,
+						&anchors,
+						&newNodeIdCounter,
+						*abschnitt,
+						elementsNotFound,
+					)
+					if err != nil {
+						return errors.Wrap(err, "failed finding track ends")
+					}
 				}
 			}
 

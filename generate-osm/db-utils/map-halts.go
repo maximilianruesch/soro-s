@@ -23,7 +23,7 @@ func mapHalts(
 			elementsNotFound,
 			true)
 		if err != nil {
-			return errors.Wrap(err, "failed finding falling main signal")
+			return errors.Wrap(err, "failed finding falling stop position")
 		}
 		err = searchHalt(
 			osmData,
@@ -33,7 +33,7 @@ func mapHalts(
 			elementsNotFound,
 			false)
 		if err != nil {
-			return errors.Wrap(err, "failed finding falling main signal")
+			return errors.Wrap(err, "failed finding falling stop position")
 		}
 	}
 	return nil
@@ -61,10 +61,10 @@ func searchHalt(
 		maxNode, err := findBestOSMNode(osmData, anchors, kilometrage)
 		if err != nil {
 			if errors.Cause(err) == errNoSuitableAnchors {
-				elementsNotFound["main signals"] = append(elementsNotFound["main signals"], halt.Name.Value)
+				elementsNotFound["stop positions"] = append(elementsNotFound["stop positions"], halt.Name.Value)
 				continue
 			}
-			return errors.Wrap(err, "failed to map main signal  "+halt.Name.Value)
+			return errors.Wrap(err, "failed to map stop position "+halt.Name.Value)
 		}
 
 		newSignalNode := createNewHalt(

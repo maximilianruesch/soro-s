@@ -139,3 +139,63 @@ func createNewHalt(
 		},
 	}
 }
+
+// createNewBumper creates a new node with the following tags:
+// 'type:element' and 'subtype:bumper'.
+// It also increments the "global" NodeIDCounter provided in 'id'.
+func createNewBumper(
+	id *int,
+	node *OSMUtil.Node,
+) OSMUtil.Node {
+	*id++
+
+	return OSMUtil.Node{
+		Id:  strconv.Itoa(*id),
+		Lat: node.Lat,
+		Lon: node.Lon,
+		Tag: []*OSMUtil.Tag{
+			{XMLName: XML_TAG_NAME_CONST, K: "type", V: "element"},
+			{XMLName: XML_TAG_NAME_CONST, K: "subtype", V: "bumper"},
+		},
+	}
+}
+
+// createNewBorder creates a new node with the following tags:
+// 'type:element' and 'subtype:border'.
+// It also increments the "global" NodeIDCounter provided in 'id'.
+func createNewBorder(
+	id *int,
+	node *OSMUtil.Node,
+) OSMUtil.Node {
+	*id++
+
+	return OSMUtil.Node{
+		Id:  strconv.Itoa(*id),
+		Lat: node.Lat,
+		Lon: node.Lon,
+		Tag: []*OSMUtil.Tag{
+			{XMLName: XML_TAG_NAME_CONST, K: "type", V: "element"},
+			{XMLName: XML_TAG_NAME_CONST, K: "subtype", V: "border"},
+		},
+	}
+}
+
+// createNewBorder creates a new node with the following tags:
+// 'type:element' and 'subtype:track_end'.
+// It also increments the "global" NodeIDCounter provided in 'id'.
+func createNewTrackEnd(
+	id *int,
+	node *OSMUtil.Node,
+) OSMUtil.Node {
+	*id++
+
+	return OSMUtil.Node{
+		Id:  strconv.Itoa(*id),
+		Lat: node.Lat,
+		Lon: node.Lon,
+		Tag: []*OSMUtil.Tag{
+			{XMLName: XML_TAG_NAME_CONST, K: "type", V: "element"},
+			{XMLName: XML_TAG_NAME_CONST, K: "subtype", V: "track_end"},
+		},
+	}
+}
