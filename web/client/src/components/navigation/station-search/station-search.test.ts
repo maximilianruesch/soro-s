@@ -5,7 +5,7 @@ import { ElementType } from '@/components/infrastructure/elementTypes';
 import { VueWrapper } from '@vue/test-utils';
 import { VList } from 'vuetify/components';
 
-vi.mock('@/components/infrastructure/addIcons', () => ({
+vi.mock('@/components/infrastructure/add-icons', () => ({
     iconUrl: 'some-icon-url/',
     iconExtension: '.something',
 }));

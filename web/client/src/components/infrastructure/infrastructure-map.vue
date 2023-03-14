@@ -34,7 +34,7 @@ import {
 } from './infrastructureMap';
 import { FilterSpecification, Map } from 'maplibre-gl';
 import { createInfrastructureMapStyle } from './mapStyle';
-import { addIcons } from './addIcons';
+import { addIcons } from './add-icons';
 import { ElementTypes, ElementType } from './elementTypes';
 import { defineComponent } from 'vue';
 import { transformUrl } from '@/api/api-client';

@@ -55,7 +55,7 @@
 
 <script lang="ts">
 import { ElementTypeLabels, ElementTypes } from '@/components/infrastructure/elementTypes.js';
-import { iconExtension, iconUrl } from '@/components/infrastructure/addIcons';
+import { iconExtension, iconUrl } from './add-icons';
 import { defineComponent } from 'vue';
 
 export const SpecialLegendControl = {
