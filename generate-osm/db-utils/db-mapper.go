@@ -19,6 +19,8 @@ func MapDB(
 ) error {
 	newNodeIdCounter := 0
 	linesWithNoAnchors := 0
+	totalNumberOfAnchors := 0
+	totalElementsNotFound := 0
 	for _, line := range refs {
 		var anchors map[float64]([]*OSMUtil.Node) = map[float64]([]*OSMUtil.Node){}
 		var osm OSMUtil.Osm
@@ -42,7 +44,7 @@ func MapDB(
 			return errors.Wrap(err, "failed unmarshalling db file: "+dbLineFilePath)
 		}
 
-		fmt.Printf("Processing line %s \n", line)
+		fmt.Printf("Mapping line %s \n", line)
 
 		var notFoundSignalsFalling []*Signal = []*Signal{}
 		var notFoundSignalsRising []*Signal = []*Signal{}
@@ -76,9 +78,12 @@ func MapDB(
 			}
 		}
 
-		numSignalsNotFound := (float64)(len(notFoundSignalsFalling) + len(notFoundSignalsRising))
-		percentAnchored := ((float64)(foundAnchorCount) / ((float64)(foundAnchorCount) + numSignalsNotFound)) * 100.0
-		fmt.Printf("Could anchor %f %% of signals. \n", percentAnchored)
+		numElementsNotFound := len(notFoundSignalsFalling) + len(notFoundSignalsRising) + len(notFoundSwitches)
+		percentAnchored := ((float64)(foundAnchorCount) / ((float64)(foundAnchorCount) + (float64)(numElementsNotFound))) * 100.0
+		fmt.Printf("Could anchor %d/%d (%f %%) of signals and switches. \n", foundAnchorCount, foundAnchorCount+numElementsNotFound, percentAnchored)
+
+		totalNumberOfAnchors += foundAnchorCount
+		totalElementsNotFound += numElementsNotFound
 
 		var issWithMappedSignals = XmlIssDaten{
 			Betriebsstellen: []*Spurplanbetriebsstelle{{
@@ -94,6 +99,7 @@ func MapDB(
 
 		if len(anchors) == 0 {
 			fmt.Print("Could not find anchors! \n")
+			linesWithNoAnchors++
 			continue
 		}
 		if len(anchors) == 1 {
@@ -108,7 +114,8 @@ func MapDB(
 						&newNodeIdCounter,
 						*abschnitt,
 					)
-					mapUnanchoredSwitches(&osm,
+					mapUnanchoredSwitches(
+						&osm,
 						&anchors,
 						&newNodeIdCounter,
 						*abschnitt,
@@ -127,6 +134,8 @@ func MapDB(
 		}
 	}
 
+	totalPercentAnchored := ((float64)(totalNumberOfAnchors) / ((float64)(totalNumberOfAnchors) + (float64)(totalElementsNotFound))) * 100.0
+	fmt.Printf("Could in total anchor %d/%d (%f %%) of signals and switches. \n", totalNumberOfAnchors, totalNumberOfAnchors+totalElementsNotFound, totalPercentAnchored)
 	fmt.Printf("Lines with no anchors: %d out of %d \n", linesWithNoAnchors, len(refs))
 	return nil
 }
