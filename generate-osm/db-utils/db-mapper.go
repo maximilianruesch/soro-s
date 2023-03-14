@@ -18,9 +18,10 @@ func MapDB(
 	DBDir string,
 ) error {
 	newNodeIdCounter := 0
-	linesWithNoAnchors := 0
-	totalNumberOfAnchors := 0
-	totalElementsNotFound := 0
+	totalNumberOfAnchors, totalElementsNotFound := 0, 0
+	linesWithNoAnchors := []string{}
+	linesWithOneAnchor := []string{}
+
 	for _, line := range refs {
 		var anchors map[float64]([]*OSMUtil.Node) = map[float64]([]*OSMUtil.Node){}
 		var osm OSMUtil.Osm
@@ -98,29 +99,41 @@ func MapDB(
 		}
 
 		if len(anchors) == 0 {
-			fmt.Print("Could not find anchors! \n")
-			linesWithNoAnchors++
+			linesWithNoAnchors = append(linesWithNoAnchors, line)
 			continue
 		}
 		if len(anchors) == 1 {
-			fmt.Print("Could not find enough anchors! \n")
+			linesWithOneAnchor = append(linesWithOneAnchor, line)
 			// TODO: Node not found, find closest mapped Node and work from there
 		} else {
+			elementsNotFound := make(map[string]([]string))
 			for _, stelle := range issWithMappedSignals.Betriebsstellen {
 				for _, abschnitt := range stelle.Abschnitte {
-					mapUnanchoredMainSignals(
+					err = mapUnanchoredMainSignals(
 						&osm,
 						&anchors,
 						&newNodeIdCounter,
 						*abschnitt,
+						elementsNotFound,
 					)
-					mapUnanchoredSwitches(
+					if err != nil {
+						return errors.Wrap(err, "failed finding main signals")
+					}
+					err = mapUnanchoredSwitches(
 						&osm,
 						&anchors,
 						&newNodeIdCounter,
 						*abschnitt,
+						elementsNotFound,
 					)
+					if err != nil {
+						return errors.Wrap(err, "failed finding switches")
+					}
 				}
+			}
+
+			for elementType, nameList := range elementsNotFound {
+				fmt.Printf("Could not find %s: %v \n", elementType, nameList)
 			}
 		}
 
@@ -136,6 +149,7 @@ func MapDB(
 
 	totalPercentAnchored := ((float64)(totalNumberOfAnchors) / ((float64)(totalNumberOfAnchors) + (float64)(totalElementsNotFound))) * 100.0
 	fmt.Printf("Could in total anchor %d/%d (%f %%) of signals and switches. \n", totalNumberOfAnchors, totalNumberOfAnchors+totalElementsNotFound, totalPercentAnchored)
-	fmt.Printf("Lines with no anchors: %d out of %d \n", linesWithNoAnchors, len(refs))
+	fmt.Printf("Lines with no anchors: %d out of %d (%v)\n", len(linesWithNoAnchors), len(refs), linesWithNoAnchors)
+	fmt.Printf("Lines with only one anchor: %d out of %d (%v)\n", len(linesWithOneAnchor), len(refs), linesWithOneAnchor)
 	return nil
 }
