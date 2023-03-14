@@ -79,11 +79,7 @@ type KmSprungEnde struct {
 	Partner Partner `xml:"Partnerknoten"`
 }
 
-type Streckenwechsel0 struct {
-	KnotenTyp
-	Partner Partner `xml:"Partnerknoten"`
-}
-type Streckenwechsel1 struct {
+type Streckenwechsel struct {
 	KnotenTyp
 	Partner Partner `xml:"Partnerknoten"`
 }
@@ -172,8 +168,8 @@ type Spurplanknoten struct {
 	FstrZugschlussstelleF   []*Zugschlussstelle `xml:"FstrZugschlussstelleF"`
 	FstrZugschlussstelleS   []*Zugschlussstelle `xml:"FstrZugschlussstelleS"`
 
-	Streckenwechsel0 []*Streckenwechsel0 `xml:"Streckenwechsel0"`
-	Streckenwechsel1 []*Streckenwechsel1 `xml:"Streckenwechsel1"`
+	Streckenwechsel0 []*Streckenwechsel `xml:"Streckenwechsel0"`
+	Streckenwechsel1 []*Streckenwechsel `xml:"Streckenwechsel1"`
 }
 
 type Strecke struct {

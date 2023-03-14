@@ -224,6 +224,26 @@ func MapDB(
 					if err != nil {
 						return errors.Wrap(err, "failed finding tunnels")
 					}
+					err = mapEoTDs(
+						&osm,
+						&anchors,
+						&newNodeIdCounter,
+						*abschnitt,
+						elementsNotFound,
+					)
+					if err != nil {
+						return errors.Wrap(err, "failed finding end of train detectors")
+					}
+					err = mapLineSwitches(
+						&osm,
+						&anchors,
+						&newNodeIdCounter,
+						*abschnitt,
+						elementsNotFound,
+					)
+					if err != nil {
+						return errors.Wrap(err, "failed finding line switches")
+					}
 				}
 			}
 

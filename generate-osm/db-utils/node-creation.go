@@ -286,3 +286,50 @@ func createNewTunnel(
 		},
 	}
 }
+
+// createNewSpeedLimit creates a new OSM-Node with the following tags:
+// 'type:element', 'subtype:spl' and 'direction:...' where ... depends on 'isFalling'.
+// It also increments the "global" NodeIDCounter provided in 'id'.
+func createNewEoTD(
+	id *int,
+	node *OSMUtil.Node,
+	halt *MaxGeschwindigkeit,
+	isFalling bool,
+) OSMUtil.Node {
+	directionString := "falling"
+	if !isFalling {
+		directionString = "rising"
+	}
+	*id++
+
+	return OSMUtil.Node{
+		Id:  strconv.Itoa(*id),
+		Lat: node.Lat,
+		Lon: node.Lon,
+		Tag: []*OSMUtil.Tag{
+			{XMLName: XML_TAG_NAME_CONST, K: "type", V: "element"},
+			{XMLName: XML_TAG_NAME_CONST, K: "subtype", V: "eotd"},
+			{XMLName: XML_TAG_NAME_CONST, K: "direction", V: directionString},
+		},
+	}
+}
+
+// createNewLineSwitch creates a new node with the following tags:
+// 'type:element' and 'subtype:line_switch'.
+// It also increments the "global" NodeIDCounter provided in 'id'.
+func createNewLineSwitch(
+	id *int,
+	node *OSMUtil.Node,
+) OSMUtil.Node {
+	*id++
+
+	return OSMUtil.Node{
+		Id:  strconv.Itoa(*id),
+		Lat: node.Lat,
+		Lon: node.Lon,
+		Tag: []*OSMUtil.Tag{
+			{XMLName: XML_TAG_NAME_CONST, K: "type", V: "element"},
+			{XMLName: XML_TAG_NAME_CONST, K: "subtype", V: "line_switch"},
+		},
+	}
+}

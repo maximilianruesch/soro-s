@@ -179,7 +179,7 @@ func mapSpeedLimits(
 	return nil
 }
 
-// serachUnanchoredMainSignal searches for a Node, that best fits the Signal to be mapped.
+// searchSpeedLimit searches for a Node, that best fits the speed limit to be mapped.
 // This search is based on at least two anchored elements and their respective distance to the signal at hand.
 // If no ore only one anchor could be identified, or all anchors are otherwise insufficient, no mapping can be done.
 func searchSpeedLimit(
@@ -279,6 +279,117 @@ func mapTunnels(
 			}
 
 			newSignalNode := createNewTunnel(
+				nodeIdCounter,
+				maxNode,
+			)
+			OSMUtil.InsertNewNodeWithReferenceNode(
+				osmData,
+				&newSignalNode,
+				maxNode,
+			)
+		}
+	}
+	return nil
+}
+
+// mapEoTDs processes all speed limits.
+func mapEoTDs(
+	osmData *OSMUtil.Osm,
+	anchors *map[float64]([]*OSMUtil.Node),
+	nodeIdCounter *int,
+	abschnitt Spurplanabschnitt,
+	elementsNotFound map[string]([]string),
+) error {
+	for _, knoten := range abschnitt.Knoten {
+		err := searchEoTD(
+			osmData,
+			anchors,
+			nodeIdCounter,
+			*knoten,
+			elementsNotFound,
+			true)
+		if err != nil {
+			return errors.Wrap(err, "failed finding falling end of train detector")
+		}
+		err = searchEoTD(
+			osmData,
+			anchors,
+			nodeIdCounter,
+			*knoten,
+			elementsNotFound,
+			false)
+		if err != nil {
+			return errors.Wrap(err, "failed finding rising end of train detector")
+		}
+	}
+	return nil
+}
+
+// searchEoTD searches for a Node, that best fits the Signal to be mapped.
+// This search is based on at least two anchored elements and their respective distance to the signal at hand.
+// If no ore only one anchor could be identified, or all anchors are otherwise insufficient, no mapping can be done.
+func searchEoTD(
+	osmData *OSMUtil.Osm,
+	anchors *map[float64]([]*OSMUtil.Node),
+	nodeIdCounter *int,
+	knoten Spurplanknoten,
+	elementsNotFound map[string]([]string),
+	isFalling bool,
+) error {
+	signals := knoten.MaxSpeedF
+	if !isFalling {
+		signals = knoten.MaxSpeedS
+	}
+
+	for _, eotd := range signals {
+		kilometrage, _ := formatKilometrageStringInFloat(eotd.KnotenTyp.Kilometrierung.Value)
+
+		maxNode, err := findBestOSMNode(osmData, anchors, kilometrage)
+		if err != nil {
+			if errors.Cause(err) == errNoSuitableAnchors {
+				elementsNotFound["eotds"] = append(elementsNotFound["eotds"], eotd.Kilometrierung.Value)
+				continue
+			}
+			return errors.Wrap(err, "failed to map eotd "+eotd.Kilometrierung.Value)
+		}
+
+		newSignalNode := createNewEoTD(
+			nodeIdCounter,
+			maxNode,
+			eotd,
+			isFalling,
+		)
+		OSMUtil.InsertNewNodeWithReferenceNode(
+			osmData,
+			&newSignalNode,
+			maxNode,
+		)
+	}
+	return nil
+}
+
+// mapLineSwitches processes all line switches.
+func mapLineSwitches(
+	osmData *OSMUtil.Osm,
+	anchors *map[float64]([]*OSMUtil.Node),
+	nodeIdCounter *int,
+	abschnitt Spurplanabschnitt,
+	elementsNotFound map[string]([]string),
+) error {
+	for _, knoten := range abschnitt.Knoten {
+		for _, line_switch := range knoten.Neigung {
+			kilometrage, _ := formatKilometrageStringInFloat(line_switch.KnotenTyp.Kilometrierung.Value)
+
+			maxNode, err := findBestOSMNode(osmData, anchors, kilometrage)
+			if err != nil {
+				if errors.Cause(err) == errNoSuitableAnchors {
+					elementsNotFound["line switches"] = append(elementsNotFound["line switches"], line_switch.Kilometrierung.Value)
+					continue
+				}
+				return errors.Wrap(err, "failed to map line switche "+line_switch.Kilometrierung.Value)
+			}
+
+			newSignalNode := createNewLineSwitch(
 				nodeIdCounter,
 				maxNode,
 			)
