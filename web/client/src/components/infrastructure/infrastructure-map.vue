@@ -270,7 +270,6 @@ export default defineComponent({
                 container: this.$refs.map as HTMLElement,
                 // @ts-ignore
                 transformRequest: (relative_url) => {
-                    console.log(relative_url);
                     if (relative_url.startsWith('/')) {
                         return { url: transformUrl(`/${infrastructure}${relative_url}`) };
                     }
