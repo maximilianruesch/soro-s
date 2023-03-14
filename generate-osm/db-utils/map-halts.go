@@ -67,10 +67,11 @@ func searchHalt(
 			return errors.Wrap(err, "failed to map stop position "+halt.Name.Value)
 		}
 
-		newSignalNode := createNewHalt(
+		newSignalNode := createNamedDirectionalNode(
 			nodeIdCounter,
 			maxNode,
-			halt,
+			"hlt",
+			halt.Name.Value,
 			isFalling,
 		)
 		OSMUtil.InsertNewNodeWithReferenceNode(

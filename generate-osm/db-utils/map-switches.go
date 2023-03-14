@@ -17,7 +17,7 @@ func findAndMapAnchorSwitches(
 	anchors map[float64][]*OSMUtil.Node,
 	notFoundSwitches *[]*Weichenanfang,
 	foundAnchorCount *int,
-	optionalNewId *int,
+	nodeIdCounter *int,
 ) error {
 	for _, knoten := range abschnitt.Knoten {
 		foundSwitch := false
@@ -40,10 +40,11 @@ func findAndMapAnchorSwitches(
 					}
 
 					anchors[kilometrageFloat] = append(anchors[kilometrageFloat], node)
-					newSwitchNode := createNewSwitch(
-						optionalNewId,
+					newSwitchNode := createNamedSimpleNode(
+						nodeIdCounter,
 						node,
-						switchBegin,
+						"simple_switch",
+						switchBegin.Name.Value,
 					)
 					OSMUtil.InsertNewNodeWithReferenceNode(
 						osm,
@@ -115,10 +116,11 @@ func mapUnanchoredSwitches(
 				return errors.Wrap(err, "failed to map switch "+simple_switch.Name.Value)
 			}
 
-			newSignalNode := createNewSwitch(
+			newSignalNode := createNamedSimpleNode(
 				nodeIdCounter,
 				maxNode,
-				simple_switch,
+				"simple_switch",
+				simple_switch.Name.Value,
 			)
 			OSMUtil.InsertNewNodeWithReferenceNode(
 				osmData,

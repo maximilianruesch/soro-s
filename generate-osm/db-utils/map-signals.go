@@ -22,7 +22,7 @@ func findAndMapAnchorMainSignals(
 	notFoundSignalsFalling *[]*Signal,
 	notFoundSignalsRising *[]*Signal,
 	foundAnchorCount *int,
-	optionalNewId *int,
+	nodeIdCounter *int,
 ) error {
 	conflictingSignalNames := map[string]bool{}
 	for _, knoten := range abschnitt.Knoten {
@@ -34,7 +34,7 @@ func findAndMapAnchorMainSignals(
 			osm,
 			true,
 			foundAnchorCount,
-			optionalNewId,
+			nodeIdCounter,
 		)
 		if err != nil {
 			return errors.Wrap(err, "failed processing falling main signals")
@@ -47,7 +47,7 @@ func findAndMapAnchorMainSignals(
 			osm,
 			false,
 			foundAnchorCount,
-			optionalNewId,
+			nodeIdCounter,
 		)
 		if err != nil {
 			return errors.Wrap(err, "failed processing rising main signals")
@@ -66,7 +66,7 @@ func processHauptsignal(
 	osm *OSMUtil.Osm,
 	isFalling bool,
 	foundAnchorCount *int,
-	optionalNewId *int,
+	nodeIdCounter *int,
 ) error {
 	signals := knoten.HauptsigF
 	if !isFalling {
@@ -90,7 +90,7 @@ func processHauptsignal(
 
 		if len(matchingSignalNodes) == 1 {
 			conflictFreeSignal, err := insertNewHauptsignal(
-				optionalNewId,
+				nodeIdCounter,
 				matchingSignalNodes[0],
 				signal,
 				isFalling,
@@ -119,7 +119,7 @@ func processHauptsignal(
 // A conflict exists, when there are either multiple Signals with the same name but different kilometrages,
 // or when there exists more than one node, that could be identified as a certian Signal (i.e. with the same name).
 func insertNewHauptsignal(
-	newId *int,
+	nodeIdCounter *int,
 	signalNode *OSMUtil.Node,
 	signal *Signal,
 	isFalling bool,
@@ -160,10 +160,11 @@ func insertNewHauptsignal(
 		}
 	}
 
-	newSignalNode := createNewMainSignal(
-		newId,
+	newSignalNode := createNamedDirectionalNode(
+		nodeIdCounter,
 		signalNode,
-		signal,
+		"ms",
+		signal.Name.Value,
 		isFalling,
 	)
 	OSMUtil.InsertNewNodeWithReferenceNode(
@@ -241,10 +242,11 @@ func searchUnanchoredMainSignal(
 			return errors.Wrap(err, "failed to map main signal "+signal.Name.Value)
 		}
 
-		newSignalNode := createNewMainSignal(
+		newSignalNode := createNamedDirectionalNode(
 			nodeIdCounter,
 			maxNode,
-			signal,
+			"ms",
+			signal.Name.Value,
 			isFalling,
 		)
 		OSMUtil.InsertNewNodeWithReferenceNode(
@@ -317,10 +319,11 @@ func searchApproachSignal(
 			return errors.Wrap(err, "failed to map approach signal "+signal.Name.Value)
 		}
 
-		newSignalNode := createNewApproachSignal(
+		newSignalNode := createNamedDirectionalNode(
 			nodeIdCounter,
 			maxNode,
-			signal,
+			"as",
+			signal.Name.Value,
 			isFalling,
 		)
 		OSMUtil.InsertNewNodeWithReferenceNode(
@@ -393,10 +396,11 @@ func searchProtectionSignal(
 			return errors.Wrap(err, "failed to map protection signal "+signal.Name.Value)
 		}
 
-		newSignalNode := createNewProtectionSignal(
+		newSignalNode := createNamedDirectionalNode(
 			nodeIdCounter,
 			maxNode,
-			signal,
+			"ps",
+			signal.Name.Value,
 			isFalling,
 		)
 		OSMUtil.InsertNewNodeWithReferenceNode(

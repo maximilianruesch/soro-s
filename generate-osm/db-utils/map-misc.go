@@ -27,9 +27,10 @@ func mapBumper(
 				return errors.Wrap(err, "failed to map bumper "+bumper.Kilometrierung.Value)
 			}
 
-			newSignalNode := createNewBumper(
+			newSignalNode := createSimpleNode(
 				nodeIdCounter,
 				maxNode,
+				"bumper",
 			)
 			OSMUtil.InsertNewNodeWithReferenceNode(
 				osmData,
@@ -62,9 +63,10 @@ func mapBorder(
 				return errors.Wrap(err, "failed to map border "+border.Kilometrierung.Value)
 			}
 
-			newSignalNode := createNewBorder(
+			newSignalNode := createSimpleNode(
 				nodeIdCounter,
 				maxNode,
+				"border",
 			)
 			OSMUtil.InsertNewNodeWithReferenceNode(
 				osmData,
@@ -97,9 +99,10 @@ func mapTrackEnd(
 				return errors.Wrap(err, "failed to map track end "+border.Kilometrierung.Value)
 			}
 
-			newSignalNode := createNewTrackEnd(
+			newSignalNode := createSimpleNode(
 				nodeIdCounter,
 				maxNode,
+				"track_end",
 			)
 			OSMUtil.InsertNewNodeWithReferenceNode(
 				osmData,
@@ -132,9 +135,10 @@ func mapKmJump(
 				return errors.Wrap(err, "failed to map kilometrage jump "+border.Kilometrierung.Value)
 			}
 
-			newSignalNode := createNewKmJump(
+			newSignalNode := createSimpleNode(
 				nodeIdCounter,
 				maxNode,
+				"km_jump",
 			)
 			OSMUtil.InsertNewNodeWithReferenceNode(
 				osmData,
@@ -207,10 +211,10 @@ func searchSpeedLimit(
 			return errors.Wrap(err, "failed to map speed limit "+speed.Kilometrierung.Value)
 		}
 
-		newSignalNode := createNewSpeedLimit(
+		newSignalNode := createDirectionalNode(
 			nodeIdCounter,
 			maxNode,
-			speed,
+			"spl",
 			isFalling,
 		)
 		OSMUtil.InsertNewNodeWithReferenceNode(
@@ -243,9 +247,10 @@ func mapSlopes(
 				return errors.Wrap(err, "failed to map slope "+slope.Kilometrierung.Value)
 			}
 
-			newSignalNode := createNewSlope(
+			newSignalNode := createSimpleNode(
 				nodeIdCounter,
 				maxNode,
+				"slope",
 			)
 			OSMUtil.InsertNewNodeWithReferenceNode(
 				osmData,
@@ -278,9 +283,10 @@ func mapTunnels(
 				return errors.Wrap(err, "failed to map tunnel "+slope.Kilometrierung.Value)
 			}
 
-			newSignalNode := createNewTunnel(
+			newSignalNode := createSimpleNode(
 				nodeIdCounter,
 				maxNode,
+				"tunnel",
 			)
 			OSMUtil.InsertNewNodeWithReferenceNode(
 				osmData,
@@ -353,10 +359,10 @@ func searchEoTD(
 			return errors.Wrap(err, "failed to map eotd "+eotd.Kilometrierung.Value)
 		}
 
-		newSignalNode := createNewEoTD(
+		newSignalNode := createDirectionalNode(
 			nodeIdCounter,
 			maxNode,
-			eotd,
+			"eotd",
 			isFalling,
 		)
 		OSMUtil.InsertNewNodeWithReferenceNode(
@@ -389,9 +395,10 @@ func mapLineSwitches(
 				return errors.Wrap(err, "failed to map line switche "+line_switch.Kilometrierung.Value)
 			}
 
-			newSignalNode := createNewLineSwitch(
+			newSignalNode := createSimpleNode(
 				nodeIdCounter,
 				maxNode,
+				"line_switch",
 			)
 			OSMUtil.InsertNewNodeWithReferenceNode(
 				osmData,
