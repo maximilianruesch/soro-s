@@ -192,7 +192,7 @@ func MapDB(
 								elementsNotFound,
 							)
 							if err != nil {
-								return errors.Wrap(err, "failed finding approach signals")
+								return errors.Wrap(err, "failed finding "+signalType)
 							}
 						}
 
@@ -215,6 +215,16 @@ func MapDB(
 						)
 						if err != nil {
 							return errors.Wrap(err, "failed finding speed limits")
+						}
+						err = mapEoTDs(
+							&osm,
+							&anchors,
+							&newNodeIdCounter,
+							*knoten,
+							elementsNotFound,
+						)
+						if err != nil {
+							return errors.Wrap(err, "failed finding end of train detectors")
 						}
 						err = mapSlopes(
 							&osm,
