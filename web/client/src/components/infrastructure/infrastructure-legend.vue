@@ -16,7 +16,7 @@
             <div class="infrastructure-map-reset">
                 <a
                     href="/"
-                    @click="onReset"
+                    @click.prevent="$emit('reset')"
                 >
                     Reset
                 </a>
@@ -106,11 +106,6 @@ export default defineComponent({
 
         getElementLabel(elementType: string) {
             return ElementTypeLabels[elementType] ?? elementType;
-        },
-
-        onReset(event: Event) {
-            event.preventDefault();
-            this.$emit('reset');
         },
 
         emitChange(event: Event) {
