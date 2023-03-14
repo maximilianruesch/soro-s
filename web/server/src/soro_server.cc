@@ -1,3 +1,5 @@
+#include <fstream>
+
 #include "soro/server/soro_server.h"
 
 #include <chrono>
@@ -17,6 +19,7 @@
 
 
 #include "soro/server/http_server.h"
+
 
 namespace soro::server {
 
@@ -290,10 +293,68 @@ void serve_search(
   res.result(http::status::ok);
 }
 
+
+std::unordered_map<std::string, std::vector<osm_object>> parse_search_file(
+    const fs::path& file) {
+
+    std::ifstream ifs(file.c_str());
+    std::stringstream buffer;
+    buffer << ifs.rdbuf();
+
+    std::string s = buffer.str();
+
+    rapidjson::Document doc;
+    doc.Parse(s.c_str());
+
+    std::unordered_map<std::string, std::vector<osm_object>> ret;
+
+    for (auto elem = doc.MemberBegin(); elem != doc.MemberEnd(); ++elem) {
+      auto const key = std::string(elem->name.GetString());
+
+      osm_type type = osm_type::UNDEFINED;
+      if (key == "stations")
+          type = osm_type::STATION;
+      else if (key == "halts")
+          type = osm_type::HALT;
+      else if (key == "signals")
+          type = osm_type::MAIN_SIGNAL;
+
+      auto const& val = elem->value.GetObject();
+      for (auto entry = val.MemberBegin(); entry != val.MemberEnd(); ++entry) {
+          auto const& v = entry->value.GetObject();
+         
+          osm_object obj;
+
+          obj.lat_ = std::stod(v["lat"].GetString());
+          obj.lon_ = std::stod(v["lon"].GetString());
+          obj.name_ = v["name"].GetString();
+          obj.type_ = type;
+
+          ret[key].push_back(obj);
+      }
+    }
+
+    return ret;
+
+}
+
+
 server::server(std::string const& address, port_t const port,
                fs::path const& server_resource_dir, bool const test,
     const std::unordered_map<std::string, std::vector<soro::server::osm_object>>& osm_halts) {
   initialize_serve_contexts(contexts_, server_resource_dir);
+
+
+  std::unordered_map<std::string, std::unordered_map<std::string, std::vector<osm_object>>> search_indices;
+
+  const auto json_path = server_resource_dir / "resources" / "search_indices";
+  if (fs::exists(json_path)) {
+      for (auto&& dir_entry :
+           fs::directory_iterator{json_path}) {
+          search_indices[dir_entry.path().filename().string()] = parse_search_file(dir_entry.path());
+      }
+  }
+
 
   serve_forever(
       address, port,
