@@ -184,7 +184,7 @@ void initialize_serve_contexts(server::serve_contexts& contexts,
 void serve_search(
     request_t const& req, response_t& res,
     const std::unordered_map<
-        std::string, std::vector<soro::server::osm_object>>& osm_objects) {
+        std::string, std::unordered_map<osm_type, std::vector<soro::server::osm_object>>>& osm_objects) {
   namespace rj = rapidjson;
 
   std::string body;
@@ -259,7 +259,7 @@ void serve_search(
 }
 
 
-std::unordered_map<std::string, std::vector<osm_object>> parse_search_file(
+std::unordered_map<osm_type, std::vector<osm_object>> parse_search_file(
     const fs::path& file) {
 
     std::ifstream ifs(file.c_str());
@@ -271,7 +271,7 @@ std::unordered_map<std::string, std::vector<osm_object>> parse_search_file(
     rapidjson::Document doc;
     doc.Parse(s.c_str());
 
-    std::unordered_map<std::string, std::vector<osm_object>> ret;
+    std::unordered_map<osm_type, std::vector<osm_object>> ret;
 
     for (auto elem = doc.MemberBegin(); elem != doc.MemberEnd(); ++elem) {
       auto const key = std::string(elem->name.GetString());
@@ -295,7 +295,7 @@ std::unordered_map<std::string, std::vector<osm_object>> parse_search_file(
           obj.name_ = v["name"].GetString();
           obj.type_ = type;
 
-          ret[key].push_back(obj);
+          ret[type].push_back(obj);
       }
     }
 
@@ -305,18 +305,16 @@ std::unordered_map<std::string, std::vector<osm_object>> parse_search_file(
 
 
 server::server(std::string const& address, port_t const port,
-               fs::path const& server_resource_dir, bool const test,
-    const std::unordered_map<std::string, std::vector<soro::server::osm_object>>& osm_halts) {
+               fs::path const& server_resource_dir, bool const test) {
   initialize_serve_contexts(contexts_, server_resource_dir);
 
 
-  std::unordered_map<std::string, std::unordered_map<std::string, std::vector<osm_object>>> search_indices;
+  std::unordered_map<std::string, std::unordered_map<osm_type, std::vector<osm_object>>> search_indices;
 
   const auto json_path = server_resource_dir / "resources" / "search_indices";
   if (fs::exists(json_path)) {
-      for (auto&& dir_entry :
-           fs::directory_iterator{json_path}) {
-          search_indices[dir_entry.path().filename().string()] = parse_search_file(dir_entry.path());
+      for (auto&& dir_entry : fs::directory_iterator{json_path}) {
+          search_indices[dir_entry.path().filename().replace_extension().string()] = parse_search_file(dir_entry.path());
       }
   }
 
@@ -359,7 +357,7 @@ server::server(std::string const& address, port_t const port,
             break;
           }
           case http::verb::post: {
-            if (should_send_pos) serve_search(req, res, osm_halts);
+            if (should_send_pos) serve_search(req, res, search_indices);
 
             break;
           }
