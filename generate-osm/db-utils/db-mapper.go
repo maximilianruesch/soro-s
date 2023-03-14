@@ -47,8 +47,8 @@ func MapDB(
 
 		fmt.Printf("Mapping line %s \n", line)
 
-		var notFoundSignalsFalling []*Signal = []*Signal{}
-		var notFoundSignalsRising []*Signal = []*Signal{}
+		var notFoundSignalsFalling []*NamedSimpleElement = []*NamedSimpleElement{}
+		var notFoundSignalsRising []*NamedSimpleElement = []*NamedSimpleElement{}
 		var notFoundSwitches []*Weichenanfang = []*Weichenanfang{}
 		var foundAnchorCount = 0
 		for _, stelle := range dbIss.Betriebsstellen {
@@ -114,11 +114,12 @@ func MapDB(
 			for _, stelle := range issWithMappedSignals.Betriebsstellen {
 				for _, abschnitt := range stelle.Abschnitte {
 					for _, knoten := range abschnitt.Knoten {
-						err = mapUnanchoredMainSignals(
+						err = mapUnanchoredSignals(
 							&osm,
 							&anchors,
 							&newNodeIdCounter,
 							*knoten,
+							"ms",
 							elementsNotFound,
 						)
 						if err != nil {
@@ -142,21 +143,23 @@ func MapDB(
 			for _, stelle := range dbIss.Betriebsstellen {
 				for _, abschnitt := range stelle.Abschnitte {
 					for _, knoten := range abschnitt.Knoten {
-						err = mapApproachSignals(
+						err = mapUnanchoredSignals(
 							&osm,
 							&anchors,
 							&newNodeIdCounter,
 							*knoten,
+							"as",
 							elementsNotFound,
 						)
 						if err != nil {
 							return errors.Wrap(err, "failed finding approach signals")
 						}
-						err = mapProtectionSignals(
+						err = mapUnanchoredSignals(
 							&osm,
 							&anchors,
 							&newNodeIdCounter,
 							*knoten,
+							"ps",
 							elementsNotFound,
 						)
 						if err != nil {

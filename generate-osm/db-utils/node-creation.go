@@ -29,18 +29,11 @@ func createDirectionalNode(
 	if !isFalling {
 		directionString = "rising"
 	}
-	*id++
 
-	return OSMUtil.Node{
-		Id:  strconv.Itoa(*id),
-		Lat: node.Lat,
-		Lon: node.Lon,
-		Tag: []*OSMUtil.Tag{
-			{XMLName: XML_TAG_NAME_CONST, K: "type", V: "element"},
-			{XMLName: XML_TAG_NAME_CONST, K: "subtype", V: subtype},
-			{XMLName: XML_TAG_NAME_CONST, K: "direction", V: directionString},
-		},
-	}
+	newNode := createSimpleNode(id, node, subtype)
+	newNode.Tag = append(newNode.Tag, &OSMUtil.Tag{XMLName: XML_TAG_NAME_CONST, K: "direction", V: directionString})
+
+	return newNode
 }
 
 func createNamedSimpleNode(
