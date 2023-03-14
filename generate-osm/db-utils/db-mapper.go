@@ -132,6 +132,31 @@ func MapDB(
 				}
 			}
 
+			for _, stelle := range dbIss.Betriebsstellen {
+				for _, abschnitt := range stelle.Abschnitte {
+					err = mapApproachSignals(
+						&osm,
+						&anchors,
+						&newNodeIdCounter,
+						*abschnitt,
+						elementsNotFound,
+					)
+					if err != nil {
+						return errors.Wrap(err, "failed finding approach signals")
+					}
+					err = mapProtectionSignals(
+						&osm,
+						&anchors,
+						&newNodeIdCounter,
+						*abschnitt,
+						elementsNotFound,
+					)
+					if err != nil {
+						return errors.Wrap(err, "failed finding protection signals")
+					}
+				}
+			}
+
 			for elementType, nameList := range elementsNotFound {
 				fmt.Printf("Could not find %s: %v \n", elementType, nameList)
 			}

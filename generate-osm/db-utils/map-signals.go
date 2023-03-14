@@ -160,7 +160,7 @@ func insertNewHauptsignal(
 		}
 	}
 
-	newSignalNode := createNewHauptsignal(
+	newSignalNode := createNewMainSignal(
 		newId,
 		signalNode,
 		signal,
@@ -238,10 +238,162 @@ func searchUnanchoredMainSignal(
 				elementsNotFound["main signals"] = append(elementsNotFound["main signals"], signal.Name.Value)
 				continue
 			}
-			return errors.Wrap(err, "failed to map switch "+signal.Name.Value)
+			return errors.Wrap(err, "failed to map main signal  "+signal.Name.Value)
 		}
 
-		newSignalNode := createNewHauptsignal(
+		newSignalNode := createNewMainSignal(
+			nodeIdCounter,
+			maxNode,
+			signal,
+			isFalling,
+		)
+		OSMUtil.InsertNewNodeWithReferenceNode(
+			osmData,
+			&newSignalNode,
+			maxNode,
+		)
+	}
+	return nil
+}
+
+// mapApproachSignals processes all approach signals.
+func mapApproachSignals(
+	osmData *OSMUtil.Osm,
+	anchors *map[float64]([]*OSMUtil.Node),
+	nodeIdCounter *int,
+	abschnitt Spurplanabschnitt,
+	elementsNotFound map[string]([]string),
+) error {
+	for _, knoten := range abschnitt.Knoten {
+		err := searchApproachSignal(
+			osmData,
+			anchors,
+			nodeIdCounter,
+			*knoten,
+			elementsNotFound,
+			true)
+		if err != nil {
+			return errors.Wrap(err, "failed finding falling approach signal")
+		}
+		err = searchApproachSignal(
+			osmData,
+			anchors,
+			nodeIdCounter,
+			*knoten,
+			elementsNotFound,
+			false)
+		if err != nil {
+			return errors.Wrap(err, "failed finding falling approach signal")
+		}
+	}
+	return nil
+}
+
+// searchApproachSignal searches for a Node, that best fits the Signal to be mapped.
+// This search is based on at least two anchored elements and their respective distance to the signal at hand.
+// If no ore only one anchor could be identified, or all anchors are otherwise insufficient, no mapping can be done.
+func searchApproachSignal(
+	osmData *OSMUtil.Osm,
+	anchors *map[float64]([]*OSMUtil.Node),
+	nodeIdCounter *int,
+	knoten Spurplanknoten,
+	elementsNotFound map[string]([]string),
+	isFalling bool,
+) error {
+	signals := knoten.VorsigF
+	if !isFalling {
+		signals = knoten.VorsigS
+	}
+
+	for _, signal := range signals {
+		kilometrage, _ := formatKilometrageStringInFloat(signal.KnotenTyp.Kilometrierung.Value)
+
+		maxNode, err := findBestOSMNode(osmData, anchors, kilometrage)
+		if err != nil {
+			if errors.Cause(err) == errNoSuitableAnchors {
+				elementsNotFound["approach signals"] = append(elementsNotFound["approach signals"], signal.Name.Value)
+				continue
+			}
+			return errors.Wrap(err, "failed to map approach signal "+signal.Name.Value)
+		}
+
+		newSignalNode := createNewApproachSignal(
+			nodeIdCounter,
+			maxNode,
+			signal,
+			isFalling,
+		)
+		OSMUtil.InsertNewNodeWithReferenceNode(
+			osmData,
+			&newSignalNode,
+			maxNode,
+		)
+	}
+	return nil
+}
+
+// mapApproachSignals processes all approach signals.
+func mapProtectionSignals(
+	osmData *OSMUtil.Osm,
+	anchors *map[float64]([]*OSMUtil.Node),
+	nodeIdCounter *int,
+	abschnitt Spurplanabschnitt,
+	elementsNotFound map[string]([]string),
+) error {
+	for _, knoten := range abschnitt.Knoten {
+		err := searchProtectionSignal(
+			osmData,
+			anchors,
+			nodeIdCounter,
+			*knoten,
+			elementsNotFound,
+			true)
+		if err != nil {
+			return errors.Wrap(err, "failed finding falling protection signal")
+		}
+		err = searchProtectionSignal(
+			osmData,
+			anchors,
+			nodeIdCounter,
+			*knoten,
+			elementsNotFound,
+			false)
+		if err != nil {
+			return errors.Wrap(err, "failed finding falling protection signal")
+		}
+	}
+	return nil
+}
+
+// searchApproachSignal searches for a Node, that best fits the Signal to be mapped.
+// This search is based on at least two anchored elements and their respective distance to the signal at hand.
+// If no ore only one anchor could be identified, or all anchors are otherwise insufficient, no mapping can be done.
+func searchProtectionSignal(
+	osmData *OSMUtil.Osm,
+	anchors *map[float64]([]*OSMUtil.Node),
+	nodeIdCounter *int,
+	knoten Spurplanknoten,
+	elementsNotFound map[string]([]string),
+	isFalling bool,
+) error {
+	signals := knoten.SchutzsigF
+	if !isFalling {
+		signals = knoten.SchutzsigS
+	}
+
+	for _, signal := range signals {
+		kilometrage, _ := formatKilometrageStringInFloat(signal.KnotenTyp.Kilometrierung.Value)
+
+		maxNode, err := findBestOSMNode(osmData, anchors, kilometrage)
+		if err != nil {
+			if errors.Cause(err) == errNoSuitableAnchors {
+				elementsNotFound["protection signals"] = append(elementsNotFound["protection signals"], signal.Name.Value)
+				continue
+			}
+			return errors.Wrap(err, "failed to map protection signal "+signal.Name.Value)
+		}
+
+		newSignalNode := createNewProtectionSignal(
 			nodeIdCounter,
 			maxNode,
 			signal,
