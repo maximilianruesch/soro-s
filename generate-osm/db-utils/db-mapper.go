@@ -85,7 +85,7 @@ func MapDB(
 
 		numElementsNotFound := len(notFoundSignalsFalling) + len(notFoundSignalsRising) + len(notFoundSwitches)
 		percentAnchored := ((float64)(foundAnchorCount) / ((float64)(foundAnchorCount) + (float64)(numElementsNotFound))) * 100.0
-		fmt.Printf("Could anchor %d/%d (%f %%) of signals and switches. \n", foundAnchorCount, foundAnchorCount+numElementsNotFound, percentAnchored)
+		fmt.Printf("Could anchor %d/%d (%f%%) of signals and switches. \n", foundAnchorCount, foundAnchorCount+numElementsNotFound, percentAnchored)
 
 		totalNumberOfAnchors += foundAnchorCount
 		totalElementsNotFound += numElementsNotFound
@@ -140,31 +140,62 @@ func MapDB(
 				}
 			}
 
+			simpleElements := make(map[string]([]*SimpleElement))
+			namedSimpleElements := make(map[string]([]*NamedSimpleElement))
+
 			for _, stelle := range dbIss.Betriebsstellen {
 				for _, abschnitt := range stelle.Abschnitte {
 					for _, knoten := range abschnitt.Knoten {
-						err = mapUnanchoredSignals(
-							&osm,
-							&anchors,
-							&newNodeIdCounter,
-							*knoten,
-							"as",
-							elementsNotFound,
-						)
-						if err != nil {
-							return errors.Wrap(err, "failed finding approach signals")
+						simpleElements["line_switch"] = knoten.Streckenwechsel0
+						simpleElements["km_jump"] = knoten.KmSprungAnf
+						simpleElements["border"] = knoten.BetriebsStGr
+						simpleElements["bumper"] = knoten.Prellbock
+
+						namedSimpleElements["tunnel"] = knoten.Tunnel
+						namedSimpleElements["track_end"] = knoten.Gleisende
+
+						for elementName, elementList := range simpleElements {
+							err = mapSimpleElement(
+								&osm,
+								anchors,
+								&newNodeIdCounter,
+								*knoten,
+								elementName,
+								elementList,
+								elementsNotFound,
+							)
+							if err != nil {
+								return errors.Wrap(err, "failed finding "+elementName)
+							}
 						}
-						err = mapUnanchoredSignals(
-							&osm,
-							&anchors,
-							&newNodeIdCounter,
-							*knoten,
-							"ps",
-							elementsNotFound,
-						)
-						if err != nil {
-							return errors.Wrap(err, "failed finding protection signals")
+						for elementName, elementList := range namedSimpleElements {
+							err = mapNamedSimpleElement(
+								&osm,
+								anchors,
+								&newNodeIdCounter,
+								*knoten,
+								elementName,
+								elementList,
+								elementsNotFound,
+							)
+							if err != nil {
+								return errors.Wrap(err, "failed finding "+elementName)
+							}
 						}
+						for _, signalType := range []string{"as", "ps"} {
+							err = mapUnanchoredSignals(
+								&osm,
+								&anchors,
+								&newNodeIdCounter,
+								*knoten,
+								signalType,
+								elementsNotFound,
+							)
+							if err != nil {
+								return errors.Wrap(err, "failed finding approach signals")
+							}
+						}
+
 						err = mapHalts(
 							&osm,
 							&anchors,
@@ -174,46 +205,6 @@ func MapDB(
 						)
 						if err != nil {
 							return errors.Wrap(err, "failed finding halts")
-						}
-						err = mapBorder(
-							&osm,
-							&anchors,
-							&newNodeIdCounter,
-							*knoten,
-							elementsNotFound,
-						)
-						if err != nil {
-							return errors.Wrap(err, "failed finding borders")
-						}
-						err = mapBumper(
-							&osm,
-							&anchors,
-							&newNodeIdCounter,
-							*knoten,
-							elementsNotFound,
-						)
-						if err != nil {
-							return errors.Wrap(err, "failed finding bumpers")
-						}
-						err = mapTrackEnd(
-							&osm,
-							&anchors,
-							&newNodeIdCounter,
-							*knoten,
-							elementsNotFound,
-						)
-						if err != nil {
-							return errors.Wrap(err, "failed finding track ends")
-						}
-						err = mapKmJump(
-							&osm,
-							&anchors,
-							&newNodeIdCounter,
-							*knoten,
-							elementsNotFound,
-						)
-						if err != nil {
-							return errors.Wrap(err, "failed finding kilometrage jumps")
 						}
 						err = mapSpeedLimits(
 							&osm,
@@ -235,36 +226,6 @@ func MapDB(
 						if err != nil {
 							return errors.Wrap(err, "failed finding slopes")
 						}
-						err = mapTunnels(
-							&osm,
-							&anchors,
-							&newNodeIdCounter,
-							*knoten,
-							elementsNotFound,
-						)
-						if err != nil {
-							return errors.Wrap(err, "failed finding tunnels")
-						}
-						err = mapEoTDs(
-							&osm,
-							&anchors,
-							&newNodeIdCounter,
-							*knoten,
-							elementsNotFound,
-						)
-						if err != nil {
-							return errors.Wrap(err, "failed finding end of train detectors")
-						}
-						err = mapLineSwitches(
-							&osm,
-							&anchors,
-							&newNodeIdCounter,
-							*knoten,
-							elementsNotFound,
-						)
-						if err != nil {
-							return errors.Wrap(err, "failed finding line switches")
-						}
 					}
 				}
 			}
@@ -285,7 +246,7 @@ func MapDB(
 	}
 
 	totalPercentAnchored := ((float64)(totalNumberOfAnchors) / ((float64)(totalNumberOfAnchors) + (float64)(totalElementsNotFound))) * 100.0
-	fmt.Printf("Could in total anchor %d/%d (%f %%) of signals and switches. \n", totalNumberOfAnchors, totalNumberOfAnchors+totalElementsNotFound, totalPercentAnchored)
+	fmt.Printf("Could in total anchor %d/%d (%f%%) of signals and switches. \n", totalNumberOfAnchors, totalNumberOfAnchors+totalElementsNotFound, totalPercentAnchored)
 	fmt.Printf("Lines with no anchors: %d out of %d (%v)\n", len(linesWithNoAnchors), len(refs), linesWithNoAnchors)
 	fmt.Printf("Lines with only one anchor: %d out of %d (%v)\n", len(linesWithOneAnchor), len(refs), linesWithOneAnchor)
 	return nil

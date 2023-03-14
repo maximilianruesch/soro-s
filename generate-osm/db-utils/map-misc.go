@@ -6,143 +6,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// mapBumper processes all bumpers.
-func mapBumper(
-	osmData *OSMUtil.Osm,
-	anchors *map[float64]([]*OSMUtil.Node),
-	nodeIdCounter *int,
-	knoten Spurplanknoten,
-	elementsNotFound map[string]([]string),
-) error {
-	for _, bumper := range knoten.Prellbock {
-		kilometrage, _ := formatKilometrageStringInFloat(bumper.KnotenTyp.Kilometrierung.Value)
-
-		maxNode, err := findBestOSMNode(osmData, anchors, kilometrage)
-		if err != nil {
-			if errors.Cause(err) == errNoSuitableAnchors {
-				elementsNotFound["bumpers"] = append(elementsNotFound["bumpers"], bumper.Kilometrierung.Value)
-				continue
-			}
-			return errors.Wrap(err, "failed to map bumper "+bumper.Kilometrierung.Value)
-		}
-
-		newSignalNode := createSimpleNode(
-			nodeIdCounter,
-			maxNode,
-			"bumper",
-		)
-		OSMUtil.InsertNewNodeWithReferenceNode(
-			osmData,
-			&newSignalNode,
-			maxNode,
-		)
-	}
-	return nil
-}
-
-// mapBumper processes all bumpers.
-func mapBorder(
-	osmData *OSMUtil.Osm,
-	anchors *map[float64]([]*OSMUtil.Node),
-	nodeIdCounter *int,
-	knoten Spurplanknoten,
-	elementsNotFound map[string]([]string),
-) error {
-	for _, border := range knoten.BetriebsStGr {
-		kilometrage, _ := formatKilometrageStringInFloat(border.KnotenTyp.Kilometrierung.Value)
-
-		maxNode, err := findBestOSMNode(osmData, anchors, kilometrage)
-		if err != nil {
-			if errors.Cause(err) == errNoSuitableAnchors {
-				elementsNotFound["borders"] = append(elementsNotFound["borders"], border.Kilometrierung.Value)
-				continue
-			}
-			return errors.Wrap(err, "failed to map border "+border.Kilometrierung.Value)
-		}
-
-		newSignalNode := createSimpleNode(
-			nodeIdCounter,
-			maxNode,
-			"border",
-		)
-		OSMUtil.InsertNewNodeWithReferenceNode(
-			osmData,
-			&newSignalNode,
-			maxNode,
-		)
-	}
-	return nil
-}
-
-// mapTrackEnd processes all track ends.
-func mapTrackEnd(
-	osmData *OSMUtil.Osm,
-	anchors *map[float64]([]*OSMUtil.Node),
-	nodeIdCounter *int,
-	knoten Spurplanknoten,
-	elementsNotFound map[string]([]string),
-) error {
-	for _, track_end := range knoten.Gleisende {
-		kilometrage, _ := formatKilometrageStringInFloat(track_end.KnotenTyp.Kilometrierung.Value)
-
-		maxNode, err := findBestOSMNode(osmData, anchors, kilometrage)
-		if err != nil {
-			if errors.Cause(err) == errNoSuitableAnchors {
-				elementsNotFound["track ends"] = append(elementsNotFound["track ends"], track_end.Name.Value)
-				continue
-			}
-			return errors.Wrap(err, "failed to map track end "+track_end.Name.Value)
-		}
-
-		newSignalNode := createNamedSimpleNode(
-			nodeIdCounter,
-			maxNode,
-			"track_end",
-			track_end.Name.Value,
-		)
-		OSMUtil.InsertNewNodeWithReferenceNode(
-			osmData,
-			&newSignalNode,
-			maxNode,
-		)
-	}
-	return nil
-}
-
-// mapKmJump processes all kilometrage jumps.
-func mapKmJump(
-	osmData *OSMUtil.Osm,
-	anchors *map[float64]([]*OSMUtil.Node),
-	nodeIdCounter *int,
-	knoten Spurplanknoten,
-	elementsNotFound map[string]([]string),
-) error {
-	for _, jump := range knoten.KmSprungAnf {
-		kilometrage, _ := formatKilometrageStringInFloat(jump.KnotenTyp.Kilometrierung.Value)
-
-		maxNode, err := findBestOSMNode(osmData, anchors, kilometrage)
-		if err != nil {
-			if errors.Cause(err) == errNoSuitableAnchors {
-				elementsNotFound["kilometrage jumps"] = append(elementsNotFound["kilometrage jumps"], jump.Kilometrierung.Value)
-				continue
-			}
-			return errors.Wrap(err, "failed to map kilometrage jump "+jump.Kilometrierung.Value)
-		}
-
-		newSignalNode := createSimpleNode(
-			nodeIdCounter,
-			maxNode,
-			"km_jump",
-		)
-		OSMUtil.InsertNewNodeWithReferenceNode(
-			osmData,
-			&newSignalNode,
-			maxNode,
-		)
-	}
-	return nil
-}
-
 // mapSpeedLimits processes all speed limits.
 func mapSpeedLimits(
 	osmData *OSMUtil.Osm,
@@ -203,15 +66,16 @@ func searchSpeedLimit(
 			return errors.Wrap(err, "failed to map speed limit "+speed.Kilometrierung.Value)
 		}
 
-		newSignalNode := createDirectionalNode(
+		newNode := createDirectionalNode(
 			nodeIdCounter,
 			maxNode,
 			"spl",
 			isFalling,
 		)
+		newNode.Tag = append(newNode.Tag, &OSMUtil.Tag{XMLName: XML_TAG_NAME_CONST, K: "speed", V: speed.Geschwindigkeit.Value})
 		OSMUtil.InsertNewNodeWithReferenceNode(
 			osmData,
-			&newSignalNode,
+			&newNode,
 			maxNode,
 		)
 	}
@@ -238,49 +102,16 @@ func mapSlopes(
 			return errors.Wrap(err, "failed to map slope "+slope.Kilometrierung.Value)
 		}
 
-		newSignalNode := createSimpleNode(
+		newNode := createSimpleNode(
 			nodeIdCounter,
 			maxNode,
 			"slope",
 		)
+		newNode.Tag = append(newNode.Tag, &OSMUtil.Tag{XMLName: XML_TAG_NAME_CONST, K: "rising", V: slope.Rising.Value})
+		newNode.Tag = append(newNode.Tag, &OSMUtil.Tag{XMLName: XML_TAG_NAME_CONST, K: "falling", V: slope.Falling.Value})
 		OSMUtil.InsertNewNodeWithReferenceNode(
 			osmData,
-			&newSignalNode,
-			maxNode,
-		)
-	}
-	return nil
-}
-
-// mapSlopes processes all slopes.
-func mapTunnels(
-	osmData *OSMUtil.Osm,
-	anchors *map[float64]([]*OSMUtil.Node),
-	nodeIdCounter *int,
-	knoten Spurplanknoten,
-	elementsNotFound map[string]([]string),
-) error {
-	for _, tunnel := range knoten.Tunnel {
-		kilometrage, _ := formatKilometrageStringInFloat(tunnel.KnotenTyp.Kilometrierung.Value)
-
-		maxNode, err := findBestOSMNode(osmData, anchors, kilometrage)
-		if err != nil {
-			if errors.Cause(err) == errNoSuitableAnchors {
-				elementsNotFound["tunnels"] = append(elementsNotFound["tunnels"], tunnel.Name.Value)
-				continue
-			}
-			return errors.Wrap(err, "failed to map tunnel "+tunnel.Name.Value)
-		}
-
-		newSignalNode := createNamedSimpleNode(
-			nodeIdCounter,
-			maxNode,
-			"tunnel",
-			tunnel.Name.Value,
-		)
-		OSMUtil.InsertNewNodeWithReferenceNode(
-			osmData,
-			&newSignalNode,
+			&newNode,
 			maxNode,
 		)
 	}
@@ -347,7 +178,7 @@ func searchEoTD(
 			return errors.Wrap(err, "failed to map eotd "+eotd.Kilometrierung.Value)
 		}
 
-		newSignalNode := createDirectionalNode(
+		newNode := createDirectionalNode(
 			nodeIdCounter,
 			maxNode,
 			"eotd",
@@ -355,41 +186,99 @@ func searchEoTD(
 		)
 		OSMUtil.InsertNewNodeWithReferenceNode(
 			osmData,
-			&newSignalNode,
+			&newNode,
 			maxNode,
 		)
 	}
 	return nil
 }
 
-// mapLineSwitches processes all line switches.
-func mapLineSwitches(
+func mapSimpleElement(
 	osmData *OSMUtil.Osm,
-	anchors *map[float64]([]*OSMUtil.Node),
+	anchors map[float64]([]*OSMUtil.Node),
 	nodeIdCounter *int,
 	knoten Spurplanknoten,
+	elementType string,
+	elements []*SimpleElement,
 	elementsNotFound map[string]([]string),
 ) error {
-	for _, line_switch := range knoten.Streckenwechsel0 {
-		kilometrage, _ := formatKilometrageStringInFloat(line_switch.KnotenTyp.Kilometrierung.Value)
+	var elementTypeLong string
+	switch elementType {
+	case "line_switch":
+		elementTypeLong = "line switch"
+	case "km_jump":
+		elementTypeLong = "kilometrage jump"
+	case "border":
+		elementTypeLong = "border"
+	case "bumper":
+		elementTypeLong = "bumper"
+	default:
+		return errors.New("failed to identify" + elementType + " as simple element.")
+	}
 
-		maxNode, err := findBestOSMNode(osmData, anchors, kilometrage)
+	for _, element := range elements {
+		kilometrage, _ := formatKilometrageStringInFloat(element.KnotenTyp.Kilometrierung.Value)
+
+		maxNode, err := findBestOSMNode(osmData, &anchors, kilometrage)
 		if err != nil {
 			if errors.Cause(err) == errNoSuitableAnchors {
-				elementsNotFound["line switches"] = append(elementsNotFound["line switches"], line_switch.Kilometrierung.Value)
+				elementsNotFound[elementTypeLong+"s"] = append(elementsNotFound[elementTypeLong+"s"], element.Kilometrierung.Value)
 				continue
 			}
-			return errors.Wrap(err, "failed to map line switche "+line_switch.Kilometrierung.Value)
+			return errors.Wrap(err, "failed to map line switche "+element.Kilometrierung.Value)
 		}
 
-		newSignalNode := createSimpleNode(
+		newNode := createSimpleNode(
 			nodeIdCounter,
 			maxNode,
-			"line_switch",
+			elementType,
 		)
 		OSMUtil.InsertNewNodeWithReferenceNode(
 			osmData,
-			&newSignalNode,
+			&newNode,
+			maxNode,
+		)
+	}
+	return nil
+}
+
+func mapNamedSimpleElement(
+	osmData *OSMUtil.Osm,
+	anchors map[float64]([]*OSMUtil.Node),
+	nodeIdCounter *int,
+	knoten Spurplanknoten,
+	elementType string,
+	elements []*NamedSimpleElement,
+	elementsNotFound map[string]([]string),
+) error {
+	var elementTypeLong string
+	if elementType == "tunnel" || elementType == "track_end" {
+		elementTypeLong = elementType
+	} else {
+		return errors.New("failed to identify " + elementType + " as named simple element.")
+	}
+
+	for _, element := range elements {
+		kilometrage, _ := formatKilometrageStringInFloat(element.KnotenTyp.Kilometrierung.Value)
+
+		maxNode, err := findBestOSMNode(osmData, &anchors, kilometrage)
+		if err != nil {
+			if errors.Cause(err) == errNoSuitableAnchors {
+				elementsNotFound[elementTypeLong+"s"] = append(elementsNotFound[elementTypeLong+"s"], element.Name.Value)
+				continue
+			}
+			return errors.Wrap(err, "failed to map line switche "+element.Name.Value)
+		}
+
+		newNode := createNamedSimpleNode(
+			nodeIdCounter,
+			maxNode,
+			elementType,
+			element.Name.Value,
+		)
+		OSMUtil.InsertNewNodeWithReferenceNode(
+			osmData,
+			&newNode,
 			maxNode,
 		)
 	}
