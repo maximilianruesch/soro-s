@@ -112,7 +112,7 @@ func generateOsm(generateLines bool, mapDB bool, inputFile string, outputFile st
 			return errors.Wrap(err, "failed to create lines folder")
 		}
 
-		for _, refId := range []string{"3601"} {
+		for _, refId := range refs {
 			lineOsmFile, err := filepath.Abs(tempLinesDir + "/" + refId + ".xml")
 			if err != nil {
 				return errors.Wrap(err, "failed to get line xml file path for ref: "+refId)
@@ -139,7 +139,7 @@ func generateOsm(generateLines bool, mapDB bool, inputFile string, outputFile st
 			var haltList map[string]osmUtils.Halt
 			var mainSignalList map[string]osmUtils.Signal
 			var otherSignalList map[string]osmUtils.Signal
-			haltList, mainSignalList, otherSignalList, err = dbUtils.MapDB(relevant_refs, tempLinesDir, tempDBLinesDir)
+			haltList, mainSignalList, otherSignalList, maxNewNodeID, err = dbUtils.MapDB(relevant_refs, tempLinesDir, tempDBLinesDir)
 			if err != nil {
 				return errors.Wrap(err, "failed mapping DB data")
 			}

@@ -48,13 +48,13 @@ func generateSearchFile(osm Osm) (stationsList map[string]Station, stationHaltOs
 	stationHaltsNodes := make([]*Node, 0)
 
 	for _, node := range osm.Node {
-		railwayTag, err := FindTagOnNode(node, "railway")
-		if err != nil {
+		railwayTag, railWayTagNotFound := FindTagOnNode(node, "railway")
+		if railWayTagNotFound != nil {
 			continue
 		}
 
-		name, err := FindTagOnNode(node, "name")
-		if err != nil {
+		name, nameNotFound := FindTagOnNode(node, "name")
+		if nameNotFound != nil {
 			continue
 		}
 
