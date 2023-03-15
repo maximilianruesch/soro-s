@@ -13,18 +13,21 @@ func SortAndRemoveDuplicatesOsm(osmData *Osm) {
 	removeDuplicatesOsm(osmData)
 }
 
+// SortOsm takes arbitrarily built OSM-data and ensures a consistent set of OSM-data as output.
+// This is done by first sorting the lists of Nodes, Ways and Relations according to their ID.
+// Then, all duplicate Nodes, Ways and Relations are removed and only the first occurence is kept.
 func sortOsm(osmData *Osm) {
 	sort.Slice(osmData.Way, func(i, j int) bool {
 		id1, _ := strconv.Atoi(osmData.Way[i].Id)
 		id2, _ := strconv.Atoi(osmData.Way[j].Id)
 		return id1 < id2
 	})
-	sort.Slice(osmData.Node, func(i, j int) bool {
+	sort.SliceStable(osmData.Node, func(i, j int) bool {
 		id1, _ := strconv.Atoi(osmData.Node[i].Id)
 		id2, _ := strconv.Atoi(osmData.Node[j].Id)
 		return id1 < id2
 	})
-	sort.Slice(osmData.Relation, func(i, j int) bool {
+	sort.SliceStable(osmData.Relation, func(i, j int) bool {
 		id1, _ := strconv.Atoi(osmData.Relation[i].Id)
 		id2, _ := strconv.Atoi(osmData.Relation[j].Id)
 		return id1 < id2
@@ -83,6 +86,8 @@ func removeDuplicatesOsm(osmData *Osm) {
 	osmData.Relation = newRelations
 }
 
+// search implements a binary search over arr.
+// Therefore, all strings in arr must be integers and arr must be sorted.
 func search(id int, arr []string, start, end int) (bool, int) {
 	if end < 0 || start < 0 {
 		return false, -1

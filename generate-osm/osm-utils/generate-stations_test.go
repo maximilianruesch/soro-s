@@ -55,14 +55,14 @@ func TestGenerateSearchFile(t *testing.T) {
 	}
 
 	t.Run(test.name, func(t *testing.T) {
-		searchFile, stationHaltsOsm := osmUtils.GenerateOsmAndSearchFile(&test.args.osm)
-		assert.Equal(t, "testStation", searchFile.Stations["1"].Name, "Expected testStation, got %s", searchFile.Stations["1"].Name)
-		assert.Equal(t, "1", searchFile.Stations["1"].Lat, "Expected 1, got %s", searchFile.Stations["1"].Lat)
-		assert.Equal(t, "2", searchFile.Stations["1"].Lon, "Expected 2, got %s", searchFile.Stations["1"].Lon)
+		stations, stationHaltsOsm := osmUtils.GenerateOsmAndSearchFile(test.args.osm)
+		assert.Equal(t, "testStation", stations["1"].Name, "Expected testStation, got %s", stations["1"].Name)
+		assert.Equal(t, "1", stations["1"].Lat, "Expected 1, got %s", stations["1"].Lat)
+		assert.Equal(t, "2", stations["1"].Lon, "Expected 2, got %s", stations["1"].Lon)
 
-		assert.Equal(t, "testHalt", searchFile.Halts["2"].Name, "Expected testHalt, got %s", searchFile.Halts["2"].Name)
-		assert.Equal(t, "3", searchFile.Halts["2"].Lat, "Expected 3, got %s", searchFile.Halts["2"].Lat)
-		assert.Equal(t, "4", searchFile.Halts["2"].Lon, "Expected 4, got %s", searchFile.Halts["2"].Lon)
+		assert.Equal(t, "testHalt", stations["2"].Name, "Expected testHalt, got %s", stations["2"].Name)
+		assert.Equal(t, "3", stations["2"].Lat, "Expected 3, got %s", stations["2"].Lat)
+		assert.Equal(t, "4", stations["2"].Lon, "Expected 4, got %s", stations["2"].Lon)
 
 		for _, stationHaltNode := range stationHaltsOsm.Node {
 			if stationHaltNode.Id == "1" {
@@ -71,7 +71,7 @@ func TestGenerateSearchFile(t *testing.T) {
 			}
 			if stationHaltNode.Id == "2" {
 				assert.Equal(t, "type", stationHaltNode.Tag[2].K, "Expected type, got %s", stationHaltNode.Tag[2].K)
-				assert.Equal(t, "element", stationHaltNode.Tag[2].V, "Expected element, got %s", stationHaltNode.Tag[2].V)
+				assert.Equal(t, "station", stationHaltNode.Tag[2].V, "Expected element, got %s", stationHaltNode.Tag[2].V)
 			}
 		}
 	})
