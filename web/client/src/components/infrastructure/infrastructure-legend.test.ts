@@ -53,15 +53,15 @@ describe('infrastructure-legend', async () => {
         expect(checkbox.exists());
     });
 
-    it('emits a \'checked\' event with that legend controls element type when a checkbox is checked', async () => {
+    it('emits a \'change\' event with that legend controls element type when a checkbox is checked', async () => {
         const mapLegend = infrastructureLegend.findComponent({ ref: 'mapLegend' });
 
         const checkbox = mapLegend.find<HTMLInputElement>('input[value="station"]');
         checkbox.element.checked = true;
         await checkbox.trigger('input');
 
-        const checkedEvents = infrastructureLegend.emitted('checked');
-        expect(checkedEvents).toStrictEqual([['station']]);
+        const changeEvents = infrastructureLegend.emitted('change');
+        expect(changeEvents).toStrictEqual([['station', true]]);
     });
 
     it('emits an \'unchecked\' event with that legend controls element type when a checkbox is unchecked', async () => {
@@ -71,8 +71,8 @@ describe('infrastructure-legend', async () => {
         checkbox.element.checked = false;
         await checkbox.trigger('input');
 
-        const checkedEvents = infrastructureLegend.emitted('unchecked');
-        expect(checkedEvents).toStrictEqual([['station']]);
+        const changeEvents = infrastructureLegend.emitted('change');
+        expect(changeEvents).toStrictEqual([['station', false]]);
     });
 
     it('exports special legend controls available for other modules', async () => {

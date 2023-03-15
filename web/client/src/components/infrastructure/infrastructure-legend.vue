@@ -79,8 +79,7 @@ export default defineComponent({
     },
 
     emits: [
-        'checked',
-        'unchecked',
+        'change',
         'reset',
     ],
 
@@ -112,8 +111,9 @@ export default defineComponent({
             const eventTarget = event.target as HTMLInputElement;
 
             this.$emit(
-                eventTarget.checked ? 'checked' : 'unchecked',
+                'change',
                 eventTarget.value,
+                eventTarget.checked,
             );
         },
     },
