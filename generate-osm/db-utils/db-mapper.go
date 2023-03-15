@@ -141,7 +141,6 @@ func MapDB(
 							return nil, nil, nil, -1, errors.Wrap(err, "failed finding switches")
 						}
 					}
-
 				}
 			}
 
