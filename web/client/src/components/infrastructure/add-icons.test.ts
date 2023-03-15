@@ -1,6 +1,6 @@
 import { transformUrl } from '@/api/api-client';
 import { iconUrl, iconExtension, addIcons } from '@/components/infrastructure/add-icons';
-import { ElementTypes } from '@/components/infrastructure/elementTypes';
+import { ElementTypes } from '@/components/infrastructure/element-types';
 
 vi.mock('./elementTypes', () => ({
     ElementTypes: [

@@ -4,23 +4,23 @@ import { ComponentPublicInstance } from 'vue';
 import InfrastructureMap, { initiallyCheckedControls } from './infrastructure-map.vue';
 import MaplibreGl, { Map } from 'maplibre-gl';
 import { InfrastructureNamespace, InfrastructureState } from '@/stores/infrastructure-store';
-import { ElementType, ElementTypes } from './elementTypes';
+import { ElementType, ElementTypes } from './element-types';
 import { Mock } from 'vitest';
 import * as AddIcons from './add-icons';
 import { addIcons } from './add-icons';
 import { transformUrl } from '@/api/api-client';
-import * as MapStyle from './mapStyle';
-import { createInfrastructureMapStyle } from './mapStyle';
+import * as MapStyle from './map-style';
+import { createInfrastructureMapStyle } from './map-style';
 import {
     highlightSignalStationRoute,
     deHighlightSignalStationRoute,
     highlightStationRoute,
     deHighlightStationRoute,
-} from './infrastructureMap';
+} from './highlight-helpers';
 import { SpecialLegendControl } from './infrastructure-legend.vue';
 
-vi.mock('./mapStyle', async () => {
-    const originalMapStyle = await vi.importActual<typeof MapStyle>('./mapStyle');
+vi.mock('./map-style', async () => {
+    const originalMapStyle = await vi.importActual<typeof MapStyle>('./map-style');
 
     return {
         ...originalMapStyle,
@@ -32,7 +32,7 @@ vi.mock('./add-icons',async () => ({
     ...(await  vi.importActual<typeof AddIcons>('./add-icons')),
     addIcons: vi.fn(),
 }));
-vi.mock('./infrastructureMap', () => ({
+vi.mock('./highlight-helpers', () => ({
     deHighlightSignalStationRoute: vi.fn(),
     deHighlightStationRoute: vi.fn(),
     highlightSignalStationRoute: vi.fn(),

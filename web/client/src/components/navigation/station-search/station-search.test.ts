@@ -1,7 +1,7 @@
 import { mountWithDefaults } from '@/test-utils/mount-with-defaults';
 import StationSearch from './station-search.vue';
 import { InfrastructureNamespace } from '@/stores/infrastructure-store';
-import { ElementType } from '@/components/infrastructure/elementTypes';
+import { ElementType } from '@/components/infrastructure/element-types';
 import { VueWrapper } from '@vue/test-utils';
 import { VList } from 'vuetify/components';
 

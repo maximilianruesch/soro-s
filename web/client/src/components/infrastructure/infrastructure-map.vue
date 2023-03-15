@@ -30,11 +30,11 @@ import {
     deHighlightStationRoute,
     highlightSignalStationRoute,
     highlightStationRoute,
-} from './infrastructureMap';
+} from './highlight-helpers';
 import { FilterSpecification, Map } from 'maplibre-gl';
-import { createInfrastructureMapStyle } from './mapStyle';
+import { createInfrastructureMapStyle } from './map-style';
 import { addIcons } from './add-icons';
-import { ElementTypes, ElementType } from './elementTypes';
+import { ElementTypes, ElementType } from './element-types';
 import { defineComponent } from 'vue';
 import { transformUrl } from '@/api/api-client';
 import { ThemeInstance, useTheme } from 'vuetify';

@@ -4,7 +4,7 @@ import InfrastructureLegend from '@/components/infrastructure/infrastructure-leg
 import { SpecialLegendControls, SpecialLegendControl } from '@/components/infrastructure/infrastructure-legend.vue';
 import { ComponentPublicInstance } from 'vue';
 import { VCheckbox } from 'vuetify/components';
-import { ElementType, ElementTypes } from '@/components/infrastructure/elementTypes';
+import { ElementType, ElementTypes } from '@/components/infrastructure/element-types';
 
 describe('infrastructure-legend', async () => {
     let infrastructureLegend: VueWrapper<ComponentPublicInstance<any>>;

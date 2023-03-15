@@ -54,7 +54,7 @@
 </template>
 
 <script lang="ts">
-import { ElementTypeLabels, ElementTypes } from '@/components/infrastructure/elementTypes.js';
+import { ElementTypeLabels, ElementTypes } from '@/components/infrastructure/element-types.js';
 import { iconExtension, iconUrl } from './add-icons';
 import { defineComponent } from 'vue';
 
