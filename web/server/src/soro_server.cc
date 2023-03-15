@@ -281,7 +281,7 @@ std::unordered_map<osm_type, std::vector<osm_object>> parse_search_file(
           type = osm_type::STATION;
       else if (key == "halts")
           type = osm_type::HALT;
-      else if (key == "signals")
+      else if (key == "main_signals")
           type = osm_type::MAIN_SIGNAL;
 
       auto const& val = elem->value.GetObject();
