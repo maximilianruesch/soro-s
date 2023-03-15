@@ -262,11 +262,11 @@ void serve_search(
 std::unordered_map<osm_type, std::vector<osm_object>> parse_search_file(
     const fs::path& file) {
 
-    std::ifstream ifs(file.c_str());
+    std::ifstream const ifs(file.c_str());
     std::stringstream buffer;
     buffer << ifs.rdbuf();
 
-    std::string s = buffer.str();
+    std::string const s = buffer.str();
 
     rapidjson::Document doc;
     doc.Parse(s.c_str());
