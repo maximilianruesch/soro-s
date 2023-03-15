@@ -26,8 +26,6 @@ namespace soro::server {
 
         std::vector<soro::server::osm_object> matches;
 
-        using ot = soro::server::osm_type;
-
         if (filter.halt_) {
             // add halts
             for (const auto& object : osm_objects.at(osm_type::HALT)) {
