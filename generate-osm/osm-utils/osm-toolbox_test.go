@@ -67,7 +67,11 @@ func TestFindTagOnNode(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			val, err := osmUtils.FindTagOnNode(tc.args.node, tc.args.key)
 			assert.Equal(t, tc.want.value, val, "Expected %v, got %v", tc.want.value, val)
-			assert.Equal(t, tc.want.err, err, "Expected %v, got %v", tc.want.err, err)
+			if err != nil {
+				assert.Equal(t, tc.want.err.Error(), err.Error(), "Expected %v, got %v", tc.want.err, err)
+			} else {
+				assert.Equal(t, tc.want.err, err, "Expected %v, got %v", tc.want.err, err)
+			}
 		})
 	}
 }
@@ -131,7 +135,11 @@ func TestGetNodeById(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			node, err := osmUtils.GetNodeById(tc.args.osm, tc.args.id)
 			assert.Equal(t, tc.want.node, node, "Expected %v, got %v", tc.want.node, node)
-			assert.Equal(t, tc.want.err, err, "Expected %v, got %v", tc.want.err, err)
+			if err != nil {
+				assert.Equal(t, tc.want.err.Error(), err.Error(), "Expected %v, got %v", tc.want.err, err)
+			} else {
+				assert.Equal(t, tc.want.err, err, "Expected %v, got %v", tc.want.err, err)
+			}
 		})
 	}
 }
@@ -193,7 +201,11 @@ func TestGetNodeIndexInWay(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			index, err := osmUtils.GetNodeIndexInWay(tc.args.way, tc.args.id)
 			assert.Equal(t, tc.want.index, index, "Expected %v, got %v", tc.want.index, index)
-			assert.Equal(t, tc.want.err, err, "Expected %v, got %v", tc.want.err, err)
+			if err != nil {
+				assert.Equal(t, tc.want.err.Error(), err.Error(), "Expected %v, got %v", tc.want.err, err)
+			} else {
+				assert.Equal(t, tc.want.err, err, "Expected %v, got %v", tc.want.err, err)
+			}
 		})
 	}
 }
@@ -297,7 +309,11 @@ func TestFindWaysByNodeId(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			ways, err := osmUtils.FindWaysByNodeId(tc.args.osm, tc.args.id)
 			assert.Equal(t, tc.want.ways, ways, "Expected %v, got %v", tc.want.ways, ways)
-			assert.Equal(t, tc.want.err, err, "Expected %v, got %v", tc.want.err, err)
+			if err != nil {
+				assert.Equal(t, tc.want.err.Error(), err.Error(), "Expected %v, got %v", tc.want.err, err)
+			} else {
+				assert.Equal(t, tc.want.err, err, "Expected %v, got %v", tc.want.err, err)
+			}
 		})
 	}
 }
