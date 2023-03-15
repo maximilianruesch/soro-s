@@ -109,6 +109,7 @@ func mapUnanchoredSwitches(
 			if errors.Cause(err) == errNoSuitableAnchors {
 				elementsNotFound["switches"] = append(elementsNotFound["switches"], simple_switch.Name.Value)
 				continue
+
 			}
 			return errors.Wrap(err, "failed to map switch "+simple_switch.Name.Value)
 		}
