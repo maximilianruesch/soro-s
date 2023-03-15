@@ -134,12 +134,13 @@ func generateOsm(generateLines bool, mapDB bool, inputFile string, outputFile st
 			if err != nil {
 				return errors.Wrap(err, "failed parsing DB data")
 			}
-			haltList, signalList, err := dbUtils.MapDB(relevant_refs, tempLinesDir, tempDBLinesDir)
+			haltList, mainSignalList, otherSignalList, err := dbUtils.MapDB(relevant_refs, tempLinesDir, tempDBLinesDir)
 			if err != nil {
 				return errors.Wrap(err, "failed mapping DB data")
 			}
 			searchFile.Halts = haltList
-			searchFile.Signals = signalList
+			searchFile.MainSignals = mainSignalList
+			searchFile.OtherSignals = otherSignalList
 		}
 
 		fmt.Println("Generated all lines")
