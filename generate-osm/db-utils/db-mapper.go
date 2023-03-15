@@ -201,6 +201,16 @@ func MapDB(
 							}
 						}
 
+						err = mapCrosses(
+							&osm,
+							anchors,
+							&newNodeIdCounter,
+							*knoten,
+							elementsNotFound,
+						)
+						if err != nil {
+							return errors.Wrap(err, "failed finding crosses")
+						}
 						err = mapHalts(
 							&osm,
 							anchors,

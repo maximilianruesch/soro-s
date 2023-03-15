@@ -274,6 +274,7 @@ func searchUnanchoredSignal(
 				continue
 			}
 			return errors.Wrap(err, "failed to map "+signalTypeLong+" "+signal.Name.Value)
+
 		}
 
 		newSignalNode := createNamedDirectionalNode(
