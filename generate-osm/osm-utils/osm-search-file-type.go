@@ -1,9 +1,10 @@
 package osmUtils
 
 type SearchFile struct {
-	Stations map[string]Station `json:"stations"`
-	Halts    map[string]Halt    `json:"halts"`
-	Signals  map[string]Signal  `json:"signals"`
+	Stations     map[string]Station `json:"stations"`
+	Halts        map[string]Halt    `json:"halts"`
+	MainSignals  map[string]Signal  `json:"main_signals"`
+	OtherSignals map[string]Signal  `json:"other_signals"`
 }
 
 type Station struct {
