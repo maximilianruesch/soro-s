@@ -35,7 +35,7 @@ func mapHalts(
 		elementsNotFound,
 		false)
 	if err != nil {
-		return errors.Wrap(err, "failed finding falling stop position")
+		return errors.Wrap(err, "failed finding rising stop position")
 	}
 	return nil
 }
