@@ -3,6 +3,8 @@ package osmUtils_test
 import (
 	"testing"
 	osmUtils "transform-osm/osm-utils"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSortAndRemoveDuplicates(t *testing.T) {
@@ -85,21 +87,15 @@ func TestSortAndRemoveDuplicates(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			osmUtils.SortAndRemoveDuplicatesOsm(tt.args.osm)
 			for i := 0; i < len(tt.args.osm.Relation); i++ {
-				if tt.args.osm.Relation[i].Id != tt.want.Relation[i].Id {
-					t.Errorf("SortAndRemoveDuplicates() = %v, want %v", tt.args.osm.Relation[i].Id, tt.want.Relation[i].Id)
-				}
+				assert.Equal(t, tt.want.Relation[i].Id, tt.args.osm.Relation[i].Id, "Expected %v, got %v", tt.want.Relation[i].Id, tt.args.osm.Relation[i].Id)
 			}
 
 			for i := 0; i < len(tt.args.osm.Way); i++ {
-				if tt.args.osm.Way[i].Id != tt.want.Way[i].Id {
-					t.Errorf("SortAndRemoveDuplicates() = %v, want %v", tt.args.osm.Way[i].Id, tt.want.Way[i].Id)
-				}
+				assert.Equal(t, tt.want.Way[i].Id, tt.args.osm.Way[i].Id, "Expected %v, got %v", tt.want.Way[i].Id, tt.args.osm.Way[i].Id)
 			}
 
 			for i := 0; i < len(tt.args.osm.Node); i++ {
-				if tt.args.osm.Node[i].Id != tt.want.Node[i].Id {
-					t.Errorf("SortAndRemoveDuplicates() = %v, want %v", tt.args.osm.Node[i].Id, tt.want.Node[i].Id)
-				}
+				assert.Equal(t, tt.want.Node[i].Id, tt.args.osm.Node[i].Id, "Expected %v, got %v", tt.want.Node[i].Id, tt.args.osm.Node[i].Id)
 			}
 		})
 	}

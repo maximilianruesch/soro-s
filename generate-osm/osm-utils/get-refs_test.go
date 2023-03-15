@@ -2,9 +2,10 @@ package osmUtils_test
 
 import (
 	"encoding/xml"
-	"reflect"
 	"testing"
 	osmUtils "transform-osm/osm-utils"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGetRefIds(t *testing.T) {
@@ -65,10 +66,8 @@ func TestGetRefIds(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := osmUtils.GetRefIds(tt.args.trackRefOsm); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetRefIds() = %v, want %v", got, tt.want)
-			}
+			got := osmUtils.GetRefIds(tt.args.trackRefOsm)
+			assert.Equal(t, tt.want, got, "Expected %v, got %v", tt.want, got)
 		})
 	}
-
 }
