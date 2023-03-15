@@ -87,7 +87,6 @@ func MapDB(
 		percentAnchored := ((float64)(foundAnchorCount) / ((float64)(foundAnchorCount) + (float64)(numElementsNotFound))) * 100.0
 		fmt.Printf("Could anchor %d/%d (%f%%) of signals and switches. \n", foundAnchorCount, foundAnchorCount+numElementsNotFound, percentAnchored)
 
-
 		totalNumberOfAnchors += foundAnchorCount
 		totalElementsNotFound += numElementsNotFound
 
@@ -197,6 +196,16 @@ func MapDB(
 							}
 						}
 
+						err = mapCrosses(
+							&osm,
+							anchors,
+							&newNodeIdCounter,
+							*knoten,
+							elementsNotFound,
+						)
+						if err != nil {
+							return errors.Wrap(err, "failed finding crosses")
+						}
 						err = mapHalts(
 							&osm,
 							&anchors,
@@ -240,7 +249,6 @@ func MapDB(
 					}
 				}
 			}
-
 
 			for elementType, nameList := range elementsNotFound {
 				fmt.Printf("Could not find %s: %v \n", elementType, nameList)

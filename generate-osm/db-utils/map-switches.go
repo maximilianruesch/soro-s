@@ -128,3 +128,38 @@ func mapUnanchoredSwitches(
 	}
 	return nil
 }
+
+func mapCrosses(
+	osmData *OSMUtil.Osm,
+	anchors map[float64]([]*OSMUtil.Node),
+	nodeIdCounter *int,
+	knoten Spurplanknoten,
+	elementsNotFound map[string]([]string),
+) error {
+	for _, cross := range knoten.KreuzungsweicheAnfangLinks {
+		kilometrage, _ := formatKilometrageStringInFloat(cross.KnotenTyp.Kilometrierung.Value)
+
+		maxNode, err := findBestOSMNode(osmData, &anchors, kilometrage)
+		if err != nil {
+			if errors.Cause(err) == errNoSuitableAnchors {
+				elementsNotFound["crosses"] = append(elementsNotFound["crosses"], cross.Name.Value)
+				continue
+
+			}
+			return errors.Wrap(err, "failed to map cross "+cross.Name.Value)
+		}
+
+		newSignalNode := createNamedSimpleNode(
+			nodeIdCounter,
+			maxNode,
+			"cross",
+			cross.Name.Value,
+		)
+		OSMUtil.InsertNewNodeWithReferenceNode(
+			osmData,
+			&newSignalNode,
+			maxNode,
+		)
+	}
+	return nil
+}
