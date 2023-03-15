@@ -96,7 +96,7 @@ func findAndMapAnchorSwitches(
 // mapUnanchoredSwitches processes all switches for which no unique Node could be determined.
 func mapUnanchoredSwitches(
 	osmData *OSMUtil.Osm,
-	anchors *map[float64]([]*OSMUtil.Node),
+	anchors map[float64]([]*OSMUtil.Node),
 	nodeIdCounter *int,
 	knoten Spurplanknoten,
 	elementsNotFound map[string]([]string),
