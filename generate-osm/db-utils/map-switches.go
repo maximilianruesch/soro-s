@@ -139,7 +139,7 @@ func mapCrosses(
 	for _, cross := range knoten.KreuzungsweicheAnfangLinks {
 		kilometrage, _ := formatKilometrageStringInFloat(cross.KnotenTyp.Kilometrierung.Value)
 
-		maxNode, err := findBestOSMNode(osmData, &anchors, kilometrage)
+		maxNode, err := findBestOSMNode(osmData, anchors, kilometrage)
 		if err != nil {
 			if errors.Cause(err) == errNoSuitableAnchors {
 				elementsNotFound["crosses"] = append(elementsNotFound["crosses"], cross.Name.Value)

@@ -209,7 +209,7 @@ func MapDB(
 							elementsNotFound,
 						)
 						if err != nil {
-							return errors.Wrap(err, "failed finding crosses")
+							return nil, nil, errors.Wrap(err, "failed finding crosses")
 						}
 						err = mapHalts(
 							&osm,
