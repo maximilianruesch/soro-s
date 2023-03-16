@@ -100,7 +100,7 @@ func MapUnanchoredSwitches(
 	anchors map[float64]([]*osmUtils.Node),
 	nodeIdCounter *int,
 	knoten Spurplanknoten,
-	elementsNotFound map[string]([]string),
+	tracker NotFoundElementTracker,
 ) error {
 	for _, simple_switch := range knoten.WeichenAnf {
 		kilometrage, _ := findNodes.FormatKilometrageStringInFloat(simple_switch.KnotenTyp.Kilometrierung.Value)
@@ -108,7 +108,7 @@ func MapUnanchoredSwitches(
 		maxNode, err := findNodes.FindBestOSMNode(osmData, anchors, kilometrage)
 		if err != nil {
 			if errors.Cause(err) == findNodes.ErrNoSuitableAnchors {
-				elementsNotFound["switches"] = append(elementsNotFound["switches"], simple_switch.Name.Value)
+				tracker.AddNotFoundElement(Switches, simple_switch.Name.Value)
 				continue
 
 			}
@@ -135,7 +135,7 @@ func MapCrosses(
 	anchors map[float64]([]*osmUtils.Node),
 	nodeIdCounter *int,
 	knoten Spurplanknoten,
-	elementsNotFound map[string]([]string),
+	tracker NotFoundElementTracker,
 ) error {
 	for _, cross := range knoten.KreuzungsweicheAnfangLinks {
 		kilometrage, _ := findNodes.FormatKilometrageStringInFloat(cross.KnotenTyp.Kilometrierung.Value)
@@ -143,7 +143,7 @@ func MapCrosses(
 		maxNode, err := findNodes.FindBestOSMNode(osmData, anchors, kilometrage)
 		if err != nil {
 			if errors.Cause(err) == findNodes.ErrNoSuitableAnchors {
-				elementsNotFound["crosses"] = append(elementsNotFound["crosses"], cross.Name.Value)
+				tracker.AddNotFoundElement(Crosses, cross.Name.Value)
 				continue
 
 			}

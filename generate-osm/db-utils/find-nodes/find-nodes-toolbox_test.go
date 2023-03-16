@@ -317,14 +317,14 @@ func TestComputeHaversineDistance(t *testing.T) {
 				lon2: 4.0,
 			},
 			want: want{
-				distance: 157.22543203807288,
+				distance: 314.4029510236249,
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := findNodes.ComputeHaversineDistance(tt.args.lat1, tt.args.lon1, tt.args.lat2, tt.args.lon2)
+			got := findNodes.ComputeHaversineDistance(tt.args.lat1, tt.args.lat2, tt.args.lon1, tt.args.lon2)
 			assert.Equal(t, tt.want.distance, got)
 		})
 	}

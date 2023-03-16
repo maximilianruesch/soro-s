@@ -1,7 +1,6 @@
 package mapper
 
 import (
-	"fmt"
 	findNodes "transform-osm/db-utils/find-nodes"
 	osmUtils "transform-osm/osm-utils"
 
@@ -16,7 +15,7 @@ func MapHalts(
 	haltList map[string]osmUtils.Halt,
 	nodeIdCounter *int,
 	knoten Spurplanknoten,
-	elementsNotFound map[string]([]string),
+	tracker NotFoundElementTracker,
 ) error {
 	err := searchHalt(
 		osmData,
@@ -24,7 +23,7 @@ func MapHalts(
 		haltList,
 		nodeIdCounter,
 		knoten,
-		elementsNotFound,
+		tracker,
 		true)
 	if err != nil {
 		return errors.Wrap(err, "failed finding falling stop position")
@@ -35,7 +34,7 @@ func MapHalts(
 		haltList,
 		nodeIdCounter,
 		knoten,
-		elementsNotFound,
+		tracker,
 		false)
 	if err != nil {
 		return errors.Wrap(err, "failed finding rising stop position")
@@ -52,7 +51,7 @@ func searchHalt(
 	haltList map[string]osmUtils.Halt,
 	nodeIdCounter *int,
 	knoten Spurplanknoten,
-	elementsNotFound map[string]([]string),
+	tracker NotFoundElementTracker,
 	isFalling bool,
 ) error {
 	halts := append(knoten.HalteplGzF, knoten.HalteplRzF...)
@@ -66,7 +65,7 @@ func searchHalt(
 		maxNode, err := findNodes.FindBestOSMNode(osmData, anchors, kilometrage)
 		if err != nil {
 			if errors.Cause(err) == findNodes.ErrNoSuitableAnchors {
-				elementsNotFound["stop positions"] = append(elementsNotFound["stop positions"], halt.Name.Value)
+				tracker.AddNotFoundElement(Halt, halt.Name.Value)
 				continue
 			}
 			return errors.Wrap(err, "failed to map stop position "+halt.Name.Value)
@@ -79,7 +78,6 @@ func searchHalt(
 			halt.Name.Value,
 			isFalling,
 		)
-		fmt.Println("newSignalNode: ", newSignalNode)
 		osmUtils.InsertNewNodeWithReferenceNode(
 			osmData,
 			&newSignalNode,
