@@ -22,16 +22,22 @@ func goDirection(
 	totalDist := 0.0
 	wayDirUp := initialWayDirUp
 
+	if wayDirUp && index != len(runningWay.Nd)-1 {
+		oldNode, _ = OSMUtil.GetNodeById(osmData, runningWay.Nd[index+1].Ref)
+	} else if !wayDirUp && index != 0 {
+		oldNode, _ = OSMUtil.GetNodeById(osmData, runningWay.Nd[index-1].Ref)
+	}
+
 	var err error
 
 	for totalDist < dist {
 		if (wayDirUp && index == 0) || (!wayDirUp && index == len(runningWay.Nd)-1) {
 			runningWay, index, wayDirUp, err = findNextWay(osmData, wayDirUp, index, runningNode, oldNode, runningWay)
-			if err == endReachedError || err == junctionReachedError {
+			if errors.Cause(err) == endReachedError || errors.Cause(err) == junctionReachedError {
 				return runningNode.Id, totalDist, err
 			}
 			if err != nil {
-				return "", 0, errors.Wrap(err, "faild finding next way")
+				return "", 0, errors.Wrap(err, "failed finding next way")
 			}
 		}
 
@@ -48,7 +54,7 @@ func goDirection(
 		totalDist += ComputeHaversineDistance(phi1, phi2, lambda1, lambda2)
 
 		if totalDist == dist {
-			return runningWay.Nd[index].Ref, totalDist, nil
+			return nextNode.Id, totalDist, nil
 		}
 
 		if wayDirUp {

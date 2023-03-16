@@ -153,7 +153,7 @@ func TestFormatKilometrageStringInFloat(t *testing.T) {
 	}
 	type want struct {
 		kilometrage float64
-		err         string
+		wantErr     bool
 	}
 	tests := []struct {
 		name string
@@ -167,7 +167,7 @@ func TestFormatKilometrageStringInFloat(t *testing.T) {
 			},
 			want: want{
 				kilometrage: 1.000,
-				err:         "",
+				wantErr:     false,
 			},
 		},
 		{
@@ -177,7 +177,7 @@ func TestFormatKilometrageStringInFloat(t *testing.T) {
 			},
 			want: want{
 				kilometrage: 2.500,
-				err:         "",
+				wantErr:     false,
 			},
 		},
 		{
@@ -187,7 +187,7 @@ func TestFormatKilometrageStringInFloat(t *testing.T) {
 			},
 			want: want{
 				kilometrage: 5.150,
-				err:         "",
+				wantErr:     false,
 			},
 		},
 		{
@@ -197,18 +197,32 @@ func TestFormatKilometrageStringInFloat(t *testing.T) {
 			},
 			want: want{
 				kilometrage: 0.0,
-				err:         "failed to parse kilometrage: 2,abc",
+				wantErr:     true,
+			},
+		},
+		{
+			name: "throws error when kilometrage is not a float",
+			args: args{
+				kilometrage: "2,000+0,abc",
+			},
+			want: want{
+				kilometrage: 0.0,
+				wantErr:     true,
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := findNodes.FormatKilometrageStringInFloat(tt.args.kilometrage)
-			assert.Equal(t, tt.want.kilometrage, got)
-			if err != nil {
+			kilometrage, err := findNodes.FormatKilometrageStringInFloat(tt.args.kilometrage)
+
+			if tt.want.wantErr {
 				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
 			}
+
+			assert.Equal(t, tt.want.kilometrage, kilometrage)
 		})
 	}
 }
@@ -280,14 +294,16 @@ func TestComputeNodeInformation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			node, nodeLat, nodeLon, err := findNodes.ComputeNodeInformation(tt.args.osm, tt.args.nodeId)
-			assert.Equal(t, tt.want.node, node)
-			assert.Equal(t, tt.want.nodeLat, nodeLat)
-			assert.Equal(t, tt.want.nodeLon, nodeLon)
+
 			if tt.want.errNil {
 				assert.Nil(t, err)
 			} else {
 				assert.NotNil(t, err)
 			}
+
+			assert.Equal(t, tt.want.node, node)
+			assert.Equal(t, tt.want.nodeLat, nodeLat)
+			assert.Equal(t, tt.want.nodeLon, nodeLon)
 		})
 	}
 
@@ -324,8 +340,8 @@ func TestComputeHaversineDistance(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := findNodes.ComputeHaversineDistance(tt.args.lat1, tt.args.lon1, tt.args.lat2, tt.args.lon2)
-			assert.Equal(t, tt.want.distance, got)
+			distance := findNodes.ComputeHaversineDistance(tt.args.lat1, tt.args.lon1, tt.args.lat2, tt.args.lon2)
+			assert.Equal(t, tt.want.distance, distance)
 		})
 	}
 }
@@ -451,12 +467,14 @@ func TestFindNextRunningNode(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			nextNode, err := findNodes.FindNextRunningNode(tt.args.osm, tt.args.wayDirUp, tt.args.index, tt.args.runningWay)
-			assert.Equal(t, tt.want.nextNode, nextNode)
+
 			if tt.want.errNil {
 				assert.Nil(t, err)
 			} else {
 				assert.NotNil(t, err)
 			}
+
+			assert.Equal(t, tt.want.nextNode, nextNode)
 		})
 	}
 }

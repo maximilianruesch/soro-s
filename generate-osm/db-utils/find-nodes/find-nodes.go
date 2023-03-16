@@ -29,18 +29,15 @@ func findNodes(
 
 	if len(waysForNode) == 1 {
 		runningWay := waysForNode[0]
-		index, err := OSMUtil.GetNodeIndexInWay(&runningWay, node.Id)
-		if err != nil {
-			return "", 0, "", 0, errors.Wrap(err, "error with starting way")
-		}
+		index, _ := OSMUtil.GetNodeIndexInWay(&runningWay, node.Id)
 
 		upId, upDist, err = goDirection(osmData, runningWay, index, dist, true) // going "up" first
-		if err != nil && err != endReachedError && err != junctionReachedError {
+		if err != nil && errors.Cause(err) != endReachedError && errors.Cause(err) != junctionReachedError {
 			return "", 0, "", 0, errors.Wrap(err, "failed going all the way up")
 		}
 
 		downId, downDist, err = goDirection(osmData, runningWay, index, dist, false) // then going "down"
-		if err != nil && err != endReachedError && err != junctionReachedError {
+		if err != nil && errors.Cause(err) != endReachedError && errors.Cause(err) != junctionReachedError {
 			return "", 0, "", 0, errors.Wrap(err, "failed going all the way down")
 		}
 		return upId, upDist, downId, downDist, nil
@@ -66,11 +63,11 @@ func findNodes(
 	}
 
 	upId, upDist, err = goDirection(osmData, runningWayUp, len(runningWayUp.Nd)-1, dist, true)
-	if err != nil && err != endReachedError && err != junctionReachedError {
+	if err != nil && errors.Cause(err) != endReachedError && errors.Cause(err) != junctionReachedError {
 		return "", 0, "", 0, errors.Wrap(err, "failed going all the way up")
 	}
 	downId, downDist, err = goDirection(osmData, runningWayDown, 0, dist, false)
-	if err != nil && err != endReachedError && err != junctionReachedError {
+	if err != nil && errors.Cause(err) != endReachedError && errors.Cause(err) != junctionReachedError {
 		return "", 0, "", 0, errors.Wrap(err, "failed going all the way down")
 	}
 

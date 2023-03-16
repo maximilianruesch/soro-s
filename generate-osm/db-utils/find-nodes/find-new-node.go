@@ -1,7 +1,7 @@
 package findNodes
 
 import (
-	"fmt"
+	"math"
 	OSMUtil "transform-osm/osm-utils"
 
 	"github.com/pkg/errors"
@@ -23,12 +23,7 @@ func findNewNode(
 
 	up1, upDist1, down1, downDist1, err1 := findNodes(osmData, node1, dist1)
 	up2, upDist2, down2, downDist2, err2 := findNodes(osmData, node2, dist2)
-	fmt.Println("up1: ", up1)
-	fmt.Println("up2: ", up2)
-	fmt.Println("down1: ", down1)
-	fmt.Println("down2: ", down2)
-	fmt.Println("err1: ", err1)
-	fmt.Println("err2: ", err2)
+
 	if err1 != nil {
 		return nil, errors.Wrap(err1, "insufficient anchor: "+node1.Id)
 	}
@@ -41,6 +36,6 @@ func findNewNode(
 	} else if down1 == up2 || down1 == down2 {
 		return OSMUtil.GetNodeById(osmData, down1)
 	} else {
-		return findClosestMatch(osmData, up1, up2, down1, down2, upDist1, upDist2, downDist1, downDist2)
+		return findClosestMatch(osmData, up1, up2, down1, down2, math.Abs(upDist1-dist1), math.Abs(upDist2-dist2), math.Abs(downDist1-dist1), math.Abs(downDist2-dist2))
 	}
 }

@@ -80,7 +80,7 @@ func findNextWay(
 		return runningWay, index, wayDirUp, nil
 	}
 
-	firstLastAndSecondLastMatch := GetWayNdRef(firstWay, LastNdRef) == GetWayNdRef(secondWay, SecondLastNdRef)
+	firstLastAndSecondLastMatch := GetWayNdRef(firstWay, LastNdRef) == GetWayNdRef(secondWay, LastNdRef)
 
 	firstWayLastMatches := GetWayNdRef(firstWay, LastNdRef) == runningNode.Id
 	secondWayLastMatches := GetWayNdRef(secondWay, LastNdRef) == runningNode.Id
