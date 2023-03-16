@@ -4,8 +4,6 @@
 
 #include "soro/server/search_util.h"
 
-#include <algorithm>
-
 using namespace soro::server;
 
 TEST_SUITE_BEGIN("osm search suite");
