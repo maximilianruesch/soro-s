@@ -182,26 +182,23 @@ func insertNewHauptsignal(
 	return true, nil
 }
 
-// mapUnanchoredSignals processes all previously unmapped signals.
-// This is main signals, for which no unique Node could be determined ("signalType" = 'ms'),
-// or approach and protection signals ("signalType" = 'as'/'ps').
-func MapUnanchoredSignals(
+// MapUnanchoredSignals processes all previously unmapped main signals.
+func MapUnanchoredMainSignals(
 	osmData *osmUtils.Osm,
 	anchors map[float64]([]*osmUtils.Node),
 	signalList map[string]osmUtils.Signal,
 	nodeIdCounter *int,
 	knoten Spurplanknoten,
-	signalType string,
-	elementsNotFound map[string]([]string),
+	tracker NotFoundElementTracker,
 ) error {
 	err := searchUnanchoredSignal(
 		osmData,
 		anchors,
 		signalList,
 		nodeIdCounter,
-		knoten,
-		signalType,
-		elementsNotFound,
+		MainSignal,
+		knoten.HauptsigF,
+		tracker,
 		true)
 	if err != nil {
 		return errors.Wrap(err, "failed finding falling main signal")
@@ -212,12 +209,86 @@ func MapUnanchoredSignals(
 		anchors,
 		signalList,
 		nodeIdCounter,
-		knoten,
-		signalType,
-		elementsNotFound,
+		MainSignal,
+		knoten.HauptsigS,
+		tracker,
 		false)
 	if err != nil {
 		return errors.Wrap(err, "failed finding rising main signal")
+	}
+	return nil
+}
+
+// MapUnanchoredSignals processes all previously unmapped protection signals.
+func MapUnanchoredProtectionSignals(
+	osmData *osmUtils.Osm,
+	anchors map[float64]([]*osmUtils.Node),
+	signalList map[string]osmUtils.Signal,
+	nodeIdCounter *int,
+	knoten Spurplanknoten,
+	tracker NotFoundElementTracker,
+) error {
+	err := searchUnanchoredSignal(
+		osmData,
+		anchors,
+		signalList,
+		nodeIdCounter,
+		ProtectionSignal,
+		knoten.SchutzsigF,
+		tracker,
+		true)
+	if err != nil {
+		return errors.Wrap(err, "failed finding falling protection signal")
+	}
+
+	err = searchUnanchoredSignal(
+		osmData,
+		anchors,
+		signalList,
+		nodeIdCounter,
+		ProtectionSignal,
+		knoten.SchutzsigS,
+		tracker,
+		false)
+	if err != nil {
+		return errors.Wrap(err, "failed finding rising protection signal")
+	}
+	return nil
+}
+
+// MapUnanchoredSignals processes all previously unmapped approach signals.
+func MapUnanchoredApproachSignals(
+	osmData *osmUtils.Osm,
+	anchors map[float64]([]*osmUtils.Node),
+	signalList map[string]osmUtils.Signal,
+	nodeIdCounter *int,
+	knoten Spurplanknoten,
+	tracker NotFoundElementTracker,
+) error {
+	err := searchUnanchoredSignal(
+		osmData,
+		anchors,
+		signalList,
+		nodeIdCounter,
+		ApproachSignal,
+		knoten.VorsigF,
+		tracker,
+		true)
+	if err != nil {
+		return errors.Wrap(err, "failed finding falling approach signal")
+	}
+
+	err = searchUnanchoredSignal(
+		osmData,
+		anchors,
+		signalList,
+		nodeIdCounter,
+		ApproachSignal,
+		knoten.VorsigS,
+		tracker,
+		false)
+	if err != nil {
+		return errors.Wrap(err, "failed finding rising approach signal")
 	}
 	return nil
 }
@@ -230,52 +301,35 @@ func searchUnanchoredSignal(
 	anchors map[float64]([]*osmUtils.Node),
 	signalList map[string]osmUtils.Signal,
 	nodeIdCounter *int,
-	knoten Spurplanknoten,
-	signalType string,
-	elementsNotFound map[string]([]string),
+	signalType ElementType,
+	signals []*NamedSimpleElement,
+	tracker NotFoundElementTracker,
 	isFalling bool,
 ) error {
-	var signalTypeLong string
-	var signals []*NamedSimpleElement
-
-	switch signalType {
-	case "ms":
-		signalTypeLong = "main signal"
-		signals = knoten.HauptsigF
-		if !isFalling {
-			signals = knoten.HauptsigS
-		}
-	case "as":
-		signalTypeLong = "approach signal"
-		signals = knoten.VorsigF
-		if !isFalling {
-			signals = knoten.VorsigS
-		}
-	case "ps":
-		signalTypeLong = "protection signal"
-		signals = knoten.SchutzsigF
-		if !isFalling {
-			signals = knoten.SchutzsigS
-		}
-	}
-
 	for _, signal := range signals {
 		kilometrage, _ := findNodes.FormatKilometrageStringInFloat(signal.KnotenTyp.Kilometrierung.Value)
 
 		maxNode, err := findNodes.FindBestOSMNode(osmData, anchors, kilometrage)
 		if err != nil {
 			if errors.Cause(err) == findNodes.ErrNoSuitableAnchors {
-				elementsNotFound[signalTypeLong+"s"] = append(elementsNotFound[signalTypeLong+"s"], signal.Name.Value)
+				tracker.AddNotFoundElement(signalType, signal.Name.Value)
 				continue
 			}
-			return errors.Wrap(err, "failed to map "+signalTypeLong+" "+signal.Name.Value)
+			return errors.Wrap(err, "failed to map signal: "+signal.Name.Value+" ("+signalType.String()+")")
 
+		}
+
+		signalSubtype := "ms"
+		if signalType == ProtectionSignal {
+			signalSubtype = "ps"
+		} else if signalType == ApproachSignal {
+			signalSubtype = "as"
 		}
 
 		newSignalNode := createNamedDirectionalNode(
 			nodeIdCounter,
 			maxNode,
-			signalType,
+			signalSubtype,
 			signal.Name.Value,
 			isFalling,
 		)

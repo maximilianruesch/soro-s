@@ -1,7 +1,6 @@
 package osmUtils
 
 import (
-	"fmt"
 	"os"
 	"os/exec"
 
@@ -75,7 +74,6 @@ func InsertNewNodeWithReferenceNode(
 ) {
 	for _, way := range osm.Way {
 		index, err := GetNodeIndexInWay(way, referenceNode.Id)
-		fmt.Println(index, err)
 		if err == nil {
 			if index == len(way.Nd)-1 {
 				way.Nd = append(way.Nd[:index], []*Nd{{Ref: newNode.Id}, {Ref: referenceNode.Id}}...)

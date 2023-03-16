@@ -19,7 +19,6 @@ func FindBestOSMNode(
 	kilometrage float64,
 ) (*OSMUtil.Node, error) {
 	sortedAnchors := SortAnchors(anchors, kilometrage)
-
 	nearest, secondNearest := sortedAnchors[0], sortedAnchors[1]
 
 	anchor1 := (anchors[nearest])[0]
@@ -34,7 +33,6 @@ func FindBestOSMNode(
 		distance1,
 		distance2,
 	)
-
 	if err == nil {
 		return newNode, nil
 	}

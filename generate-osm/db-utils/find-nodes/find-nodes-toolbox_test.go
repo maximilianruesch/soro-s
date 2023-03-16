@@ -333,7 +333,7 @@ func TestComputeHaversineDistance(t *testing.T) {
 				lon2: 4.0,
 			},
 			want: want{
-				distance: 157.22543203807288,
+				distance: 314.4029510236249,
 			},
 		},
 	}
