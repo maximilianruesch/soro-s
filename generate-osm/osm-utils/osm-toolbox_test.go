@@ -317,3 +317,67 @@ func TestFindWaysByNodeId(t *testing.T) {
 		})
 	}
 }
+
+func TestInsertNewNodeWithReferenceNode(t *testing.T) {
+	type args struct {
+		osm           *osmUtils.Osm
+		newNode       *osmUtils.Node
+		referenceNode *osmUtils.Node
+	}
+	tt := []struct {
+		name string
+		args args
+		want int
+	}{
+		{
+			name: "inserts new node between two nodes",
+			args: args{
+				osm: &osmUtils.Osm{
+					Node: []*osmUtils.Node{
+						{
+							Id: "123",
+						},
+						{
+							Id: "456",
+						},
+						{
+							Id: "789",
+						},
+					},
+					Way: []*osmUtils.Way{
+						{
+							Id: "1",
+							Nd: []*osmUtils.Nd{
+								{
+									Ref: "123",
+								},
+								{
+									Ref: "456",
+								},
+								{
+									Ref: "789",
+								},
+							},
+						},
+					},
+				},
+				newNode: &osmUtils.Node{
+					Id: "555",
+				},
+				referenceNode: &osmUtils.Node{
+					Id: "456",
+				},
+			},
+			want: 2,
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			osmUtils.InsertNewNodeWithReferenceNode(tc.args.osm, tc.args.newNode, tc.args.referenceNode)
+			assert.Equal(t, 4, len(tc.args.osm.Node), "Expected %v, got %v", 4, len(tc.args.osm.Node))
+			assert.Equal(t, 4, len(tc.args.osm.Way[0].Nd), "Expected %v, got %v", 4, len(tc.args.osm.Way[0].Nd))
+			assert.Equal(t, tc.args.osm.Way[0].Nd[tc.want].Ref, tc.args.newNode.Id, "Expected %v, got %v", tc.args.newNode.Id, tc.args.osm.Way[0].Nd[tc.want].Ref)
+		})
+	}
+}
