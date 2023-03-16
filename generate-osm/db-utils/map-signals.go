@@ -2,7 +2,6 @@ package dbUtils
 
 import (
 	"encoding/xml"
-	"fmt"
 	"strconv"
 	"strings"
 	OSMUtil "transform-osm/osm-utils"
@@ -17,42 +16,44 @@ var XML_TAG_NAME_CONST = xml.Name{Space: " ", Local: "tag"}
 // (excluding spaces) as the Signal-name.
 // In notFoundSignals... all signals that could not be identified will be returned.
 func findAndMapAnchorMainSignals(
-	abschnitt *Spurplanabschnitt,
+	knoten Spurplanknoten,
 	osm *OSMUtil.Osm,
 	anchors map[float64][]*OSMUtil.Node,
-	notFoundSignalsFalling *[]*Signal,
-	notFoundSignalsRising *[]*Signal,
+	notFoundSignalsFalling *[]*NamedSimpleElement,
+	notFoundSignalsRising *[]*NamedSimpleElement,
+	signalList map[string]OSMUtil.Signal,
 	foundAnchorCount *int,
-	optionalNewId *int,
+	nodeIdCounter *int,
 ) error {
 	conflictingSignalNames := map[string]bool{}
-	for _, knoten := range abschnitt.Knoten {
-		err := processHauptsignal(
-			*knoten,
-			notFoundSignalsFalling,
-			anchors,
-			&conflictingSignalNames,
-			osm,
-			true,
-			foundAnchorCount,
-			optionalNewId,
-		)
-		if err != nil {
-			return errors.Wrap(err, "failed processing falling main signals")
-		}
-		err = processHauptsignal(
-			*knoten,
-			notFoundSignalsRising,
-			anchors,
-			&conflictingSignalNames,
-			osm,
-			false,
-			foundAnchorCount,
-			optionalNewId,
-		)
-		if err != nil {
-			return errors.Wrap(err, "failed processing rising main signals")
-		}
+	err := processHauptsignal(
+		knoten,
+		notFoundSignalsFalling,
+		anchors,
+		signalList,
+		conflictingSignalNames,
+		osm,
+		true,
+		foundAnchorCount,
+		nodeIdCounter,
+	)
+	if err != nil {
+		return errors.Wrap(err, "failed processing falling main signals")
+	}
+
+	err = processHauptsignal(
+		knoten,
+		notFoundSignalsRising,
+		anchors,
+		signalList,
+		conflictingSignalNames,
+		osm,
+		false,
+		foundAnchorCount,
+		nodeIdCounter,
+	)
+	if err != nil {
+		return errors.Wrap(err, "failed processing rising main signals")
 	}
 	return nil
 }
@@ -61,13 +62,14 @@ func findAndMapAnchorMainSignals(
 // and does all the identification.
 func processHauptsignal(
 	knoten Spurplanknoten,
-	notFoundSignals *[]*Signal,
+	notFoundSignals *[]*NamedSimpleElement,
 	anchors map[float64][]*OSMUtil.Node,
-	conflictingSignalNames *map[string]bool,
+	signalList map[string]OSMUtil.Signal,
+	conflictingSignalNames map[string]bool,
 	osm *OSMUtil.Osm,
 	isFalling bool,
 	foundAnchorCount *int,
-	optionalNewId *int,
+	nodeIdCounter *int,
 ) error {
 	signals := knoten.HauptsigF
 	if !isFalling {
@@ -91,13 +93,13 @@ func processHauptsignal(
 
 		if len(matchingSignalNodes) == 1 {
 			conflictFreeSignal, err := insertNewHauptsignal(
-				optionalNewId,
+				nodeIdCounter,
 				matchingSignalNodes[0],
 				signal,
 				isFalling,
 				notFoundSignals,
 				anchors,
-				*conflictingSignalNames,
+				conflictingSignalNames,
 				osm,
 				foundAnchorCount,
 			)
@@ -106,10 +108,15 @@ func processHauptsignal(
 			}
 			if conflictFreeSignal {
 				*foundAnchorCount++
+				signalList[matchingSignalNodes[0].Id] = OSMUtil.Signal{
+					Name: signal.Name.Value,
+					Lat:  matchingSignalNodes[0].Lat,
+					Lon:  matchingSignalNodes[0].Lon,
+				}
 				return nil
 			}
 		}
-		(*conflictingSignalNames)[signal.Name.Value] = true
+		conflictingSignalNames[signal.Name.Value] = true
 		*notFoundSignals = append(*notFoundSignals, signal)
 	}
 	return nil
@@ -120,11 +127,11 @@ func processHauptsignal(
 // A conflict exists, when there are either multiple Signals with the same name but different kilometrages,
 // or when there exists more than one node, that could be identified as a certian Signal (i.e. with the same name).
 func insertNewHauptsignal(
-	newId *int,
+	nodeIdCounter *int,
 	signalNode *OSMUtil.Node,
-	signal *Signal,
+	signal *NamedSimpleElement,
 	isFalling bool,
-	notFound *[]*Signal,
+	notFound *[]*NamedSimpleElement,
 	anchors map[float64][]*OSMUtil.Node,
 	conflictingSignalNames map[string]bool,
 	osm *OSMUtil.Osm,
@@ -141,7 +148,7 @@ func insertNewHauptsignal(
 		for _, possibleAnchor := range currentAnchors {
 			if possibleAnchor.Lat == signalNode.Lat && possibleAnchor.Lon == signalNode.Lon && anchorKilometrage != signalKilometrage {
 				for _, errorAnchor := range currentAnchors {
-					errorSignal := Signal{}
+					errorSignal := NamedSimpleElement{}
 					errorSignal.KnotenTyp = KnotenTyp{
 						Kilometrierung: Wert{
 							Value: strconv.FormatFloat(anchorKilometrage, 'f', 3, 64),
@@ -161,10 +168,11 @@ func insertNewHauptsignal(
 		}
 	}
 
-	newSignalNode := createNewHauptsignal(
-		newId,
+	newSignalNode := createNamedDirectionalNode(
+		nodeIdCounter,
 		signalNode,
-		signal,
+		"ms",
+		signal.Name.Value,
 		isFalling,
 	)
 	OSMUtil.InsertNewNodeWithReferenceNode(
@@ -181,42 +189,81 @@ func insertNewHauptsignal(
 	return true, nil
 }
 
-// mapUnanchoredMainSignals processes all main signals for which no unique Node could be determined.
-func mapUnanchoredMainSignals(
+// mapUnanchoredSignals processes all previously unmapped signals.
+// This is main signals, for which no unique Node could be determined ("signalType" = 'ms'),
+// or approach and protection signals ("signalType" = 'as'/'ps').
+func mapUnanchoredSignals(
 	osmData *OSMUtil.Osm,
-	anchors *map[float64]([]*OSMUtil.Node),
-	nodeIdCounter *int,
-	abschnitt Spurplanabschnitt,
-) {
-	for _, knoten := range abschnitt.Knoten {
-		searchUnanchoredMainSignal(
-			osmData,
-			anchors,
-			nodeIdCounter,
-			*knoten,
-			true)
-		searchUnanchoredMainSignal(
-			osmData,
-			anchors,
-			nodeIdCounter,
-			*knoten,
-			false)
-	}
-}
-
-// serachUnanchoredMainSignal searches for a Node, that best fits the Signal to be mapped.
-// This search is based on at least two anchored elements and their respective distance to the signal at hand.
-// If no ore only one anchor could be identified, or all anchors are otherwise insufficient, no mapping can be done.
-func searchUnanchoredMainSignal(
-	osmData *OSMUtil.Osm,
-	anchors *map[float64]([]*OSMUtil.Node),
+	anchors map[float64]([]*OSMUtil.Node),
+	signalList map[string]OSMUtil.Signal,
 	nodeIdCounter *int,
 	knoten Spurplanknoten,
+	signalType string,
+	elementsNotFound map[string]([]string),
+) error {
+	err := searchUnanchoredSignal(
+		osmData,
+		anchors,
+		signalList,
+		nodeIdCounter,
+		knoten,
+		signalType,
+		elementsNotFound,
+		true)
+	if err != nil {
+		return errors.Wrap(err, "failed finding falling main signal")
+	}
+
+	err = searchUnanchoredSignal(
+		osmData,
+		anchors,
+		signalList,
+		nodeIdCounter,
+		knoten,
+		signalType,
+		elementsNotFound,
+		false)
+	if err != nil {
+		return errors.Wrap(err, "failed finding rising main signal")
+	}
+	return nil
+}
+
+// serachUnanchoredSignal searches for a Node, that best fits the Signal to be mapped.
+// This search is based on at least two anchored elements and their respective distance to the signal at hand.
+// If no ore only one anchor could be identified, or all anchors are otherwise insufficient, no mapping can be done.
+func searchUnanchoredSignal(
+	osmData *OSMUtil.Osm,
+	anchors map[float64]([]*OSMUtil.Node),
+	signalList map[string]OSMUtil.Signal,
+	nodeIdCounter *int,
+	knoten Spurplanknoten,
+	signalType string,
+	elementsNotFound map[string]([]string),
 	isFalling bool,
-) {
-	signals := knoten.HauptsigF
-	if !isFalling {
-		signals = knoten.HauptsigS
+) error {
+	var signalTypeLong string
+	var signals []*NamedSimpleElement
+
+	switch signalType {
+	case "ms":
+		signalTypeLong = "main signal"
+		signals = knoten.HauptsigF
+		if !isFalling {
+			signals = knoten.HauptsigS
+		}
+	case "as":
+		signalTypeLong = "approach signal"
+		signals = knoten.VorsigF
+		if !isFalling {
+			signals = knoten.VorsigS
+		}
+	case "ps":
+		signalTypeLong = "protection signal"
+		signals = knoten.SchutzsigF
+		if !isFalling {
+			signals = knoten.SchutzsigS
+		}
 	}
 
 	for _, signal := range signals {
@@ -224,14 +271,19 @@ func searchUnanchoredMainSignal(
 
 		maxNode, err := findBestOSMNode(osmData, anchors, kilometrage)
 		if err != nil {
-			fmt.Printf("Error with finding node for signal %s: %s \n", signal.Name.Value, err.Error())
-			continue
+			if errors.Cause(err) == errNoSuitableAnchors {
+				elementsNotFound[signalTypeLong+"s"] = append(elementsNotFound[signalTypeLong+"s"], signal.Name.Value)
+				continue
+			}
+			return errors.Wrap(err, "failed to map "+signalTypeLong+" "+signal.Name.Value)
+
 		}
 
-		newSignalNode := createNewHauptsignal(
+		newSignalNode := createNamedDirectionalNode(
 			nodeIdCounter,
 			maxNode,
-			signal,
+			signalType,
+			signal.Name.Value,
 			isFalling,
 		)
 		OSMUtil.InsertNewNodeWithReferenceNode(
@@ -239,5 +291,11 @@ func searchUnanchoredMainSignal(
 			&newSignalNode,
 			maxNode,
 		)
+		signalList[newSignalNode.Id] = OSMUtil.Signal{
+			Name: signal.Name.Value,
+			Lat:  newSignalNode.Lat,
+			Lon:  newSignalNode.Lon,
+		}
 	}
+	return nil
 }

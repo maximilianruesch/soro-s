@@ -4,6 +4,7 @@
 
 #include "soro/server/search_util.h"
 
+#include <algorithm>
 
 using namespace soro::server;
 

@@ -16,9 +16,15 @@ func MapDB(
 	refs []string,
 	osmDir string,
 	DBDir string,
-) error {
+) (map[string]OSMUtil.Halt, map[string]OSMUtil.Signal, map[string]OSMUtil.Signal, int, error) {
 	newNodeIdCounter := 0
-	linesWithNoAnchors := 0
+	totalNumberOfAnchors, totalElementsNotFound := 0, 0
+	linesWithNoAnchors := []string{}
+	linesWithOneAnchor := []string{}
+	haltList := make(map[string]OSMUtil.Halt)
+	mainSignalList := make(map[string]OSMUtil.Signal)
+	otherSignalList := make(map[string]OSMUtil.Signal)
+
 	for _, line := range refs {
 		var anchors map[float64]([]*OSMUtil.Node) = map[float64]([]*OSMUtil.Node){}
 		var osm OSMUtil.Osm
@@ -27,58 +33,66 @@ func MapDB(
 		osmLineFilePath := osmDir + "/" + line + ".xml"
 		osmFile, err := os.ReadFile(osmLineFilePath)
 		if err != nil {
-			return errors.Wrap(err, "failed reading osm line file: "+osmLineFilePath)
+			return nil, nil, nil, -1, errors.Wrap(err, "failed reading osm line file: "+osmLineFilePath)
 		}
 		dbLineFilePath := DBDir + "/" + line + "_DB.xml"
 		dbFile, err := os.ReadFile(dbLineFilePath)
 		if err != nil {
-			return errors.Wrap(err, "failed reading DB line file: "+dbLineFilePath)
+			return nil, nil, nil, -1, errors.Wrap(err, "failed reading DB line file: "+dbLineFilePath)
 		}
 
 		if err := xml.Unmarshal([]byte(osmFile), &osm); err != nil {
-			return errors.Wrap(err, "failed unmarshalling osm file: "+osmLineFilePath)
+			return nil, nil, nil, -1, errors.Wrap(err, "failed unmarshalling osm file: "+osmLineFilePath)
 		}
 		if err := xml.Unmarshal([]byte(dbFile), &dbIss); err != nil {
-			return errors.Wrap(err, "failed unmarshalling db file: "+dbLineFilePath)
+			return nil, nil, nil, -1, errors.Wrap(err, "failed unmarshalling db file: "+dbLineFilePath)
 		}
 
-		fmt.Printf("Processing line %s \n", line)
+		fmt.Printf("Mapping line %s \n", line)
 
-		var notFoundSignalsFalling []*Signal = []*Signal{}
-		var notFoundSignalsRising []*Signal = []*Signal{}
+		var notFoundSignalsFalling []*NamedSimpleElement = []*NamedSimpleElement{}
+		var notFoundSignalsRising []*NamedSimpleElement = []*NamedSimpleElement{}
 		var notFoundSwitches []*Weichenanfang = []*Weichenanfang{}
 		var foundAnchorCount = 0
 		for _, stelle := range dbIss.Betriebsstellen {
 			for _, abschnitt := range stelle.Abschnitte {
-				err = findAndMapAnchorMainSignals(
-					abschnitt,
-					&osm,
-					anchors,
-					&notFoundSignalsFalling,
-					&notFoundSignalsRising,
-					&foundAnchorCount,
-					&newNodeIdCounter,
-				)
-				if err != nil {
-					return errors.Wrap(err, "failed anchoring main signals")
+				for _, knoten := range abschnitt.Knoten {
+					err = findAndMapAnchorMainSignals(
+						*knoten,
+						&osm,
+						anchors,
+						&notFoundSignalsFalling,
+						&notFoundSignalsRising,
+						mainSignalList,
+						&foundAnchorCount,
+						&newNodeIdCounter,
+					)
+					if err != nil {
+						return nil, nil, nil, -1, errors.Wrap(err, "failed anchoring main signals")
+					}
+
+					err = findAndMapAnchorSwitches(
+						*knoten,
+						&osm,
+						anchors,
+						&notFoundSwitches,
+						&foundAnchorCount,
+						&newNodeIdCounter,
+					)
+					if err != nil {
+						return nil, nil, nil, -1, errors.Wrap(err, "failed anchoring switches")
+					}
 				}
-				err = findAndMapAnchorSwitches(
-					abschnitt,
-					&osm,
-					anchors,
-					&notFoundSwitches,
-					&foundAnchorCount,
-					&newNodeIdCounter,
-				)
-				if err != nil {
-					return errors.Wrap(err, "failed anchoring switches")
-				}
+
 			}
 		}
 
-		numSignalsNotFound := (float64)(len(notFoundSignalsFalling) + len(notFoundSignalsRising))
-		percentAnchored := ((float64)(foundAnchorCount) / ((float64)(foundAnchorCount) + numSignalsNotFound)) * 100.0
-		fmt.Printf("Could anchor %f %% of signals. \n", percentAnchored)
+		numElementsNotFound := len(notFoundSignalsFalling) + len(notFoundSignalsRising) + len(notFoundSwitches)
+		percentAnchored := ((float64)(foundAnchorCount) / ((float64)(foundAnchorCount) + (float64)(numElementsNotFound))) * 100.0
+		fmt.Printf("Could anchor %d/%d (%f%%) of signals and switches. \n", foundAnchorCount, foundAnchorCount+numElementsNotFound, percentAnchored)
+
+		totalNumberOfAnchors += foundAnchorCount
+		totalElementsNotFound += numElementsNotFound
 
 		var issWithMappedSignals = XmlIssDaten{
 			Betriebsstellen: []*Spurplanbetriebsstelle{{
@@ -93,40 +107,173 @@ func MapDB(
 		}
 
 		if len(anchors) == 0 {
-			fmt.Print("Could not find anchors! \n")
+			linesWithNoAnchors = append(linesWithNoAnchors, line)
 			continue
 		}
 		if len(anchors) == 1 {
-			fmt.Print("Could not find enough anchors! \n")
+			linesWithOneAnchor = append(linesWithOneAnchor, line)
 			// TODO: Node not found, find closest mapped Node and work from there
 		} else {
+			elementsNotFound := make(map[string]([]string))
 			for _, stelle := range issWithMappedSignals.Betriebsstellen {
 				for _, abschnitt := range stelle.Abschnitte {
-					mapUnanchoredMainSignals(
-						&osm,
-						&anchors,
-						&newNodeIdCounter,
-						*abschnitt,
-					)
-					mapUnanchoredSwitches(&osm,
-						&anchors,
-						&newNodeIdCounter,
-						*abschnitt,
-					)
+					for _, knoten := range abschnitt.Knoten {
+						err = mapUnanchoredSignals(
+							&osm,
+							anchors,
+							mainSignalList,
+							&newNodeIdCounter,
+							*knoten,
+							"ms",
+							elementsNotFound,
+						)
+						if err != nil {
+							return nil, nil, nil, -1, errors.Wrap(err, "failed finding main signals")
+						}
+						err = mapUnanchoredSwitches(
+							&osm,
+							anchors,
+							&newNodeIdCounter,
+							*knoten,
+							elementsNotFound,
+						)
+						if err != nil {
+							return nil, nil, nil, -1, errors.Wrap(err, "failed finding switches")
+						}
+					}
 				}
+			}
+
+			simpleElements := make(map[string]([]*SimpleElement))
+			namedSimpleElements := make(map[string]([]*NamedSimpleElement))
+
+			for _, stelle := range dbIss.Betriebsstellen {
+				for _, abschnitt := range stelle.Abschnitte {
+					for _, knoten := range abschnitt.Knoten {
+						simpleElements["line_switch"] = knoten.Streckenwechsel0
+						simpleElements["km_jump"] = knoten.KmSprungAnf
+						simpleElements["border"] = knoten.BetriebsStGr
+						simpleElements["bumper"] = knoten.Prellbock
+
+						namedSimpleElements["tunnel"] = knoten.Tunnel
+						namedSimpleElements["track_end"] = knoten.Gleisende
+
+						for elementName, elementList := range simpleElements {
+							err = mapSimpleElement(
+								&osm,
+								anchors,
+								&newNodeIdCounter,
+								*knoten,
+								elementName,
+								elementList,
+								elementsNotFound,
+							)
+							if err != nil {
+								return nil, nil, nil, -1, errors.Wrap(err, "failed finding "+elementName)
+							}
+						}
+						for elementName, elementList := range namedSimpleElements {
+							err = mapNamedSimpleElement(
+								&osm,
+								anchors,
+								&newNodeIdCounter,
+								*knoten,
+								elementName,
+								elementList,
+								elementsNotFound,
+							)
+							if err != nil {
+								return nil, nil, nil, -1, errors.Wrap(err, "failed finding "+elementName)
+							}
+						}
+						for _, signalType := range []string{"as", "ps"} {
+							err = mapUnanchoredSignals(
+								&osm,
+								anchors,
+								otherSignalList,
+								&newNodeIdCounter,
+								*knoten,
+								signalType,
+								elementsNotFound,
+							)
+							if err != nil {
+								return nil, nil, nil, -1, errors.Wrap(err, "failed finding "+signalType)
+							}
+						}
+
+						err = mapCrosses(
+							&osm,
+							anchors,
+							&newNodeIdCounter,
+							*knoten,
+							elementsNotFound,
+						)
+						if err != nil {
+							return nil, nil, nil, -1, errors.Wrap(err, "failed finding crosses")
+						}
+						err = mapHalts(
+							&osm,
+							anchors,
+							haltList,
+							&newNodeIdCounter,
+							*knoten,
+							elementsNotFound,
+						)
+						if err != nil {
+							return nil, nil, nil, -1, errors.Wrap(err, "failed finding halts")
+						}
+						err = mapSpeedLimits(
+							&osm,
+							anchors,
+							&newNodeIdCounter,
+							*knoten,
+							elementsNotFound,
+						)
+						if err != nil {
+							return nil, nil, nil, -1, errors.Wrap(err, "failed finding speed limits")
+						}
+						err = mapEoTDs(
+							&osm,
+							anchors,
+							&newNodeIdCounter,
+							*knoten,
+							elementsNotFound,
+						)
+						if err != nil {
+							return nil, nil, nil, -1, errors.Wrap(err, "failed finding end of train detectors")
+						}
+						err = mapSlopes(
+							&osm,
+							anchors,
+							&newNodeIdCounter,
+							*knoten,
+							elementsNotFound,
+						)
+						if err != nil {
+							return nil, nil, nil, -1, errors.Wrap(err, "failed finding slopes")
+						}
+					}
+				}
+			}
+
+			for elementType, nameList := range elementsNotFound {
+				fmt.Printf("Could not find %s: %v \n", elementType, nameList)
 			}
 		}
 
 		if new_Data, err := xml.MarshalIndent(osm, "", "	"); err != nil {
-			return errors.Wrap(err, "failed marshalling osm data")
+			return nil, nil, nil, -1, errors.Wrap(err, "failed marshalling osm data")
 		} else {
 			if err := os.WriteFile(osmLineFilePath,
 				[]byte(xml.Header+string(new_Data)), 0644); err != nil {
-				return errors.Wrap(err, "failed writing file: "+osmLineFilePath)
+				return nil, nil, nil, -1, errors.Wrap(err, "failed writing file: "+osmLineFilePath)
 			}
 		}
 	}
 
-	fmt.Printf("Lines with no anchors: %d out of %d \n", linesWithNoAnchors, len(refs))
-	return nil
+	totalPercentAnchored := ((float64)(totalNumberOfAnchors) / ((float64)(totalNumberOfAnchors) + (float64)(totalElementsNotFound))) * 100.0
+	fmt.Printf("Could in total anchor %d/%d (%f%%) of signals and switches. \n", totalNumberOfAnchors, totalNumberOfAnchors+totalElementsNotFound, totalPercentAnchored)
+	fmt.Printf("Lines with no anchors: %d out of %d (%v)\n", len(linesWithNoAnchors), len(refs), linesWithNoAnchors)
+	fmt.Printf("Lines with only one anchor: %d out of %d (%v)\n", len(linesWithOneAnchor), len(refs), linesWithOneAnchor)
+	return haltList, mainSignalList, otherSignalList, newNodeIdCounter, nil
 }

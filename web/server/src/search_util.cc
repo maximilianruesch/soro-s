@@ -49,11 +49,11 @@ namespace soro::server {
          if (filter.main_signal_) {
             // add signaals
             for (const auto& object : osm_objects.at(osm_type::MAIN_SIGNAL)) {
-              if (to_lower(object.name_).find(to_lower(name)) !=
-                  std::string::npos) {
-                matches.push_back(object);
-              }
+            if (to_lower(object.name_).find(to_lower(name)) !=
+                std::string::npos) {
+              matches.push_back(object);
             }
+        }
         }
 
 
