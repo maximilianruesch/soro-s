@@ -216,9 +216,10 @@ void serve_search(
       }
   }
 
-
-  const auto info = get_object_info(osm_objects.at(infra_name), object_name, filter);
-
+  std::vector<osm_object> info;
+  if (osm_objects.contains(infra_name)) {
+      info = get_object_info(osm_objects.at(infra_name), object_name, filter);
+  }
  
   rapidjson::Document ret;
   ret.SetArray();
