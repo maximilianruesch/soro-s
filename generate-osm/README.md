@@ -31,3 +31,5 @@ To access comprehensible documention for all public methods, run
 godoc -http=:6060
 ```
 in the `generate-osm` directory and access it via the browser under `localhost:6060/`. You will find it under the tab `standard library / transform-osm`
+
+The generated `finalOsm.xml` has to be copied into the `/soro-s/resources/osm` folder and the `finalOsm.json` has to be copied into the folder `/soro-s/resources/serach_indices`. The files need to have the same name for the search feature to function properly.
