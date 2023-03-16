@@ -17,7 +17,7 @@ func SortAndRemoveDuplicatesOsm(osmData *Osm) {
 // This is done by first sorting the lists of Nodes, Ways and Relations according to their ID.
 // Then, all duplicate Nodes, Ways and Relations are removed and only the first occurence is kept.
 func sortOsm(osmData *Osm) {
-	sort.Slice(osmData.Way, func(i, j int) bool {
+	sort.SliceStable(osmData.Way, func(i, j int) bool {
 		id1, _ := strconv.Atoi(osmData.Way[i].Id)
 		id2, _ := strconv.Atoi(osmData.Way[j].Id)
 		return id1 < id2

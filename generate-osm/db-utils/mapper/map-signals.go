@@ -9,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// findAndMapAnchorMainSignals identifies Hauptsignal(S/F)-Node pairs, that match up.
+// FindAndMapAnchorMainSignals identifies Hauptsignal(S/F)-Node pairs, that match up.
 // Matching up in this context means, that the Node has the tags 'railway:signal' and 'name:...' where ... is the same
 // (excluding spaces) as the Signal-name.
 // In notFoundSignals... all signals that could not be identified will be returned.
@@ -25,7 +25,7 @@ func FindAndMapAnchorMainSignals(
 ) error {
 	conflictingSignalNames := map[string]bool{}
 	err := processHauptsignal(
-		knoten,
+		knoten.HauptsigF,
 		notFoundSignalsFalling,
 		anchors,
 		signalList,
@@ -40,7 +40,7 @@ func FindAndMapAnchorMainSignals(
 	}
 
 	err = processHauptsignal(
-		knoten,
+		knoten.HauptsigS,
 		notFoundSignalsRising,
 		anchors,
 		signalList,
@@ -59,7 +59,7 @@ func FindAndMapAnchorMainSignals(
 // processHauptsignal iterates over all Hautpsignal[S/F] (depending on 'is Falling')
 // and does all the identification.
 func processHauptsignal(
-	knoten Spurplanknoten,
+	signals []*NamedSimpleElement,
 	notFoundSignals *[]*NamedSimpleElement,
 	anchors map[float64][]*osmUtils.Node,
 	signalList map[string]osmUtils.Signal,
@@ -69,11 +69,6 @@ func processHauptsignal(
 	foundAnchorCount *int,
 	nodeIdCounter *int,
 ) error {
-	signals := knoten.HauptsigF
-	if !isFalling {
-		signals = knoten.HauptsigS
-	}
-
 	for _, signal := range signals {
 		matchingSignalNodes := []*osmUtils.Node{}
 

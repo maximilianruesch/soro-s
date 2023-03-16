@@ -22,7 +22,7 @@ func GenerateOsmTrackRefs(inputFilePath string, tempFilePath string) (refs []str
 		"--overwrite",
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed to execute osmium command")
+		return nil, errors.Wrap(err, "failed to execute osmium command")
 	}
 
 	var data []byte

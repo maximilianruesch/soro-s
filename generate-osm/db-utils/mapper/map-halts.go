@@ -1,6 +1,7 @@
 package mapper
 
 import (
+	"fmt"
 	findNodes "transform-osm/db-utils/find-nodes"
 	osmUtils "transform-osm/osm-utils"
 
@@ -78,6 +79,7 @@ func searchHalt(
 			halt.Name.Value,
 			isFalling,
 		)
+		fmt.Println("newSignalNode: ", newSignalNode)
 		osmUtils.InsertNewNodeWithReferenceNode(
 			osmData,
 			&newSignalNode,

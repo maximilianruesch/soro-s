@@ -13,26 +13,28 @@ import (
 
 const EARTH_RADIUS_CONST = 6371.0
 
+type NdRefPosition int
+
 const (
-	FirstNdRef      = 0
-	SecondNdRef     = 1
-	SecondLastNdRef = 3
-	LastNdRef       = 4
+	FirstNdRef NdRefPosition = iota
+	SecondNdRef
+	SecondLastNdRef
+	LastNdRef
 )
 
 // GetWayNdRef returns the reference of the node at the given index. The index can be one of the following:
 // FirstNdRef, SecondNdRef, SecondLastNdRef, LastNdRef
 func GetWayNdRef(
 	way OSMUtil.Way,
-	index int,
+	ndRefPosition NdRefPosition,
 ) string {
-	if index == FirstNdRef {
+	if ndRefPosition == FirstNdRef {
 		return way.Nd[0].Ref
 	}
-	if index == SecondNdRef {
+	if ndRefPosition == SecondNdRef {
 		return way.Nd[1].Ref
 	}
-	if index == SecondLastNdRef {
+	if ndRefPosition == SecondLastNdRef {
 		return way.Nd[len(way.Nd)-2].Ref
 	}
 

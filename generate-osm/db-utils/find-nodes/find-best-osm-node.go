@@ -1,6 +1,7 @@
 package findNodes
 
 import (
+	"fmt"
 	"math"
 	"strings"
 	OSMUtil "transform-osm/osm-utils"
@@ -18,22 +19,28 @@ func FindBestOSMNode(
 	kilometrage float64,
 ) (*OSMUtil.Node, error) {
 	sortedAnchors := SortAnchors(anchors, kilometrage)
-
+	if len(sortedAnchors) < 2 {
+		return nil, errors.Wrap(ErrNoSuitableAnchors, "less than two anchors found")
+	}
+	fmt.Printf("sortedAnchors: %v %v", sortedAnchors[0], sortedAnchors[1])
 	nearest, secondNearest := sortedAnchors[0], sortedAnchors[1]
 
 	anchor1 := (anchors[nearest])[0]
 	anchor2 := (anchors[secondNearest])[0]
 	distance1 := math.Abs(nearest - kilometrage)
 	distance2 := math.Abs(secondNearest - kilometrage)
-
-	newNode, err := FindNewNode(
+	fmt.Println("anchor1: ", anchor1)
+	fmt.Println("anchor2: ", anchor2)
+	fmt.Println("distance1: ", distance1)
+	fmt.Println("distance2: ", distance2)
+	newNode, err := findNewNode(
 		osmData,
 		anchor1,
 		anchor2,
 		distance1,
 		distance2,
 	)
-
+	fmt.Println("newNode: ", newNode)
 	if err == nil {
 		return newNode, nil
 	}
@@ -59,7 +66,7 @@ func FindBestOSMNode(
 			distance2 = math.Abs(secondNearest - kilometrage)
 			newAnchorCounter++
 		}
-		newNode, err = FindNewNode(
+		newNode, err = findNewNode(
 			osmData,
 			anchor1,
 			anchor2,

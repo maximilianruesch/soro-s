@@ -1,14 +1,15 @@
 package findNodes
 
 import (
+	"fmt"
 	OSMUtil "transform-osm/osm-utils"
 
 	"github.com/pkg/errors"
 )
 
-// FindNewNode takes two Nodes and a desired distance to both Nodes and computes an optimal Node in the provided 'osmData'.
+// findNewNode takes two Nodes and a desired distance to both Nodes and computes an optimal Node in the provided 'osmData'.
 // The returned Node satisfies the distance as best as possible.
-func FindNewNode(
+func findNewNode(
 	osmData *OSMUtil.Osm,
 	node1 *OSMUtil.Node,
 	node2 *OSMUtil.Node,
@@ -22,7 +23,12 @@ func FindNewNode(
 
 	up1, upDist1, down1, downDist1, err1 := findNodes(osmData, node1, dist1)
 	up2, upDist2, down2, downDist2, err2 := findNodes(osmData, node2, dist2)
-
+	fmt.Println("up1: ", up1)
+	fmt.Println("up2: ", up2)
+	fmt.Println("down1: ", down1)
+	fmt.Println("down2: ", down2)
+	fmt.Println("err1: ", err1)
+	fmt.Println("err2: ", err2)
 	if err1 != nil {
 		return nil, errors.Wrap(err1, "insufficient anchor: "+node1.Id)
 	}
