@@ -52,7 +52,7 @@ describe('soro-select', async () => {
 
     it('emits a \'select\' event when the inner select emits a model update', async () => {
         const innerSelect = soroSelect.findComponent<typeof VSelect>({ name: 'v-select' });
-        innerSelect.vm.$emit('update:model-value', 'new-value');
+        innerSelect.vm.$emit('update:modelValue', 'new-value');
 
         expect(soroSelect.emitted('select')).toStrictEqual([['new-value']]);
     });
