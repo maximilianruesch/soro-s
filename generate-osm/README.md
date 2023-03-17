@@ -30,7 +30,7 @@ Also note that **you may have to rebuild your cmake project** to apply the chang
 #### CLI-Flags
 ```bash
 --generate-lines, --gl    Generate lines all lines new (default: false)
---mapDB, --mdb            Generate lines all lines new as well as map an DB data (default: false)
+--mapDB, --mdb            Generate lines all lines new as well as map any DB data (default: false)
 --input value, -i value   The input file to read as OSM PBF file (default: "./temp/base.osm.pbf")
 --output value, -o value  The output file to write annotated OSM result (filtered by rail) to as XML file (default: "./finalOsm.xml")
 --additional-osm value,   An additional OSM file in XML format to add parsed DB data to (default: "" (do not add))
