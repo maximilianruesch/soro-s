@@ -16,8 +16,9 @@ This README contains information on how to use the generate-osm build for produc
 go build
 ./transform-osm
 ```
+Note that depending on the name of your file, you may need to use the CLI Flag `--input`. For further details see the CLI Flag reference down below.
 
-The final OSM file as well as the generated search indices will be in the folder `generate-osm/temp` and named `finalOsm.{xml,json}`.
+The final OSM file as well as the generated search indices will be in the folder `generate-osm` and named `finalOsm.{xml,json}` (if not specified otherwise via `--output`).
 
 Both generated files (OSM and JSON search indices) now have to be copied as by the following:
 1. OSM file: `/soro-s/resources/osm`
@@ -34,7 +35,7 @@ Also note that **you may have to rebuild your cmake project** to apply the chang
 --output value, -o value  The output file to write annotated OSM result (filtered by rail) to as XML file (default: "./finalOsm.xml")
 --additional-osm value,   An additional OSM file in XML format to add parsed DB data to (default: "" (do not add))
   --addOsm value  
---help, -h                show help
+--help, -h                Show help
 ```
 
 ### Miscellaneous
