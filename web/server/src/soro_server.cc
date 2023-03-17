@@ -1,3 +1,5 @@
+#include <fstream>
+
 #include "soro/server/soro_server.h"
 
 #include <chrono>
@@ -17,6 +19,7 @@
 
 
 #include "soro/server/http_server.h"
+
 
 namespace soro::server {
 
@@ -177,46 +180,11 @@ void initialize_serve_contexts(server::serve_contexts& contexts,
   }
 }
 
-std::string to_lower(std::string str) {
-  std::transform(str.begin(), str.end(), str.begin(),
-                 [](unsigned char c) { return std::tolower(c); });
-  return str;
-}
-
-std::vector<soro::server::osm_object> get_object_info(
-    const std::vector<soro::server::osm_object>& osm_objects,
-    const std::string& name,
-    const soro::server::search_filter& filter) {
-    std::vector<soro::server::osm_object> matches;
-
-    using ot = soro::server::osm_type;
-
-    for (const auto& object : osm_objects) {
-        if (!filter.halt_ && object.type_ == ot::HALT) continue;
-        if (!filter.station_ && object.type_ == ot::STATION) continue;
-        if (!filter.main_signal_ && object.type_ == ot::MAIN_SIGNAL) continue;
-
-        if (to_lower(object.name_).find(to_lower(name)) != std::string::npos) {
-            matches.push_back(object);
-        }
-    }
-
-   std::sort(matches.begin(), matches.end(),
-        [](const soro::server::osm_object& a, const soro::server::osm_object& b) {
-            // Primary ordering by length
-            if (a.name_.length() < b.name_.length()) return true;
-            if (a.name_.length() > b.name_.length()) return false;
-            // Secondary ordering by lexicographical order
-            return a.name_ < b.name_;
-        });
-
-    return matches;
-}
 
 void serve_search(
     request_t const& req, response_t& res,
     const std::unordered_map<
-        std::string, std::vector<soro::server::osm_object>>& osm_objects) {
+        std::string, std::unordered_map<osm_type, std::vector<soro::server::osm_object>>>& osm_objects) {
   namespace rj = rapidjson;
 
   std::string body;
@@ -248,9 +216,10 @@ void serve_search(
       }
   }
 
-
-  const auto info = get_object_info(osm_objects.at(infra_name), object_name, filter);
-
+  std::vector<osm_object> info;
+  if (osm_objects.contains(infra_name)) {
+      info = get_object_info(osm_objects.at(infra_name), object_name, filter);
+  }
  
   rapidjson::Document ret;
   ret.SetArray();
@@ -290,10 +259,66 @@ void serve_search(
   res.result(http::status::ok);
 }
 
+
+std::unordered_map<osm_type, std::vector<osm_object>> parse_search_file(
+    const fs::path& file) {
+
+    std::ifstream const ifs(file.c_str());
+    std::stringstream buffer;
+    buffer << ifs.rdbuf();
+
+    std::string const s = buffer.str();
+
+    rapidjson::Document doc;
+    doc.Parse(s.c_str());
+
+    std::unordered_map<osm_type, std::vector<osm_object>> ret;
+
+    for (auto elem = doc.MemberBegin(); elem != doc.MemberEnd(); ++elem) {
+      auto const key = std::string(elem->name.GetString());
+
+      osm_type type = osm_type::UNDEFINED;
+      if (key == "stations")
+          type = osm_type::STATION;
+      else if (key == "halts")
+          type = osm_type::HALT;
+      else if (key == "main_signals")
+          type = osm_type::MAIN_SIGNAL;
+
+      auto const& val = elem->value.GetObject();
+      for (auto entry = val.MemberBegin(); entry != val.MemberEnd(); ++entry) {
+          auto const& v = entry->value.GetObject();
+         
+          osm_object obj;
+
+          obj.lat_ = std::stod(v["lat"].GetString());
+          obj.lon_ = std::stod(v["lon"].GetString());
+          obj.name_ = v["name"].GetString();
+          obj.type_ = type;
+
+          ret[type].push_back(obj);
+      }
+    }
+
+    return ret;
+
+}
+
+
 server::server(std::string const& address, port_t const port,
-               fs::path const& server_resource_dir, bool const test,
-    const std::unordered_map<std::string, std::vector<soro::server::osm_object>>& osm_halts) {
+               fs::path const& server_resource_dir, bool const test) {
   initialize_serve_contexts(contexts_, server_resource_dir);
+
+
+  std::unordered_map<std::string, std::unordered_map<osm_type, std::vector<osm_object>>> search_indices;
+
+  const auto json_path = server_resource_dir / "resources" / "search_indices";
+  if (fs::exists(json_path)) {
+      for (auto&& dir_entry : fs::directory_iterator{json_path}) {
+          search_indices[dir_entry.path().filename().replace_extension().string()] = parse_search_file(dir_entry.path());
+      }
+  }
+
 
   serve_forever(
       address, port,
@@ -333,7 +358,7 @@ server::server(std::string const& address, port_t const port,
             break;
           }
           case http::verb::post: {
-            if (should_send_pos) serve_search(req, res, osm_halts);
+            if (should_send_pos) serve_search(req, res, search_indices);
 
             break;
           }

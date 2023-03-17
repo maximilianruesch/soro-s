@@ -15,5 +15,32 @@ export default mergeConfig(viteConfig, defineConfig({
         deps: {
             inline: ['vuetify'],
         },
+        // Enable coverage using the test:coverage script
+        coverage: {
+            provider: 'c8',
+            all: true,
+            include: [
+                'src/api/**',
+                'src/components/**',
+                'src/golden-layout/**',
+                'src/stores/**',
+                'src/App.vue',
+            ],
+            exclude: [
+                // These files are not used as of right now and not ensured to work properly, so they do not have to
+                // partake in coverage measurement.
+                'src/stores/timetable-store.ts',
+                'src/components/infrastructure/highlight-helpers.ts',
+                'src/components/disruption-detail.vue',
+                'src/components/station-detail.vue',
+                'src/components/simulation/**',
+                'src/golden-layout/components/OrderingGraphComponent.vue',
+                'src/golden-layout/components/SimulationComponent.vue',
+                'src/golden-layout/components/TimetableComponent.vue',
+                // defaults
+                '**/*.d.ts',
+                '**/*.test.ts',
+            ],
+        },
     },
 }));
